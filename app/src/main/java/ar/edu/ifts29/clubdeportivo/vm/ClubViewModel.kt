@@ -1,0 +1,774 @@
+package ar.edu.ifts29.clubdeportivo.vm
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import ar.edu.ifts29.clubdeportivo.data.Acceso
+import ar.edu.ifts29.clubdeportivo.data.Actividad
+import ar.edu.ifts29.clubdeportivo.data.Campos
+import ar.edu.ifts29.clubdeportivo.data.Consulta
+import ar.edu.ifts29.clubdeportivo.data.Cuota
+import ar.edu.ifts29.clubdeportivo.data.DemoData
+import ar.edu.ifts29.clubdeportivo.data.DiaRutina
+import ar.edu.ifts29.clubdeportivo.data.Ejercicio
+import ar.edu.ifts29.clubdeportivo.data.EstadoCuota
+import ar.edu.ifts29.clubdeportivo.data.Fecha
+import ar.edu.ifts29.clubdeportivo.data.FichaNutricional
+import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
+import ar.edu.ifts29.clubdeportivo.data.HOY
+import ar.edu.ifts29.clubdeportivo.data.HORA_ACTUAL
+import ar.edu.ifts29.clubdeportivo.data.Ingreso
+import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
+import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
+import ar.edu.ifts29.clubdeportivo.data.ReportTab
+import ar.edu.ifts29.clubdeportivo.data.Rol
+import ar.edu.ifts29.clubdeportivo.data.Rutina
+import ar.edu.ifts29.clubdeportivo.data.Screen
+import ar.edu.ifts29.clubdeportivo.data.SheetData
+import ar.edu.ifts29.clubdeportivo.data.Socio
+import ar.edu.ifts29.clubdeportivo.data.Turno
+import ar.edu.ifts29.clubdeportivo.data.Usuario
+import ar.edu.ifts29.clubdeportivo.data.Visitante
+import ar.edu.ifts29.clubdeportivo.data.daysTo
+import ar.edu.ifts29.clubdeportivo.data.dniFmt
+import ar.edu.ifts29.clubdeportivo.data.fecha
+import ar.edu.ifts29.clubdeportivo.data.fmt
+import ar.edu.ifts29.clubdeportivo.data.fmtCorto
+import ar.edu.ifts29.clubdeportivo.data.fmtIso
+import ar.edu.ifts29.clubdeportivo.data.fmtLargo
+import ar.edu.ifts29.clubdeportivo.data.masAnios
+import ar.edu.ifts29.clubdeportivo.data.masDias
+import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.norm
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/** Todo el estado mutable de la app, en una sola pieza inmutable. */
+data class UiState(
+    val rol: Rol? = null,
+    val stack: List<Screen> = listOf(Screen.LOGIN),
+    val selId: Int? = null,
+    val campos: Campos = Campos(),
+    val loginError: Boolean = false,
+    val socios: List<Socio> = DemoData.socios,
+    val acts: List<Actividad> = DemoData.actividades,
+    val visitantes: List<Visitante> = DemoData.visitantesIniciales,
+    val ingresosHoy: List<IngresoHoy> = DemoData.ingresosHoyIniciales,
+    val acceso: Acceso? = null,
+    val medio: MedioPago = MedioPago.TARJETA,
+    val diaIdx: Int = 1,
+    val editDia: Int = 0,
+    val editEj: List<DiaRutina>? = null,
+    val slot: String? = null,
+    val filtro: FiltroSocios = FiltroSocios.TODOS,
+    val reportTab: ReportTab = ReportTab.VENCER,
+    val claseId: String = "musc",
+    val asistencia: Map<String, List<Int>> = mapOf("musc" to listOf(4, 7), "func" to emptyList()),
+    val profePresente: Boolean = false,
+    val toast: String? = null,
+    val sheet: SheetData? = null,
+    val logoutSheet: Boolean = false,
+    val apto: Boolean = true,
+    val planIdx: Int = 1,
+    val altaError: String? = null,
+    val visError: String? = null,
+    val visAct: String? = null,
+    val comprobante: String? = null,
+)
+
+data class ActividadVista(val act: Actividad) {
+    val id get() = act.id
+    val nombre get() = act.nombre
+    val horario get() = act.horario
+    val libres = act.cupo - act.ocupados
+    val sinCupo = libres == 0
+    val cupoJusto = libres in 1..3
+    val cupoLabel = if (libres > 0) "$libres libres" else "Sin cupo"
+    val ocupacion = act.ocupados.toFloat() / act.cupo
+    val precioLabel = money(act.precio)
+}
+
+data class ClaseVista(
+    val act: Actividad,
+    val presentes: Int,
+    val inscriptos: Int,
+)
+
+data class SlotHora(val hora: String, val key: String, val ocupado: Boolean, val elegido: Boolean)
+data class GrupoSlots(val dia: String, val horas: List<SlotHora>)
+data class GrupoAgenda(val dia: String, val esHoy: Boolean, val turnos: List<SocioVista>)
+
+/**
+ * Lógica de la app, portada del componente único del prototipo. La navegación usa la
+ * misma pila que el original: las pantallas raíz (las de la barra inferior) reemplazan
+ * la pila y el resto se apila encima, con un header con flecha para volver.
+ */
+class ClubViewModel : ViewModel() {
+
+    var estado by mutableStateOf(UiState())
+        private set
+
+    private var toastJob: Job? = null
+    private var proximoIdSocio = (DemoData.socios.maxOf { it.id }) + 1
+
+    // ---------------------------------------------------------------- navegación
+
+    val pantalla: Screen get() = estado.stack.last()
+
+    val esStaff: Boolean get() = estado.rol == Rol.EMPLEADO || estado.rol == Rol.ADMIN
+
+    val usuario: Usuario get() = DemoData.usuarios.getValue(estado.rol ?: Rol.SOCIO)
+
+    val titulo: String? get() = DemoData.titulos[pantalla]
+
+    val muestraHeader: Boolean
+        get() = (titulo != null && pantalla != Screen.PERFIL) || (pantalla == Screen.PERFIL && esStaff)
+
+    val muestraNav: Boolean
+        get() = estado.rol != null && pantalla != Screen.LOGIN && pantalla != Screen.S_PAGO_OK
+
+    val tabs: List<Pair<Screen, String>>
+        get() = estado.rol?.let { DemoData.tabs.getValue(it) } ?: emptyList()
+
+    /** La raíz activa: la que se marca en la barra inferior. */
+    val tabActiva: Screen get() = estado.stack.first()
+
+    val hoyLabel: String get() = HOY.fmtLargo().replaceFirstChar { it.uppercase() }
+
+    /**
+     * Las pantallas raíz del rol activo reemplazan la pila; el resto se apila.
+     *
+     * El criterio es por rol y no global a propósito: Perfil es una pestaña para el
+     * socio, el profesor y el nutricionista, pero para el administrativo se abre desde
+     * el avatar y tiene que poder volver a donde estaba.
+     */
+    fun ir(scr: Screen) {
+        val esRaiz = tabs.any { it.first == scr }
+        estado = if (esRaiz) {
+            estado.copy(stack = listOf(scr))
+        } else {
+            estado.copy(stack = estado.stack + scr)
+        }
+    }
+
+    fun volver() {
+        if (estado.stack.size > 1) estado = estado.copy(stack = estado.stack.dropLast(1))
+    }
+
+    /** Hay algo a lo que volver: usado por el botón atrás del sistema. */
+    val puedeVolver: Boolean get() = estado.stack.size > 1
+
+    fun toast(msg: String) {
+        toastJob?.cancel()
+        estado = estado.copy(toast = msg)
+        toastJob = viewModelScope.launch {
+            delay(2600)
+            estado = estado.copy(toast = null)
+        }
+    }
+
+    fun cerrarSheet() {
+        estado = estado.copy(sheet = null)
+    }
+
+    // ---------------------------------------------------------------- sesión (HU-01)
+
+    fun campo(update: Campos.() -> Campos) {
+        estado = estado.copy(
+            campos = estado.campos.update(),
+            loginError = false,
+            altaError = null,
+            visError = null,
+        )
+    }
+
+    fun login() {
+        val cuenta = DemoData.cuentas[norm(estado.campos.email)]
+        if (cuenta != null && estado.campos.pass == cuenta.first) {
+            val rol = cuenta.second
+            estado = estado.copy(
+                rol = rol,
+                stack = listOf(DemoData.tabs.getValue(rol).first().first),
+                loginError = false,
+                campos = estado.campos.copy(email = "", pass = ""),
+            )
+        } else {
+            estado = estado.copy(loginError = true)
+        }
+    }
+
+    fun pedirCerrarSesion() {
+        estado = estado.copy(logoutSheet = true)
+    }
+
+    fun cancelarCerrarSesion() {
+        estado = estado.copy(logoutSheet = false)
+    }
+
+    /** Vuelve al login y descarta la sesión; los datos de demo siguen como estaban. */
+    fun cerrarSesion() {
+        estado = estado.copy(rol = null, stack = listOf(Screen.LOGIN), logoutSheet = false, selId = null)
+    }
+
+    // ---------------------------------------------------------------- vistas derivadas
+
+    val socios: List<SocioVista> get() = estado.socios.map { SocioVista(it) }
+
+    /** El socio logueado. En el prototipo es siempre el primero de la lista. */
+    val yo: SocioVista get() = socios.first()
+
+    val seleccionado: SocioVista
+        get() = socios.firstOrNull { it.id == estado.selId } ?: yo
+
+    val sociosFiltrados: List<SocioVista>
+        get() {
+            val q = estado.campos.busq.trim().lowercase()
+            return socios
+                .filter {
+                    q.isEmpty() ||
+                        it.nombre.lowercase().contains(q) ||
+                        it.socio.dni.toString().contains(q.replace(".", ""))
+                }
+                .filter {
+                    when (estado.filtro) {
+                        FiltroSocios.TODOS -> true
+                        FiltroSocios.MORA -> it.mora
+                        FiltroSocios.HAB -> it.hab
+                    }
+                }
+        }
+
+    val actividades: List<ActividadVista> get() = estado.acts.map { ActividadVista(it) }
+
+    val actividadElegida: ActividadVista?
+        get() = actividades.firstOrNull { it.id == estado.visAct }
+
+    /** Cuotas pendientes que vencen dentro de la semana (HU-14). */
+    val porVencer: List<SocioVista>
+        get() = socios
+            .filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
+            .sortedBy { daysTo(it.cuota.vence) }
+
+    val enMora: List<SocioVista> get() = socios.filter { it.mora }
+
+    val filasReporte: List<SocioVista>
+        get() = if (estado.reportTab == ReportTab.VENCER) porVencer else enMora
+
+    val tituloReporte: String
+        get() = if (estado.reportTab == ReportTab.VENCER) {
+            "Cuotas que vencen en 7 días"
+        } else {
+            "Socios en mora · acceso bloqueado"
+        }
+
+    val totalReporte: String get() = money(filasReporte.sumOf { it.cuota.monto })
+
+    val ingresosDeHoy: Int
+        get() = estado.ingresosHoy.count { it.ok } + estado.visitantes.size
+
+    /** Las clases de la entrenadora logueada. */
+    val clases: List<ClaseVista>
+        get() = estado.acts
+            .filter { it.profesor == DemoData.PROFESORA }
+            .map {
+                ClaseVista(
+                    act = it,
+                    presentes = (estado.asistencia[it.id] ?: emptyList()).size,
+                    inscriptos = it.inscriptos.size,
+                )
+            }
+
+    val claseSeleccionada: ClaseVista get() = clases.firstOrNull { it.act.id == estado.claseId } ?: clases.first()
+
+    /** Los inscriptos de la clase activa, con su marca de presente. */
+    val filasAsistencia: List<Pair<SocioVista, Boolean>>
+        get() {
+            val clase = claseSeleccionada.act
+            val presentes = estado.asistencia[clase.id] ?: emptyList()
+            return clase.inscriptos.mapNotNull { id ->
+                socios.firstOrNull { it.id == id }?.let { it to (it.id in presentes) }
+            }
+        }
+
+    /** Socios de las actividades que dicta la entrenadora. */
+    val sociosDeLaProfe: List<SocioVista>
+        get() = socios.filter { s ->
+            s.actividades.any { it.nombre == "Musculación" || it.nombre == "Funcional" }
+        }
+
+    val rutinasPendientes: List<SocioVista> get() = sociosDeLaProfe.filter { !it.tieneRutina }
+
+    val diasDeRutina: List<DiaRutina> get() = yo.rutina?.dias ?: emptyList()
+
+    val diaDeRutina: DiaRutina?
+        get() = diasDeRutina.getOrNull(estado.diaIdx) ?: diasDeRutina.firstOrNull()
+
+    /** La tarjeta "Rutina · hoy" del inicio del socio apunta al segundo día. */
+    val diaDeHoy: DiaRutina? get() = diasDeRutina.getOrNull(1) ?: diasDeRutina.firstOrNull()
+
+    val diaEnEdicion: DiaRutina?
+        get() = estado.editEj?.getOrNull(estado.editDia) ?: estado.editEj?.firstOrNull()
+
+    /** Horarios de turno con nutrición, marcando los ya tomados. */
+    val slots: List<GrupoSlots>
+        get() {
+            val tomados = estado.socios.mapNotNull { s -> s.turno?.let { "${it.fecha.fmtIso()} ${it.hora}" } }.toSet()
+            return DemoData.diasDeTurnos.map { d ->
+                GrupoSlots(
+                    dia = d.fmtLargo().replaceFirstChar { it.uppercase() },
+                    horas = DemoData.horasDeTurnos.map { h ->
+                        val key = "${d.fmtIso()} $h"
+                        SlotHora(hora = h, key = key, ocupado = key in tomados, elegido = estado.slot == key)
+                    },
+                )
+            }
+        }
+
+    /** Agenda del nutricionista: los turnos del día agrupados por fecha. */
+    val agenda: List<GrupoAgenda>
+        get() = DemoData.diasDeAgenda.mapNotNull { d ->
+            val turnos = socios
+                .filter { it.turno?.fecha == d }
+                .sortedBy { it.turno!!.hora }
+            if (turnos.isEmpty()) return@mapNotNull null
+            GrupoAgenda(
+                dia = if (d == HOY) "Hoy · ${HOY.fmtLargo().lowercase().substringBefore(" de ")}" else d.fmtLargo().replaceFirstChar { it.uppercase() },
+                esHoy = d == HOY,
+                turnos = turnos,
+            )
+        }
+
+    // ---------------------------------------------------------------- socio
+
+    private fun actualizarSocio(id: Int, fn: (Socio) -> Socio) {
+        estado = estado.copy(socios = estado.socios.map { if (it.id == id) fn(it) else it })
+    }
+
+    fun elegirMedio(m: MedioPago) {
+        estado = estado.copy(medio = m)
+    }
+
+    /** HU-04. Pago simulado: no hay pasarela, se marca la cuota y se emite comprobante. */
+    fun confirmarPago() {
+        val medio = estado.medio
+        actualizarSocio(1) { s ->
+            s.copy(
+                cuota = s.cuota.copy(estado = EstadoCuota.PAGADA),
+                historial = listOf(
+                    PagoHistorial(s.cuota.mes, s.cuota.monto, HOY, medio.etiqueta),
+                ) + s.historial,
+            )
+        }
+        estado = estado.copy(
+            stack = estado.stack.dropLast(1) + Screen.S_PAGO_OK,
+            comprobante = "CD-2609-" + (1000..9999).random(),
+        )
+    }
+
+    fun elegirDiaRutina(i: Int) {
+        estado = estado.copy(diaIdx = i)
+    }
+
+    fun elegirSlot(key: String) {
+        estado = estado.copy(slot = key)
+    }
+
+    /** HU-11. */
+    fun confirmarTurno() {
+        val slot = estado.slot ?: return
+        val (iso, hora) = slot.split(" ")
+        val f = fecha(iso)
+        actualizarSocio(1) { it.copy(turno = Turno(f, hora)) }
+        volver()
+        toast("Turno confirmado · ${f.fmtCorto()} $hora")
+    }
+
+    fun pedirCancelarTurno() {
+        estado = estado.copy(
+            sheet = SheetData(
+                titulo = "Cancelar turno",
+                texto = "Vas a liberar tu turno con la nutricionista. Podés pedir otro cuando quieras.",
+                filas = listOf("Turno" to yo.turnoLabel),
+                cta = "Sí, cancelar",
+                onConfirm = {
+                    actualizarSocio(1) { it.copy(turno = null) }
+                    cerrarSheet()
+                    toast("Turno cancelado")
+                },
+            ),
+        )
+    }
+
+    // ---------------------------------------------------------------- empleado / admin
+
+    fun abrirSocio(id: Int) {
+        estado = estado.copy(selId = id)
+        ir(Screen.E_SOCIO)
+    }
+
+    fun elegirFiltro(f: FiltroSocios) {
+        estado = estado.copy(filtro = f)
+    }
+
+    fun elegirReportTab(t: ReportTab) {
+        estado = estado.copy(reportTab = t)
+    }
+
+    /** Cobro en caja desde la ficha del socio (HU-04 del lado del mostrador). */
+    fun pedirRegistrarPago() {
+        val s = seleccionado
+        estado = estado.copy(
+            sheet = SheetData(
+                titulo = "Registrar pago",
+                texto = "Cobro en caja. Al confirmar, la cuota queda pagada y el socio habilitado.",
+                filas = listOf(
+                    "Socio" to s.nombre,
+                    "Cuota" to s.cuota.mes,
+                    "Importe" to s.cuotaMonto,
+                ),
+                cta = "Cobrar ${s.cuotaMonto}",
+                onConfirm = {
+                    actualizarSocio(s.id) { x ->
+                        x.copy(
+                            cuota = x.cuota.copy(estado = EstadoCuota.PAGADA),
+                            historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, "Caja")) + x.historial,
+                        )
+                    }
+                    cerrarSheet()
+                    toast("Pago registrado · socio habilitado")
+                },
+            ),
+        )
+    }
+
+    /** HU-07: emisión y renovación de carnet, siempre por 12 meses desde hoy. */
+    fun pedirRenovarCarnet() {
+        val s = seleccionado
+        val desde = HOY
+        val hasta = HOY.masAnios(1).masDias(-1)
+        estado = estado.copy(
+            sheet = SheetData(
+                titulo = s.carnetAccion,
+                texto = "Se emite un carnet nuevo con 12 meses de vigencia desde hoy.",
+                filas = listOf(
+                    "Socio" to s.nombre,
+                    "Nueva vigencia" to "${desde.fmt()} → ${hasta.fmt()}",
+                ),
+                cta = "Emitir carnet",
+                onConfirm = {
+                    actualizarSocio(s.id) { it.copy(carnetEmitido = desde, carnetVence = hasta) }
+                    cerrarSheet()
+                    toast("Carnet emitido · vigente hasta ${hasta.fmt()}")
+                },
+            ),
+        )
+    }
+
+    fun elegirPlan(i: Int) {
+        estado = estado.copy(planIdx = i)
+    }
+
+    fun alternarApto() {
+        estado = estado.copy(apto = !estado.apto)
+    }
+
+    val planSeleccionado get() = DemoData.planes[estado.planIdx]
+
+    /** Vencimiento de la primera cuota de un alta: 10 días. */
+    val venceCuotaInicial: Fecha = HOY.masDias(10)
+
+    fun irAAlta() {
+        estado = estado.copy(
+            altaError = null,
+            campos = estado.campos.copy(nombre = "", dni = "", mail = "", obs = ""),
+        )
+        ir(Screen.E_ALTA)
+    }
+
+    /** HU-02: el alta genera N° de socio, carnet por 12 meses y cuota inicial. */
+    fun confirmarAlta() {
+        val nombre = estado.campos.nombre.trim()
+        val dni = estado.campos.dni.filter { it.isDigit() }
+        when {
+            nombre.length < 5 -> {
+                estado = estado.copy(altaError = "Ingresá nombre y apellido.")
+                return
+            }
+            dni.length < 7 || dni.length > 8 -> {
+                estado = estado.copy(altaError = "El DNI debe tener 7 u 8 dígitos.")
+                return
+            }
+            estado.socios.any { it.dni.toString() == dni } -> {
+                estado = estado.copy(altaError = "Ya existe un socio con ese DNI.")
+                return
+            }
+        }
+        val plan = planSeleccionado
+        val nuevo = Socio(
+            id = proximoIdSocio++,
+            nombre = nombre,
+            dni = dni.toLong(),
+            nro = (1500 + estado.socios.size).toString().padStart(5, '0'),
+            plan = plan.nombre,
+            alta = HOY,
+            nac = fecha("1998-01-01"),
+            carnetEmitido = HOY,
+            carnetVence = HOY.masAnios(1).masDias(-1),
+            ficha = estado.apto,
+            actividades = emptyList(),
+            cuota = Cuota("Septiembre 2026", plan.precio, venceCuotaInicial, EstadoCuota.PENDIENTE),
+            historial = emptyList(),
+            rutina = null,
+            nut = FichaNutricional(
+                peso = 0.0,
+                altura = 0.0,
+                objetivo = "—",
+                antecedentes = estado.campos.obs.ifBlank { "Sin antecedentes" },
+                consultas = emptyList(),
+            ),
+            turno = null,
+            ingresos = emptyList(),
+        )
+        estado = estado.copy(
+            socios = estado.socios + nuevo,
+            stack = listOf(Screen.E_SOCIOS, Screen.E_SOCIO),
+            selId = nuevo.id,
+            filtro = FiltroSocios.TODOS,
+        )
+        toast("Socio N° ${nuevo.nro} registrado · carnet y cuota inicial generados")
+    }
+
+    /** HU-05: control de acceso por DNI. */
+    fun validarAcceso() {
+        val dni = estado.campos.dniAcceso.filter { it.isDigit() }
+        if (dni.isEmpty()) return
+        val s = socios.firstOrNull { it.socio.dni.toString() == dni }
+        val a = when {
+            s == null -> Acceso(
+                socioId = null,
+                titulo = "No encontrado",
+                detalle = "No hay ningún socio con DNI ${dniFmt(dni)}. Podés registrarlo como visitante o dar de alta un socio.",
+                tono = Acceso.Tono.NEUTRO,
+            )
+            s.hab -> Acceso(
+                socioId = s.id,
+                titulo = "Permitido",
+                detalle = "Carnet vigente y cuota al día.",
+                tono = Acceso.Tono.PERMITIDO,
+            )
+            else -> Acceso(
+                socioId = s.id,
+                titulo = "Denegado",
+                detalle = if (s.mora) {
+                    "Cuota ${s.cuota.mes} en mora. Debe regularizar el pago en recepción."
+                } else {
+                    "Carnet vencido el ${s.socio.carnetVence.fmt()}. Debe renovarse."
+                },
+                tono = Acceso.Tono.DENEGADO,
+            )
+        }
+        estado = estado.copy(acceso = a)
+    }
+
+    fun ponerDniAcceso(dni: Long) {
+        estado = estado.copy(campos = estado.campos.copy(dniAcceso = dni.toString()))
+        validarAcceso()
+    }
+
+    fun registrarIngreso() {
+        val id = estado.acceso?.socioId ?: return
+        val s = socios.firstOrNull { it.id == id } ?: return
+        estado = estado.copy(
+            ingresosHoy = listOf(IngresoHoy(HORA_ACTUAL, s.nombre, "Permitido", ok = true)) + estado.ingresosHoy,
+            acceso = estado.acceso?.copy(registrado = true),
+        )
+        actualizarSocio(id) {
+            it.copy(ingresos = listOf(Ingreso("${HOY.fmtCorto()} · $HORA_ACTUAL", "Permitido")) + it.ingresos)
+        }
+        toast("Ingreso registrado · ${s.nombre}")
+    }
+
+    fun irAVisitanteNuevo() {
+        estado = estado.copy(
+            visError = null,
+            visAct = null,
+            campos = estado.campos.copy(vNombre = "", vDni = ""),
+        )
+        ir(Screen.E_VISITANTE_NUEVO)
+    }
+
+    fun elegirActividadVisitante(a: ActividadVista) {
+        estado = estado.copy(
+            visAct = a.id,
+            visError = if (a.sinCupo) {
+                "${a.nombre} no tiene cupo disponible hoy (${a.act.ocupados}/${a.act.cupo}). El ingreso no puede realizarse."
+            } else {
+                null
+            },
+        )
+    }
+
+    /** HU-03: ingreso de visitante, bloqueado si la actividad no tiene cupo. */
+    fun confirmarVisitante() {
+        val nombre = estado.campos.vNombre.trim()
+        val dni = estado.campos.vDni.filter { it.isDigit() }
+        if (nombre.length < 5) {
+            estado = estado.copy(visError = "Ingresá nombre y apellido del visitante.")
+            return
+        }
+        if (dni.length < 7) {
+            estado = estado.copy(visError = "Ingresá un DNI válido.")
+            return
+        }
+        val a = actividadElegida
+        if (a == null) {
+            estado = estado.copy(visError = "Seleccioná una actividad.")
+            return
+        }
+        if (a.sinCupo) {
+            estado = estado.copy(visError = "Sin cupo en ${a.nombre}. El ingreso no puede realizarse.")
+            return
+        }
+        estado = estado.copy(
+            visitantes = listOf(
+                Visitante(nombre, dniFmt(dni), a.nombre, HORA_ACTUAL, a.act.precio),
+            ) + estado.visitantes,
+            acts = estado.acts.map { if (it.id == a.id) it.copy(ocupados = it.ocupados + 1) else it },
+            stack = listOf(Screen.E_VISITANTES),
+        )
+        toast("Ingreso registrado · cobro ${money(a.act.precio)}")
+    }
+
+    // ---------------------------------------------------------------- profesor
+
+    fun marcarPresencia() {
+        estado = estado.copy(profePresente = true)
+        toast("Presencia registrada · $HORA_ACTUAL")
+    }
+
+    fun elegirClase(id: String) {
+        estado = estado.copy(claseId = id)
+    }
+
+    fun abrirAsistencia(id: String) {
+        estado = estado.copy(claseId = id)
+        ir(Screen.P_ASISTENCIA)
+    }
+
+    /** HU-08. */
+    fun alternarAsistencia(socioId: Int) {
+        val clase = claseSeleccionada.act.id
+        val actuales = estado.asistencia[clase] ?: emptyList()
+        val nuevos = if (socioId in actuales) actuales - socioId else actuales + socioId
+        estado = estado.copy(asistencia = estado.asistencia + (clase to nuevos))
+    }
+
+    fun guardarAsistencia() {
+        val filas = filasAsistencia
+        val presentes = filas.count { it.second }
+        toast("Asistencia guardada · ${claseSeleccionada.act.nombre} · $presentes/${filas.size} presentes")
+        ir(Screen.P_HOME)
+    }
+
+    /** HU-09: abre el editor de rutina; si el socio no tenía, arranca con 3 días vacíos. */
+    fun abrirRutina(id: Int) {
+        val s = estado.socios.first { it.id == id }
+        val base = s.rutina?.dias ?: listOf(
+            DiaRutina("D1", "Día 1", emptyList()),
+            DiaRutina("D2", "Día 2", emptyList()),
+            DiaRutina("D3", "Día 3", emptyList()),
+        )
+        estado = estado.copy(selId = id, editEj = base, editDia = 0)
+        ir(Screen.P_RUTINA_EDIT)
+    }
+
+    fun elegirDiaEdicion(i: Int) {
+        estado = estado.copy(editDia = i)
+    }
+
+    fun agregarEjercicio() {
+        val nombre = estado.campos.ejNombre.trim()
+        if (nombre.isEmpty()) return
+        val ej = Ejercicio(
+            nombre = nombre,
+            series = estado.campos.ejSeries.toIntOrNull() ?: 3,
+            reps = estado.campos.ejReps.toIntOrNull() ?: 12,
+        )
+        estado = estado.copy(
+            editEj = estado.editEj?.mapIndexed { i, d ->
+                if (i == estado.editDia) d.copy(ejercicios = d.ejercicios + ej) else d
+            },
+            campos = estado.campos.copy(ejNombre = "", ejSeries = "", ejReps = ""),
+        )
+    }
+
+    fun quitarEjercicio(indice: Int) {
+        estado = estado.copy(
+            editEj = estado.editEj?.mapIndexed { i, d ->
+                if (i == estado.editDia) {
+                    d.copy(ejercicios = d.ejercicios.filterIndexed { k, _ -> k != indice })
+                } else {
+                    d
+                }
+            },
+        )
+    }
+
+    fun guardarRutina() {
+        val dias = estado.editEj.orEmpty().filter { it.ejercicios.isNotEmpty() }
+        if (dias.isEmpty()) {
+            toast("Agregá al menos un ejercicio")
+            return
+        }
+        val s = seleccionado
+        actualizarSocio(s.id) { x ->
+            x.copy(
+                rutina = Rutina(
+                    nombre = x.rutina?.nombre ?: "Rutina personalizada",
+                    profesor = DemoData.PROFESORA,
+                    actualizada = HOY,
+                    dias = dias,
+                ),
+            )
+        }
+        estado = estado.copy(stack = listOf(Screen.P_RUTINAS))
+        toast("Rutina asignada a ${s.nombre} · visible en su app")
+    }
+
+    // ---------------------------------------------------------------- nutricionista
+
+    fun abrirFicha(id: Int) {
+        estado = estado.copy(
+            selId = id,
+            campos = estado.campos.copy(nPeso = "", nAltura = "", nObs = ""),
+        )
+        ir(Screen.N_FICHA)
+    }
+
+    /** HU-12: la consulta actualiza la ficha y consume el turno del día. */
+    fun guardarConsulta() {
+        val peso = estado.campos.nPeso.replace(',', '.').toDoubleOrNull()
+        if (peso == null || peso <= 0.0) {
+            toast("Ingresá el peso")
+            return
+        }
+        val altura = estado.campos.nAltura.replace(',', '.').toDoubleOrNull()
+        val obs = estado.campos.nObs.trim().ifBlank { "Control de rutina." }
+        actualizarSocio(seleccionado.id) { x ->
+            x.copy(
+                nut = x.nut.copy(
+                    peso = peso,
+                    altura = altura ?: x.nut.altura,
+                    consultas = listOf(Consulta(HOY, peso, obs)) + x.nut.consultas,
+                ),
+                turno = if (x.turno?.fecha == HOY) null else x.turno,
+            )
+        }
+        estado = estado.copy(campos = estado.campos.copy(nPeso = "", nAltura = "", nObs = ""))
+        toast("Consulta guardada en el historial")
+    }
+}

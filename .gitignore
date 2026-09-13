@@ -1,0 +1,11 @@
+*.iml
+.gradle/
+# Sin barra al inicio: tapa tanto /build como app/build, que es donde Gradle
+# deja los artefactos y el APK.
+build/
+.idea/
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+local.properties
