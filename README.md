@@ -100,6 +100,14 @@ header con flecha. El botón atrás del sistema desapila igual.
 
 ---
 
+## Diseño
+
+El prototipo de la app está en Figma:
+[CLUB DEPORTIVO MOBILE](https://www.figma.com/design/I4Izi6iGsklxyC2cyQiSOv/CLUB-DEPORTIVO-MOBILE--Copia-?node-id=0-1&t=leUzkiidK3gHrWAz-1).
+La exportación en PDF y el detalle están en [`doc/diseno/`](doc/diseno/README.md).
+
+---
+
 ## Cómo se portó el diseño
 
 La maqueta es HTML/CSS con un componente único al estilo React. El mapeo:
