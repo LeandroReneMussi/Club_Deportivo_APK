@@ -10,6 +10,7 @@ import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.data.daysTo
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
 import ar.edu.ifts29.clubdeportivo.vm.ClubViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,8 +36,12 @@ import org.junit.Test
 class ClubViewModelTest {
 
     // `toast()` publica en viewModelScope, que sin esto no tiene dispatcher en la JVM.
+    // Cada prueba arranca con los datos de demo y sin sesión, como una app recién abierta.
     @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        ClubRepositorio.reiniciar()
+    }
 
     @After
     fun tearDown() = Dispatchers.resetMain()
@@ -226,7 +231,7 @@ class ClubViewModelTest {
         val vm = admin()
         vm.irAAlta()
 
-        vm.campo { copy(nombre = "Ana", dni = "30111222") }
+        vm.campo { copy(nombre = "Ana", dni = "30111222", mail = "ana@club.com") }
         vm.confirmarAlta()
         assertNotNull("nombre demasiado corto", vm.estado.altaError)
 
@@ -240,12 +245,35 @@ class ClubViewModelTest {
     }
 
     @Test
+    fun `HU-02 - el alta rechaza formatos incorrectos y datos faltantes`() {
+        val vm = admin()
+        vm.irAAlta()
+
+        vm.campo { copy(nombre = "Marcos Ferr3yra", dni = "30111222", mail = "m@club.com") }
+        vm.confirmarAlta()
+        assertTrue(vm.estado.altaError!!.contains("letras"))
+
+        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "30A11222") }
+        vm.confirmarAlta()
+        assertTrue(vm.estado.altaError!!.contains("números"))
+
+        vm.campo { copy(dni = "30111222", mail = "") }
+        vm.confirmarAlta()
+        assertTrue(vm.estado.altaError!!.contains("correo"))
+
+        vm.campo { copy(mail = "marcos@club") }
+        vm.confirmarAlta()
+        assertTrue(vm.estado.altaError!!.contains("formato"))
+        assertEquals(Screen.E_ALTA, vm.pantalla)
+    }
+
+    @Test
     fun `HU-02 - el alta genera numero de socio, carnet y cuota inicial`() {
         val vm = admin()
         vm.irAAlta()
         val cuantos = vm.estado.socios.size
 
-        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "30111222") }
+        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "30111222", mail = "marcos@club.com") }
         vm.elegirPlan(2)
         vm.confirmarAlta()
 
@@ -302,12 +330,14 @@ class ClubViewModelTest {
     fun `HU-14 - los reportes separan proximas a vencer de la mora`() {
         val vm = admin()
 
-        assertEquals(3, vm.porVencer.size)
+        // Prototipo, pantalla Reportes: «Próximas a vencer (2)», Andrés y Valentina, $30.500.
+        assertEquals(2, vm.porVencer.size)
         assertEquals(
             "ordenadas por vencimiento",
-            listOf(2, 4, 6),
+            listOf(2, 4),
             vm.porVencer.map { daysTo(it.cuota.vence) },
         )
+        assertEquals(money(18_500 + 12_000), vm.totalReporte)
 
         assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         vm.elegirReportTab(ReportTab.MORA)
