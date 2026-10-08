@@ -1,13 +1,16 @@
 package ar.edu.ifts29.clubdeportivo.vm
 
+import android.content.Context
 import ar.edu.ifts29.clubdeportivo.data.Actividad
 import ar.edu.ifts29.clubdeportivo.data.DemoData
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Socio
 import ar.edu.ifts29.clubdeportivo.data.Visitante
+import ar.edu.ifts29.clubdeportivo.data.db.ClubDbHelper
+import ar.edu.ifts29.clubdeportivo.data.norm
 
-/** Lo que tiene que sobrevivir al pasar de una Activity a otra: la sesión y los datos del club. */
+/** Lo que tiene que sobrevivir al pasar de una Activity a otra y al cerrar la app. */
 data class DatosClub(
     val rol: Rol? = null,
     val socios: List<Socio> = DemoData.socios,
@@ -19,12 +22,11 @@ data class DatosClub(
 )
 
 /**
- * Almacenamiento en memoria compartido por todas las Activities del proceso.
+ * Punto único de los datos del club.
  *
- * Cada Activity tiene su propio [ClubViewModel]; sin este objeto, un socio dado de alta
- * por el administrativo desaparecería al cerrar sesión y entrar con otro rol. Como en el
- * prototipo, los datos se reinician recién al cerrar la app. La base de datos llega en la
- * etapa siguiente y reemplaza a este objeto.
+ * En el teléfono delega en [ClubDbHelper]: el alta, la modificación, la baja, el cobro
+ * y el listado quedan en SQLite y siguen ahí al cerrar la app. Las pruebas unitarias
+ * no abren la base y siguen usando la copia en memoria.
  */
 object ClubRepositorio {
 
@@ -32,10 +34,25 @@ object ClubRepositorio {
     var datos: DatosClub = DatosClub()
         private set
 
+    @Volatile
+    private var db: ClubDbHelper? = null
+
     val rol: Rol? get() = datos.rol
 
+    val usaBase: Boolean get() = db != null
+
+    /** La llama [ar.edu.ifts29.clubdeportivo.ClubApplication] al abrir la app. */
+    fun iniciar(context: Context) {
+        if (db != null) return
+        val helper = ClubDbHelper(context.applicationContext)
+        if (helper.estaVacia()) helper.guardar(DatosClub())
+        helper.completarCuotasSiguientes()
+        db = helper
+        datos = helper.leer()
+    }
+
     fun guardar(estado: UiState) {
-        datos = DatosClub(
+        val nuevo = DatosClub(
             rol = estado.rol,
             socios = estado.socios,
             acts = estado.acts,
@@ -44,10 +61,37 @@ object ClubRepositorio {
             asistencia = estado.asistencia,
             profePresente = estado.profePresente,
         )
+        val cambio = nuevo != datos
+        datos = nuevo
+        if (cambio) db?.guardar(nuevo)
+    }
+
+    /**
+     * `COUNT` del DNI. Con la base abierta es la consulta del ABM; sin ella, el padrón
+     * en memoria (pruebas).
+     */
+    fun contarDni(dni: Long, exceptoId: Int?): Int {
+        val helper = db
+        if (helper != null) return helper.contarDni(dni, exceptoId)
+        return datos.socios.count { it.dni == dni && it.id != exceptoId }
+    }
+
+    /** Ids del listado de cuotas a vencer. `null` cuando no hay base (pruebas). */
+    fun idsCuotasPorVencer(hastaIso: String): List<Int>? = db?.idsCuotasPorVencer(hastaIso)
+
+    /** Alias y clave contra la tabla `usuario`, o las cuentas de demo si no hay base. */
+    fun autenticar(alias: String, clave: String): Rol? {
+        val helper = db
+        if (helper != null) return helper.autenticar(alias, clave)
+        val cuenta = DemoData.cuentas[norm(alias)] ?: return null
+        if (cuenta.first != clave) return null
+        return cuenta.second
     }
 
     /** Vuelve a los datos de demostración y cierra la sesión. Usado por las pruebas. */
     fun reiniciar() {
-        datos = DatosClub()
+        val fresco = DatosClub()
+        datos = fresco
+        db?.guardar(fresco)
     }
 }

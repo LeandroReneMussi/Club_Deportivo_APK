@@ -42,8 +42,8 @@ import ar.edu.ifts29.clubdeportivo.data.fmtIso
 import ar.edu.ifts29.clubdeportivo.data.fmtLargo
 import ar.edu.ifts29.clubdeportivo.data.masAnios
 import ar.edu.ifts29.clubdeportivo.data.masDias
+import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
-import ar.edu.ifts29.clubdeportivo.data.norm
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -214,11 +214,11 @@ class ClubViewModel : ViewModel() {
     }
 
     fun login() {
-        val cuenta = DemoData.cuentas[norm(estado.campos.email)]
+        val rolCuenta = ClubRepositorio.autenticar(estado.campos.email, estado.campos.pass)
         // Un socio dado de baja (CRUD) pierde el acceso a la app.
-        val dadoDeBaja = cuenta?.second == Rol.SOCIO && estado.socios.none { it.id == ID_SOCIO_APP }
-        if (cuenta != null && estado.campos.pass == cuenta.first && !dadoDeBaja) {
-            val rol = cuenta.second
+        val dadoDeBaja = rolCuenta == Rol.SOCIO && estado.socios.none { it.id == ID_SOCIO_APP }
+        if (rolCuenta != null && !dadoDeBaja) {
+            val rol = rolCuenta
             estado = estado.copy(
                 rol = rol,
                 stack = listOf(DemoData.tabs.getValue(rol).first().first),
@@ -284,11 +284,21 @@ class ClubViewModel : ViewModel() {
     val actividadElegida: ActividadVista?
         get() = actividades.firstOrNull { it.id == estado.visAct }
 
-    /** Cuotas pendientes que vencen dentro de la semana (HU-14). */
+    /**
+     * Cuotas pendientes que vencen dentro de la semana (HU-14).
+     * Con la base abierta el filtro sale del `SELECT` del listado diario.
+     */
     val porVencer: List<SocioVista>
-        get() = socios
-            .filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
-            .sortedBy { daysTo(it.cuota.vence) }
+        get() {
+            val ids = ClubRepositorio.idsCuotasPorVencer(HOY.masDias(7).fmtIso())
+            val lista = if (ids == null) {
+                socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
+            } else {
+                val pedidas = ids.toSet()
+                socios.filter { it.id in pedidas }
+            }
+            return lista.sortedBy { daysTo(it.cuota.vence) }
+        }
 
     val enMora: List<SocioVista> get() = socios.filter { it.mora }
 
@@ -389,20 +399,25 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(medio = m)
     }
 
-    /** HU-04. Pago simulado: no hay pasarela, se marca la cuota y se emite comprobante. */
+    /**
+     * HU-04. El socio paga su cuota: queda pagada, se guarda el comprobante y se abre
+     * la cuota del mes siguiente, con vencimiento a un mes.
+     */
     fun confirmarPago() {
         val medio = estado.medio
+        val comprobante = "CD-2609-" + (1000..9999).random()
         actualizarSocio(ID_SOCIO_APP) { s ->
+            val proxima = s.cuota.vence.masMeses(1)
             s.copy(
-                cuota = s.cuota.copy(estado = EstadoCuota.PAGADA),
+                cuota = s.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = proxima),
                 historial = listOf(
-                    PagoHistorial(s.cuota.mes, s.cuota.monto, HOY, medio.etiqueta),
+                    PagoHistorial(s.cuota.mes, s.cuota.monto, HOY, medio.etiqueta, comprobante),
                 ) + s.historial,
             )
         }
         estado = estado.copy(
             stack = estado.stack.dropLast(1) + Screen.S_PAGO_OK,
-            comprobante = "CD-2609-" + (1000..9999).random(),
+            comprobante = comprobante,
         )
     }
 
@@ -558,8 +573,8 @@ class ClubViewModel : ViewModel() {
         Validaciones.nombre(c.nombre)?.let { return it }
         Validaciones.dni(c.dni)?.let { return it }
         Validaciones.email(c.mail)?.let { return it }
-        val dni = c.dni.filter { it.isDigit() }
-        if (estado.socios.any { it.dni.toString() == dni && it.id != estado.editandoId }) {
+        val dni = c.dni.filter { it.isDigit() }.toLongOrNull()
+        if (dni != null && ClubRepositorio.contarDni(dni, estado.editandoId) > 0) {
             return "Ya existe un socio con ese DNI."
         }
         return null
