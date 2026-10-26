@@ -16,17 +16,17 @@ El proyecto no trae el SDK de Android; hace falta tenerlo instalado.
 
 **Con Android Studio** (lo más simple)
 
-1. `File → Open` y elegir la carpeta raíz del repositorio.
+1. `File → Open` y elegir la carpeta `android/`.
 2. Esperar el Gradle Sync (baja AGP, Kotlin y Compose la primera vez).
 3. `Run ▶` con un emulador o un teléfono conectado, o `Build → Build APK(s)`.
 
 **Por línea de comandos**
 
 ```bash
+cd android
 ./gradlew assembleDebug     # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk
-./gradlew test              # 57 pruebas unitarias de la lógica
-./gradlew connectedDebugAndroidTest   # capturas por Activity en un emulador
+./gradlew test              # 40 pruebas unitarias de la lógica
 ```
 
 `assembleRelease` está firmado a propósito con la clave de debug, así que el APK que
@@ -69,17 +69,14 @@ panel, así que se movieron adentro de la app para que la demo sea usable.
 
 ```
 app/src/main/java/ar/edu/ifts29/clubdeportivo/
-├── LoginActivity.kt     Entry point (LAUNCHER): login y derivación al rol
-├── RolActivity.kt       SocioActivity, AdminActivity, EntrenadoraActivity, NutricionistaActivity
+├── MainActivity.kt
 ├── data/
 │   ├── Format.kt        Fecha propia, formato es-AR de importes, DNI, edades
 │   ├── Models.kt        Socio, Cuota, Rutina, FichaNutricional, Screen, Rol…
-│   ├── Validaciones.kt  Datos incompletos y formatos incorrectos de los formularios
 │   └── DemoData.kt      Dataset de demostración y tablas por rol
 ├── vm/
 │   ├── SocioVista.kt    Reglas derivadas: habilitación, badges, etiquetas
-│   ├── ClubRepositorio.kt Datos en memoria compartidos entre Activities
-│   └── ClubViewModel.kt Estado y acciones de las 14 HU y el CRUD de socios
+│   └── ClubViewModel.kt Estado y acciones de las 14 HU
 └── ui/
     ├── theme/Theme.kt   Tokens de la dirección Pista + tipografías Barlow
     ├── Widgets.kt       Tarjetas, filas, campos, botones, avatares
@@ -88,23 +85,9 @@ app/src/main/java/ar/edu/ifts29/clubdeportivo/
     └── screens/         Login, Socio, Empleado, Profesor, Nutricionista
 ```
 
-**Activities.** `LoginActivity` es el entry point. Al iniciar sesión abre la Activity del
-rol (`SocioActivity`, `AdminActivity`, `EntrenadoraActivity` o `NutricionistaActivity`) y
-se cierra; «Cerrar sesión» vuelve a `LoginActivity`. Las Activities de rol no se exportan
-y, si se abren sin una sesión de su rol, vuelven al login. Los datos viven en
-`ClubRepositorio` y se comparten entre Activities mientras la app está abierta.
-
-Dentro de cada Activity, la navegación replica la del prototipo: una **pila de pantallas**
-donde las raíces (las de la barra inferior) reemplazan la pila y el resto se apila con un
-header con flecha. El botón atrás del sistema desapila igual.
-
----
-
-## Diseño
-
-El prototipo de la app está en Figma:
-[CLUB DEPORTIVO MOBILE](https://www.figma.com/design/I4Izi6iGsklxyC2cyQiSOv/CLUB-DEPORTIVO-MOBILE--Copia-?node-id=0-1&t=leUzkiidK3gHrWAz-1).
-La exportación en PDF y el detalle están en [`doc/diseno/`](doc/diseno/README.md).
+La navegación replica la del prototipo: una **pila de pantallas** donde las raíces (las
+de la barra inferior) reemplazan la pila y el resto se apila con un header con flecha.
+El botón atrás del sistema desapila igual.
 
 ---
 
@@ -153,7 +136,7 @@ Andrés por vencer en dos días. Está en un solo lugar, `data/Format.kt`.
 
 ## Pruebas
 
-`./gradlew test` corre 57 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
+`./gradlew test` corre 40 pruebas sobre la lógica: las reglas de las 14 HU
 (`ClubViewModelTest`) y las utilidades de fecha e importe (`FormatoTest`). Cubren la
 regla central de habilitación, los cuatro casos del control de acceso, las validaciones
 de alta, el bloqueo por cupo, el bloqueo de rutina por mora o falta de apto físico y el

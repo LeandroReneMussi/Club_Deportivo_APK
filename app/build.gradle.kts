@@ -12,9 +12,8 @@ android {
         applicationId = "ar.edu.ifts29.clubdeportivo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.2.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
@@ -61,8 +60,4 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.junit)
 }

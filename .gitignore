@@ -9,13 +9,3 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
-
-# Caché y registros del compilador de Kotlin.
-.kotlin/
-
-# Entrega: el APK y el zip se adjuntan aparte; los documentos sueltos están dentro
-# del documento unificado (entrega/Documentacion_ClubDeportivo_v1.2.*).
-entrega/*.apk
-entrega/*.zip
-entrega/Capturas_ClubDeportivo_v1.2.*
-entrega/Registro_uso_IA_ClubDeportivo_v1.2.*
