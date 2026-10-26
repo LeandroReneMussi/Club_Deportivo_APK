@@ -327,12 +327,8 @@ object DemoData {
             carnetVence = fecha("2027-02-09"),
             ficha = true,
             actividades = listOf(ActividadSocio("Musculación", "Lun · Mié · Vie")),
-            // Al día: el prototipo lista solo a Andrés y Valentina como próximos a vencer ($30.500).
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-10"), EstadoCuota.PAGADA),
-            historial = listOf(
-                PagoHistorial("Septiembre 2026", 18_500, fecha("2026-09-06"), "App"),
-                PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-06"), "App"),
-            ),
+            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-14"), EstadoCuota.PENDIENTE),
+            historial = listOf(PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-06"), "App")),
             rutina = Rutina(
                 nombre = "Inicial",
                 profesor = PROFESORA,
@@ -422,7 +418,6 @@ object DemoData {
         Screen.PERFIL to "Perfil",
         Screen.E_SOCIO to "Ficha del socio",
         Screen.E_ALTA to "Alta de socio",
-        Screen.E_EDITAR to "Editar socio",
         Screen.E_VISITANTE_NUEVO to "Ingreso de visitante",
         Screen.P_RUTINA_EDIT to "Rutina del socio",
         Screen.N_FICHA to "Ficha nutricional",

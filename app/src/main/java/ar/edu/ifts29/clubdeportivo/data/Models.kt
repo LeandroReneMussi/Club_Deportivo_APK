@@ -12,7 +12,7 @@ enum class Screen {
     S_HOME, S_CARNET, S_CUOTAS, S_PAGAR, S_PAGO_OK, S_RUTINA, S_NUTRI, S_TURNO,
 
     // Empleado / Administrativo
-    E_HOME, E_SOCIOS, E_SOCIO, E_ALTA, E_EDITAR, E_ACCESO, E_VISITANTES, E_VISITANTE_NUEVO, E_REPORTES,
+    E_HOME, E_SOCIOS, E_SOCIO, E_ALTA, E_ACCESO, E_VISITANTES, E_VISITANTE_NUEVO, E_REPORTES,
 
     // Profesor
     P_HOME, P_ASISTENCIA, P_RUTINAS, P_RUTINA_EDIT,
@@ -100,7 +100,6 @@ data class Socio(
     val nut: FichaNutricional,
     val turno: Turno?,
     val ingresos: List<Ingreso>,
-    val email: String = "",
 )
 
 data class Actividad(

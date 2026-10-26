@@ -81,7 +81,7 @@ fun ClubApp(vm: ClubViewModel = viewModel()) {
                 Screen.E_HOME -> PantallaEmpleadoHome(vm)
                 Screen.E_SOCIOS -> PantallaSocios(vm)
                 Screen.E_SOCIO -> PantallaFichaSocio(vm)
-                Screen.E_ALTA, Screen.E_EDITAR -> PantallaAlta(vm)
+                Screen.E_ALTA -> PantallaAlta(vm)
                 Screen.E_ACCESO -> PantallaAcceso(vm)
                 Screen.E_VISITANTES -> PantallaVisitantes(vm)
                 Screen.E_VISITANTE_NUEVO -> PantallaVisitanteNuevo(vm)

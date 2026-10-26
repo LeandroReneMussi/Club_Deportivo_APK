@@ -417,29 +417,9 @@ fun ColumnScope.PantallaFichaSocio(vm: ClubViewModel) {
         ) {
             FilaDetalle("Alta", s.altaLabel)
             Spacer(Modifier.height(6.dp))
-            FilaDetalle("Correo", s.socio.email.ifBlank { "—" })
-            Spacer(Modifier.height(6.dp))
             FilaDetalle("Ficha médica", s.fichaLabel)
             Spacer(Modifier.height(6.dp))
             FilaDetalle("Actividades", s.actividadesLabel)
-        }
-
-        // CRUD de socios: modificación y baja.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = Pista.gutter, end = Pista.gutter, top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            BotonBorde("Editar datos", vm::irAEditar, Modifier.weight(1f), alto = 48.dp)
-            BotonBorde(
-                "Dar de baja",
-                vm::pedirBajaSocio,
-                Modifier.weight(1f),
-                tinta = Pista.bad,
-                borde = Pista.bad,
-                alto = 48.dp,
-            )
         }
     }
 }
@@ -541,12 +521,8 @@ fun ColumnScope.PantallaAlta(vm: ClubViewModel) {
             }
 
             Text(
-                if (vm.editando) {
-                    "Los cambios se aplican al guardar. Un cambio de plan rige desde la próxima cuota."
-                } else {
-                    "Al confirmar se genera: N° de socio, carnet vigente por 12 meses y cuota " +
-                        "inicial ${money(vm.planSeleccionado.precio)} con vencimiento ${vm.venceCuotaInicial.fmt()}."
-                },
+                "Al confirmar se genera: N° de socio, carnet vigente por 12 meses y cuota " +
+                    "inicial ${money(vm.planSeleccionado.precio)} con vencimiento ${vm.venceCuotaInicial.fmt()}.",
                 style = body(500, 12, Pista.mut, lineHeight = 18.sp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -555,7 +531,7 @@ fun ColumnScope.PantallaAlta(vm: ClubViewModel) {
                     .padding(horizontal = 14.dp, vertical = 12.dp),
             )
 
-            BotonPrimario(if (vm.editando) "Guardar cambios" else "Registrar socio", vm::confirmarAlta)
+            BotonPrimario("Registrar socio", vm::confirmarAlta)
         }
     }
 }

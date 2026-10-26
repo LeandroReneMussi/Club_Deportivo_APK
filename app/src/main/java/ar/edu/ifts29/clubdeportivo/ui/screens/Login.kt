@@ -90,7 +90,7 @@ fun ColumnScope.PantallaLogin(vm: ClubViewModel) {
             )
             if (vm.estado.loginError) {
                 Text(
-                    vm.mensajeLogin,
+                    "Usuario o contraseña incorrectos.",
                     style = body(600, 13, Pista.badInk),
                     modifier = Modifier
                         .fillMaxWidth()
