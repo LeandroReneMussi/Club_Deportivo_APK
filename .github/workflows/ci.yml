@@ -1,4 +1,6 @@
-# Integración continua: pruebas unitarias, lint y APK en cada push y Pull Request.
+# Integración continua: pruebas unitarias y lint (informativo) en cada push y Pull Request.
+# El APK no se construye acá: lo construye solo el workflow Release (merge a main o ejecución manual),
+# así el CI de cada push queda corto y el APK se arma una sola vez por versión.
 name: CI
 
 on:
@@ -13,7 +15,7 @@ concurrency:
 
 jobs:
   android:
-    name: Android (pruebas, lint y APK)
+    name: Android (pruebas unitarias y lint)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -23,8 +25,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Pruebas unitarias y APK
-        run: bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Pruebas unitarias
+        run: bash ./gradlew --no-daemon :app:testDebugUnitTest
       - name: Lint (informativo)
         continue-on-error: true
         run: bash ./gradlew --no-daemon :app:lintDebug

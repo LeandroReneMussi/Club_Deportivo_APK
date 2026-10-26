@@ -9,7 +9,7 @@ Complementa la política de calidad y pipeline (`doc/politica_calidad_pipeline_v
 | Versión del código | `versionName` y `versionCode` en `app/build.gradle.kts` (SemVer `X.Y.Z`). Se actualizan al preparar una versión. |
 | Publicación | Workflow **Release** (`.github/workflows/release.yml`): en cada merge a `main` corre las pruebas unitarias, crea el tag `vX.Y.Z` y una **GitHub Release** con el APK y `SHA256SUMS.txt`. |
 | Versión ya publicada | Si el código declara una versión que ya tiene tag, se publica automáticamente el siguiente parche (`X.Y.Z+1`) y la release lo indica. Ninguna versión publicada se sobrescribe. |
-| Integración continua | Workflow **CI** (`.github/workflows/ci.yml`): pruebas unitarias, APK y lint (informativo) en cada push a `main`, `release/**`, `feature-**` y en cada Pull Request. |
+| Integración continua | Workflow **CI** (`.github/workflows/ci.yml`): pruebas unitarias y lint (informativo) en cada push a `main`, `release/**`, `feature-**` y en cada Pull Request. El APK no se construye en CI: solo lo construye **Release** al hacer merge a `main` (o al ejecutarlo a mano desde Actions), una vez por versión. |
 
 Cada release es **inmutable** y queda como punto de restauración.
 
