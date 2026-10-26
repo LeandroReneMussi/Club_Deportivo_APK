@@ -1,0 +1,59 @@
+# APK a demanda: arma el APK de cualquier rama cuando se lanza a mano desde la pestaña Actions
+# ("APK a demanda" → "Run workflow") y lo deja como artefacto descargable por 14 días.
+# No publica tag ni Release: para eso está release.yml (merge a main). Sirve para probar en un
+# teléfono antes de una entrega sin generar una versión nueva.
+name: APK a demanda
+
+on:
+  workflow_dispatch:
+    inputs:
+      pruebas:
+        description: 'Correr las pruebas unitarias antes de armar el APK'
+        type: boolean
+        default: true
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: Armar APK (debug)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Pruebas unitarias
+        if: ${{ inputs.pruebas }}
+        run: bash ./gradlew --no-daemon :app:testDebugUnitTest
+
+      - name: Armar APK
+        run: bash ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Empaquetar
+        id: paquete
+        run: |
+          v=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          nombre="club-deportivo-android-v$v-${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}"
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/$nombre.apk"
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+          echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
+          echo "### APK listo: \`$nombre.apk\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Se descarga desde la sección **Artifacts** de esta ejecución." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.paquete.outputs.nombre }}
+          path: dist/
+          retention-days: 14
