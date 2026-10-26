@@ -1,0 +1,57 @@
+1_LoginActivity_01.png|LoginActivity|Inicio de sesión|HU-01|Entry point de la app. Las cuentas de prueba completan el formulario.
+1_LoginActivity_02.png|LoginActivity|Inicio de sesión|HU-01|Validación: datos incompletos (usuario y contraseña vacíos).
+1_LoginActivity_03.png|LoginActivity|Inicio de sesión|HU-01|Validación: credenciales incorrectas, el acceso se rechaza.
+2_SocioActivity_01.png|SocioActivity|Inicio|HU-04|Estado de habilitación, cuota pendiente, rutina de hoy y turno de nutrición.
+2_SocioActivity_02.png|SocioActivity|Carnet digital|HU-06|Carnet vigente con datos del socio y estado de cuota.
+2_SocioActivity_03.png|SocioActivity|Estado de cuenta|HU-04|Cuota actual e historial de pagos.
+2_SocioActivity_04.png|SocioActivity|Método de pago|HU-04|Selección del medio de pago (pago simulado).
+2_SocioActivity_05.png|SocioActivity|Pago registrado|HU-04|Comprobante del pago; el socio queda al día.
+2_SocioActivity_06.png|SocioActivity|Mi rutina|HU-10|Rutina asignada por la entrenadora, por día.
+2_SocioActivity_07.png|SocioActivity|Nutrición|HU-13|Peso, altura, IMC, objetivo y consultas anteriores.
+2_SocioActivity_08.png|SocioActivity|Cancelar turno|HU-11|Confirmación antes de cancelar el turno reservado.
+2_SocioActivity_09.png|SocioActivity|Reservar turno|HU-11|Validación: confirmar sin elegir horario.
+2_SocioActivity_10.png|SocioActivity|Reservar turno|HU-11|Horario elegido entre los disponibles.
+2_SocioActivity_11.png|SocioActivity|Nutrición|HU-11|Turno confirmado.
+2_SocioActivity_12.png|SocioActivity|Perfil|HU-01|Datos del socio y accesos rápidos.
+2_SocioActivity_13.png|SocioActivity|Cerrar sesión|HU-01|Confirmación de cierre de sesión: vuelve a LoginActivity.
+3_AdminActivity_01.png|AdminActivity|Inicio|HU-14|Indicadores del día y acciones rápidas.
+3_AdminActivity_02.png|AdminActivity|Socios|CRUD socios: Leer|Padrón de socios con búsqueda y filtros.
+3_AdminActivity_03.png|AdminActivity|Socios|CRUD socios: Leer|Filtro: socios en mora.
+3_AdminActivity_04.png|AdminActivity|Ficha del socio|HU-04 / HU-07|Socio en mora: cobro en caja, carnet, editar y dar de baja.
+3_AdminActivity_05.png|AdminActivity|Registrar pago|HU-04|Confirmación del cobro en caja.
+3_AdminActivity_06.png|AdminActivity|Renovar carnet|HU-07|Carnet vencido: emisión de un carnet nuevo por 12 meses.
+3_AdminActivity_07.png|AdminActivity|Alta de socio|HU-02 / CRUD socios: Crear|Formulario de alta.
+3_AdminActivity_08.png|AdminActivity|Alta de socio|HU-02|Validación: falta el apellido.
+3_AdminActivity_09.png|AdminActivity|Alta de socio|HU-02|Validación: DNI con formato incorrecto.
+3_AdminActivity_10.png|AdminActivity|Alta de socio|HU-02|Validación: correo con formato incorrecto.
+3_AdminActivity_11.png|AdminActivity|Alta de socio|HU-02|Validación: ya existe un socio con ese DNI.
+3_AdminActivity_12.png|AdminActivity|Ficha del socio|HU-02 / CRUD socios: Crear|Alta registrada: N° de socio, carnet y cuota inicial.
+3_AdminActivity_13.png|AdminActivity|Editar socio|CRUD socios: Actualizar|Formulario precargado para modificar los datos.
+3_AdminActivity_14.png|AdminActivity|Ficha del socio|CRUD socios: Actualizar|Datos actualizados.
+3_AdminActivity_15.png|AdminActivity|Dar de baja|CRUD socios: Eliminar|Confirmación antes de dar de baja al socio.
+3_AdminActivity_16.png|AdminActivity|Socios|CRUD socios: Eliminar|Socio dado de baja: ya no figura en el padrón.
+3_AdminActivity_17.png|AdminActivity|Control de acceso|HU-05|Socio al día: acceso permitido.
+3_AdminActivity_18.png|AdminActivity|Control de acceso|HU-05|Socio en mora: acceso denegado con el motivo.
+3_AdminActivity_19.png|AdminActivity|Control de acceso|HU-05|Carnet vencido: acceso denegado.
+3_AdminActivity_20.png|AdminActivity|Control de acceso|HU-05|DNI inexistente: no encontrado.
+3_AdminActivity_21.png|AdminActivity|Visitantes|HU-03|Cupos del día e ingresos de visitantes.
+3_AdminActivity_22.png|AdminActivity|Ingreso de visitante|HU-03|Natación sin cupo: el ingreso no puede realizarse.
+3_AdminActivity_23.png|AdminActivity|Ingreso de visitante|HU-03|Actividad con cupo: listo para confirmar el cobro.
+3_AdminActivity_24.png|AdminActivity|Reportes|HU-14|Cuotas que vencen en los próximos 7 días.
+3_AdminActivity_25.png|AdminActivity|Reportes|HU-14|Socios en mora con acceso bloqueado.
+4_EntrenadoraActivity_01.png|EntrenadoraActivity|Inicio|HU-08|Presencia del día, clases y rutinas pendientes.
+4_EntrenadoraActivity_02.png|EntrenadoraActivity|Inicio|HU-08|Presencia registrada.
+4_EntrenadoraActivity_03.png|EntrenadoraActivity|Asistencia|HU-08|Presentes y ausentes de la clase; socios no habilitados señalados.
+4_EntrenadoraActivity_04.png|EntrenadoraActivity|Rutinas|HU-09|Socios asignados y estado de su rutina.
+4_EntrenadoraActivity_05.png|EntrenadoraActivity|Rutina del socio|HU-09|Socio en mora: no se puede asignar rutina.
+4_EntrenadoraActivity_06.png|EntrenadoraActivity|Rutina del socio|HU-09|Socio sin ficha médica: no se puede asignar rutina.
+4_EntrenadoraActivity_07.png|EntrenadoraActivity|Rutina del socio|HU-09|Edición de la rutina de un socio habilitado.
+4_EntrenadoraActivity_08.png|EntrenadoraActivity|Rutina del socio|HU-09|Validación: series fuera de rango.
+4_EntrenadoraActivity_09.png|EntrenadoraActivity|Perfil|HU-01|Datos de la entrenadora.
+5_NutricionistaActivity_01.png|NutricionistaActivity|Agenda|HU-11|Turnos asignados por día.
+5_NutricionistaActivity_02.png|NutricionistaActivity|Fichas nutricionales|HU-12|Socios con su último peso registrado.
+5_NutricionistaActivity_03.png|NutricionistaActivity|Ficha nutricional|HU-12|Medidas, objetivo, antecedentes e historial de consultas.
+5_NutricionistaActivity_04.png|NutricionistaActivity|Ficha nutricional|HU-12|Validación: peso con formato incorrecto.
+5_NutricionistaActivity_05.png|NutricionistaActivity|Ficha nutricional|HU-12|Validación: altura fuera de rango (se pide en metros).
+5_NutricionistaActivity_06.png|NutricionistaActivity|Ficha nutricional|HU-12|Consulta guardada en el historial.
+5_NutricionistaActivity_07.png|NutricionistaActivity|Perfil|HU-01|Datos de la nutricionista.

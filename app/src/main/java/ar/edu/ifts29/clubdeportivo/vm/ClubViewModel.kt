@@ -31,6 +31,7 @@ import ar.edu.ifts29.clubdeportivo.data.SheetData
 import ar.edu.ifts29.clubdeportivo.data.Socio
 import ar.edu.ifts29.clubdeportivo.data.Turno
 import ar.edu.ifts29.clubdeportivo.data.Usuario
+import ar.edu.ifts29.clubdeportivo.data.Validaciones
 import ar.edu.ifts29.clubdeportivo.data.Visitante
 import ar.edu.ifts29.clubdeportivo.data.daysTo
 import ar.edu.ifts29.clubdeportivo.data.dniFmt
@@ -78,7 +79,12 @@ data class UiState(
     val visError: String? = null,
     val visAct: String? = null,
     val comprobante: String? = null,
+    /** Socio que se está editando; `null` cuando el formulario es un alta. */
+    val editandoId: Int? = null,
 )
+
+/** Socio vinculado a la cuenta de la app del socio (Andrés, en los datos de demo). */
+const val ID_SOCIO_APP = 1
 
 data class ActividadVista(val act: Actividad) {
     val id get() = act.id
@@ -109,11 +115,32 @@ data class GrupoAgenda(val dia: String, val esHoy: Boolean, val turnos: List<Soc
  */
 class ClubViewModel : ViewModel() {
 
-    var estado by mutableStateOf(UiState())
-        private set
+    private var estadoActual by mutableStateOf(estadoInicial())
+
+    /** Cada cambio se copia a [ClubRepositorio] para que la próxima Activity lo encuentre. */
+    var estado: UiState
+        get() = estadoActual
+        private set(valor) {
+            estadoActual = valor
+            ClubRepositorio.guardar(valor)
+        }
 
     private var toastJob: Job? = null
-    private var proximoIdSocio = (DemoData.socios.maxOf { it.id }) + 1
+    private val proximoIdSocio get() = estado.socios.maxOf { it.id } + 1
+
+    private fun estadoInicial(): UiState {
+        val d = ClubRepositorio.datos
+        return UiState(
+            rol = d.rol,
+            stack = listOf(d.rol?.let { DemoData.tabs.getValue(it).first().first } ?: Screen.LOGIN),
+            socios = d.socios,
+            acts = d.acts,
+            visitantes = d.visitantes,
+            ingresosHoy = d.ingresosHoy,
+            asistencia = d.asistencia,
+            profePresente = d.profePresente,
+        )
+    }
 
     // ---------------------------------------------------------------- navegación
 
@@ -188,7 +215,9 @@ class ClubViewModel : ViewModel() {
 
     fun login() {
         val cuenta = DemoData.cuentas[norm(estado.campos.email)]
-        if (cuenta != null && estado.campos.pass == cuenta.first) {
+        // Un socio dado de baja (CRUD) pierde el acceso a la app.
+        val dadoDeBaja = cuenta?.second == Rol.SOCIO && estado.socios.none { it.id == ID_SOCIO_APP }
+        if (cuenta != null && estado.campos.pass == cuenta.first && !dadoDeBaja) {
             val rol = cuenta.second
             estado = estado.copy(
                 rol = rol,
@@ -200,6 +229,14 @@ class ClubViewModel : ViewModel() {
             estado = estado.copy(loginError = true)
         }
     }
+
+    /** Datos incompletos o credenciales inválidas (HU-01, escenario 2). */
+    val mensajeLogin: String
+        get() = if (estado.campos.email.isBlank() || estado.campos.pass.isBlank()) {
+            "Completá usuario y contraseña."
+        } else {
+            "Usuario o contraseña incorrectos."
+        }
 
     fun pedirCerrarSesion() {
         estado = estado.copy(logoutSheet = true)
@@ -219,7 +256,7 @@ class ClubViewModel : ViewModel() {
     val socios: List<SocioVista> get() = estado.socios.map { SocioVista(it) }
 
     /** El socio logueado. En el prototipo es siempre el primero de la lista. */
-    val yo: SocioVista get() = socios.first()
+    val yo: SocioVista get() = socios.firstOrNull { it.id == ID_SOCIO_APP } ?: socios.first()
 
     val seleccionado: SocioVista
         get() = socios.firstOrNull { it.id == estado.selId } ?: yo
@@ -355,7 +392,7 @@ class ClubViewModel : ViewModel() {
     /** HU-04. Pago simulado: no hay pasarela, se marca la cuota y se emite comprobante. */
     fun confirmarPago() {
         val medio = estado.medio
-        actualizarSocio(1) { s ->
+        actualizarSocio(ID_SOCIO_APP) { s ->
             s.copy(
                 cuota = s.cuota.copy(estado = EstadoCuota.PAGADA),
                 historial = listOf(
@@ -379,10 +416,13 @@ class ClubViewModel : ViewModel() {
 
     /** HU-11. */
     fun confirmarTurno() {
-        val slot = estado.slot ?: return
+        val slot = estado.slot ?: run {
+            toast("Elegí un horario disponible")
+            return
+        }
         val (iso, hora) = slot.split(" ")
         val f = fecha(iso)
-        actualizarSocio(1) { it.copy(turno = Turno(f, hora)) }
+        actualizarSocio(ID_SOCIO_APP) { it.copy(turno = Turno(f, hora)) }
         volver()
         toast("Turno confirmado · ${f.fmtCorto()} $hora")
     }
@@ -395,7 +435,7 @@ class ClubViewModel : ViewModel() {
                 filas = listOf("Turno" to yo.turnoLabel),
                 cta = "Sí, cancelar",
                 onConfirm = {
-                    actualizarSocio(1) { it.copy(turno = null) }
+                    actualizarSocio(ID_SOCIO_APP) { it.copy(turno = null) }
                     cerrarSheet()
                     toast("Turno cancelado")
                 },
@@ -481,38 +521,69 @@ class ClubViewModel : ViewModel() {
     /** Vencimiento de la primera cuota de un alta: 10 días. */
     val venceCuotaInicial: Fecha = HOY.masDias(10)
 
+    val editando: Boolean get() = estado.editandoId != null
+
     fun irAAlta() {
         estado = estado.copy(
             altaError = null,
+            editandoId = null,
+            apto = true,
+            planIdx = 1,
             campos = estado.campos.copy(nombre = "", dni = "", mail = "", obs = ""),
         )
         ir(Screen.E_ALTA)
     }
 
+    /** CRUD de socios — modificación: abre el formulario del alta con los datos cargados. */
+    fun irAEditar() {
+        val s = seleccionado.socio
+        estado = estado.copy(
+            altaError = null,
+            editandoId = s.id,
+            apto = s.ficha,
+            planIdx = DemoData.planes.indexOfFirst { it.nombre == s.plan }.coerceAtLeast(0),
+            campos = estado.campos.copy(
+                nombre = s.nombre,
+                dni = s.dni.toString(),
+                mail = s.email,
+                obs = s.nut.antecedentes,
+            ),
+        )
+        ir(Screen.E_EDITAR)
+    }
+
+    /** Valida el formulario de alta / edición; devuelve el primer error o `null`. */
+    private fun errorFormularioSocio(): String? {
+        val c = estado.campos
+        Validaciones.nombre(c.nombre)?.let { return it }
+        Validaciones.dni(c.dni)?.let { return it }
+        Validaciones.email(c.mail)?.let { return it }
+        val dni = c.dni.filter { it.isDigit() }
+        if (estado.socios.any { it.dni.toString() == dni && it.id != estado.editandoId }) {
+            return "Ya existe un socio con ese DNI."
+        }
+        return null
+    }
+
     /** HU-02: el alta genera N° de socio, carnet por 12 meses y cuota inicial. */
     fun confirmarAlta() {
+        errorFormularioSocio()?.let {
+            estado = estado.copy(altaError = it)
+            return
+        }
+        if (editando) {
+            guardarEdicion()
+            return
+        }
         val nombre = estado.campos.nombre.trim()
         val dni = estado.campos.dni.filter { it.isDigit() }
-        when {
-            nombre.length < 5 -> {
-                estado = estado.copy(altaError = "Ingresá nombre y apellido.")
-                return
-            }
-            dni.length < 7 || dni.length > 8 -> {
-                estado = estado.copy(altaError = "El DNI debe tener 7 u 8 dígitos.")
-                return
-            }
-            estado.socios.any { it.dni.toString() == dni } -> {
-                estado = estado.copy(altaError = "Ya existe un socio con ese DNI.")
-                return
-            }
-        }
         val plan = planSeleccionado
         val nuevo = Socio(
-            id = proximoIdSocio++,
+            id = proximoIdSocio,
             nombre = nombre,
             dni = dni.toLong(),
-            nro = (1500 + estado.socios.size).toString().padStart(5, '0'),
+            email = estado.campos.mail.trim(),
+            nro = proximoNroSocio(),
             plan = plan.nombre,
             alta = HOY,
             nac = fecha("1998-01-01"),
@@ -542,10 +613,66 @@ class ClubViewModel : ViewModel() {
         toast("Socio N° ${nuevo.nro} registrado · carnet y cuota inicial generados")
     }
 
+    /** 1500 + cantidad de socios; si ese número ya existe (por una baja), el siguiente libre. */
+    private fun proximoNroSocio(): String {
+        val usados = estado.socios.map { it.nro }.toSet()
+        var n = 1500 + estado.socios.size
+        while (n.toString().padStart(5, '0') in usados) n++
+        return n.toString().padStart(5, '0')
+    }
+
+    /** El cambio de plan rige desde la próxima cuota; la cuota emitida no se modifica. */
+    private fun guardarEdicion() {
+        val id = estado.editandoId ?: return
+        val c = estado.campos
+        actualizarSocio(id) { s ->
+            s.copy(
+                nombre = c.nombre.trim(),
+                dni = c.dni.filter { it.isDigit() }.toLong(),
+                email = c.mail.trim(),
+                plan = planSeleccionado.nombre,
+                ficha = estado.apto,
+                nut = s.nut.copy(antecedentes = c.obs.ifBlank { "Sin antecedentes" }),
+            )
+        }
+        estado = estado.copy(stack = listOf(Screen.E_SOCIOS, Screen.E_SOCIO), selId = id, editandoId = null)
+        toast("Datos del socio actualizados")
+    }
+
+    /** CRUD de socios — baja, con confirmación. Lo quita también de clases y asistencias. */
+    fun pedirBajaSocio() {
+        val s = seleccionado
+        estado = estado.copy(
+            sheet = SheetData(
+                titulo = "Dar de baja",
+                texto = "El socio deja de figurar en el padrón, en sus clases y en la agenda. " +
+                    "Esta acción no se puede deshacer.",
+                filas = listOf("Socio" to s.nombre, "DNI" to s.dniLabel, "N° de socio" to s.nro),
+                cta = "Confirmar baja",
+                onConfirm = {
+                    val id = s.id
+                    estado = estado.copy(
+                        socios = estado.socios.filterNot { it.id == id },
+                        acts = estado.acts.map { a -> a.copy(inscriptos = a.inscriptos - id) },
+                        asistencia = estado.asistencia.mapValues { (_, ids) -> ids - id },
+                        stack = listOf(Screen.E_SOCIOS),
+                        selId = null,
+                        sheet = null,
+                    )
+                    toast("${s.nombre} dado de baja")
+                },
+            ),
+        )
+    }
+
     /** HU-05: control de acceso por DNI. */
     fun validarAcceso() {
+        Validaciones.dni(estado.campos.dniAcceso)?.let {
+            estado = estado.copy(acceso = null)
+            toast(it)
+            return
+        }
         val dni = estado.campos.dniAcceso.filter { it.isDigit() }
-        if (dni.isEmpty()) return
         val s = socios.firstOrNull { it.socio.dni.toString() == dni }
         val a = when {
             s == null -> Acceso(
@@ -616,12 +743,9 @@ class ClubViewModel : ViewModel() {
     fun confirmarVisitante() {
         val nombre = estado.campos.vNombre.trim()
         val dni = estado.campos.vDni.filter { it.isDigit() }
-        if (nombre.length < 5) {
-            estado = estado.copy(visError = "Ingresá nombre y apellido del visitante.")
-            return
-        }
-        if (dni.length < 7) {
-            estado = estado.copy(visError = "Ingresá un DNI válido.")
+        val error = Validaciones.nombre(nombre, " del visitante") ?: Validaciones.dni(estado.campos.vDni)
+        if (error != null) {
+            estado = estado.copy(visError = error)
             return
         }
         val a = actividadElegida
@@ -692,7 +816,13 @@ class ClubViewModel : ViewModel() {
 
     fun agregarEjercicio() {
         val nombre = estado.campos.ejNombre.trim()
-        if (nombre.isEmpty()) return
+        val error = (if (nombre.isEmpty()) "Ingresá el nombre del ejercicio" else null)
+            ?: Validaciones.entero(estado.campos.ejSeries, "Las series", 1..20)
+            ?: Validaciones.entero(estado.campos.ejReps, "Las repeticiones", 1..100)
+        if (error != null) {
+            toast(error)
+            return
+        }
         val ej = Ejercicio(
             nombre = nombre,
             series = estado.campos.ejSeries.toIntOrNull() ?: 3,
@@ -751,12 +881,13 @@ class ClubViewModel : ViewModel() {
 
     /** HU-12: la consulta actualiza la ficha y consume el turno del día. */
     fun guardarConsulta() {
-        val peso = estado.campos.nPeso.replace(',', '.').toDoubleOrNull()
-        if (peso == null || peso <= 0.0) {
-            toast("Ingresá el peso")
+        val error = Validaciones.peso(estado.campos.nPeso) ?: Validaciones.altura(estado.campos.nAltura)
+        if (error != null) {
+            toast(error)
             return
         }
-        val altura = estado.campos.nAltura.replace(',', '.').toDoubleOrNull()
+        val peso = estado.campos.nPeso.trim().replace(',', '.').toDouble()
+        val altura = estado.campos.nAltura.trim().replace(',', '.').toDoubleOrNull()
         val obs = estado.campos.nObs.trim().ifBlank { "Control de rutina." }
         actualizarSocio(seleccionado.id) { x ->
             x.copy(
