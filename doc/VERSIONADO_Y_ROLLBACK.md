@@ -10,6 +10,7 @@ Complementa la política de calidad y pipeline (`doc/politica_calidad_pipeline_v
 | Publicación | Workflow **Release** (`.github/workflows/release.yml`): en cada merge a `main` corre las pruebas unitarias, crea el tag `vX.Y.Z` y una **GitHub Release** con el APK y `SHA256SUMS.txt`. |
 | Versión ya publicada | Si el código declara una versión que ya tiene tag, se publica automáticamente el siguiente parche (`X.Y.Z+1`) y la release lo indica. Ninguna versión publicada se sobrescribe. |
 | Integración continua | Workflow **CI** (`.github/workflows/ci.yml`): pruebas unitarias y lint (informativo) en cada push a `main`, `release/**`, `feature-**` y en cada Pull Request. El APK no se construye en CI: solo lo construye **Release** al hacer merge a `main` (o al ejecutarlo a mano desde Actions), una vez por versión. |
+| APK a demanda | Workflow **APK a demanda** (`.github/workflows/apk.yml`): solo manual, desde Actions → "APK a demanda" → *Run workflow*, eligiendo la rama. Corre las pruebas (opcional) y arma el APK debug como artefacto descargable por 14 días, con la versión, la rama y el commit en el nombre. No crea tag ni Release: sirve para probar en un teléfono antes de una entrega. |
 
 Cada release es **inmutable** y queda como punto de restauración.
 
