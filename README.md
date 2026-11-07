@@ -1,7 +1,7 @@
 # Club Deportivo — app Android (Kotlin + Jetpack Compose)
 
-Implementación del prototipo `project/export/ClubDeportivo-App-v4.html` (Claude Design)
-como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
+Implementación del prototipo [`web/index.html`](web/index.html) (Claude Design,
+`ClubDeportivo-App-v4`) como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
 en los **5 roles**, con la dirección visual **1a Pista**.
 
 Es un prototipo académico: **todos los datos viven en memoria** y se reinician al cerrar
@@ -34,6 +34,21 @@ genera se puede instalar y compartir sin configurar un keystore. Para una public
 real hay que reemplazar esa firma en `app/build.gradle.kts`.
 
 Requisitos: JDK 17+, SDK de Android con la plataforma **35**. `minSdk` es 24 (Android 7).
+
+---
+
+## App web (prototipo)
+
+La versión web es el prototipo HTML del que se portó la app, en
+[`web/index.html`](web/index.html). Es un único archivo autocontenido: se abre con doble
+clic en cualquier navegador, sin instalar nada. Para servirlo por HTTP (por ejemplo, para
+probarlo desde un teléfono en la misma red):
+
+```bash
+python -m http.server 8080 --directory web   # http://localhost:8080/
+```
+
+Usa las mismas cuentas de prueba que la app Android.
 
 ---
 
