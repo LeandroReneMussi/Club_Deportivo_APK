@@ -1,0 +1,76 @@
+# Versionado automático (doc/VERSIONADO_Y_ROLLBACK.md): cada merge a main publica una versión inmutable
+# (tag vX.Y.Z + GitHub Release con el APK). Esas versiones son los puntos de rollback.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calcular la versión
+        id: version
+        run: |
+          base=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          v="$base"
+          if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+            # La versión del código ya fue publicada: se publica el siguiente parche.
+            ultimo=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sed 's/^v//' | sort -V | tail -1)
+            IFS=. read -r ma mi pa <<< "$ultimo"
+            v="$ma.$mi.$((pa + 1))"
+            echo "auto=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "Versión a publicar: v$v (código: $base)"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Gates antes de publicar
+        run: bash ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Empaquetar
+        run: |
+          v=${{ steps.version.outputs.version }}
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/club-deportivo-android-v$v.apk"
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Notas de la versión
+        run: |
+          base=${{ steps.version.outputs.base }}
+          : > notas.md
+          if [ -f CHANGELOG.md ]; then
+            awk -v v="$base" '$0 ~ "^## \\["v"\\]" {s=1; next} /^## \[/ {s=0} s' CHANGELOG.md > notas.md
+          fi
+          if [ "${{ steps.version.outputs.auto }}" = "true" ]; then
+            printf '\n> Versión de parche generada automáticamente: el código declara %s, que ya estaba publicada.\n' "$base" >> notas.md
+          fi
+          printf '\n**Rollback:** ver `doc/VERSIONADO_Y_ROLLBACK.md`.\n' >> notas.md
+
+      - name: Publicar tag y release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=v${{ steps.version.outputs.version }}
+          gh release create "$v" dist/* --target "$GITHUB_SHA" --title "Club Deportivo $v" --notes-file notas.md --generate-notes

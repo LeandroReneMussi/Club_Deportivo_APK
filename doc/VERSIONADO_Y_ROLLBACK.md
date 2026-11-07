@@ -1,0 +1,43 @@
+# Versionado automático y rollback — Club Deportivo
+
+Complementa la política de calidad y pipeline (`doc/politica_calidad_pipeline_v1.2.docx`).
+
+## 1. Versionado automático
+
+| Qué | Cómo |
+|---|---|
+| Versión del código | `versionName` y `versionCode` en `app/build.gradle.kts` (SemVer `X.Y.Z`). Se actualizan al preparar una versión. |
+| Publicación | Workflow **Release** (`.github/workflows/release.yml`): en cada merge a `main` corre las pruebas unitarias, crea el tag `vX.Y.Z` y una **GitHub Release** con el APK y `SHA256SUMS.txt`. |
+| Versión ya publicada | Si el código declara una versión que ya tiene tag, se publica automáticamente el siguiente parche (`X.Y.Z+1`) y la release lo indica. Ninguna versión publicada se sobrescribe. |
+| Integración continua | Workflow **CI** (`.github/workflows/ci.yml`): pruebas unitarias y lint (informativo) en cada push a `main`, `release/**`, `feature-**` y en cada Pull Request. El APK no se construye en CI: solo lo construye **Release** al hacer merge a `main` (o al ejecutarlo a mano desde Actions), una vez por versión. |
+| APK a demanda | Workflow **APK a demanda** (`.github/workflows/apk.yml`): solo manual, desde Actions → "APK a demanda" → *Run workflow*, eligiendo la rama. Corre las pruebas (opcional) y arma el APK debug como artefacto descargable por 14 días, con la versión, la rama y el commit en el nombre. No crea tag ni Release: sirve para probar en un teléfono antes de una entrega. |
+
+Cada release es **inmutable** y queda como punto de restauración.
+
+## 2. Rollback
+
+### 2.1 Rollback inmediato del APK (sin tocar el código)
+
+1. Ir a **Releases** del repositorio y elegir la última versión estable.
+2. Descargar `club-deportivo-android-vX.Y.Z.apk` y verificar el hash contra `SHA256SUMS.txt`.
+3. Instalar con `adb install -r -d club-deportivo-android-vX.Y.Z.apk` (`-d` permite volver a una versión anterior).
+
+### 2.2 Rollback del código
+
+1. **Actions → Rollback → Run workflow**, con la versión a restaurar (ej. `v1.2.0`) y el motivo.
+2. El workflow abre un Pull Request hacia `main` que deja el repositorio igual a esa versión, sin reescribir el historial.
+3. Un integrante distinto del autor lo aprueba y se hace merge.
+4. El workflow **Release** publica una nueva versión de parche con el contenido restaurado.
+
+Alternativa manual: `git revert -m 1 <commit de merge>` en una rama, Pull Request hacia `main` y aprobación.
+
+### 2.3 Qué no se hace
+
+- No se borran tags ni releases publicadas.
+- No se hace `push --force` sobre `main` ni sobre las ramas `release/**`.
+
+## 3. Limitaciones conocidas
+
+- El APK publicado está firmado con la clave de depuración del runner de GitHub Actions. Para distribuirlo fuera del equipo hay que configurar una clave de release propia (secreto del repositorio).
+- La protección de ramas (exigir Pull Request y aprobación en `main`) no está disponible para repositorios privados en el plan gratuito de GitHub; la aprobación de un segundo integrante se cumple por procedimiento.
+- Las pruebas instrumentadas (`app/src/androidTest`) no corren en GitHub Actions: se ejecutan en emulador local.
