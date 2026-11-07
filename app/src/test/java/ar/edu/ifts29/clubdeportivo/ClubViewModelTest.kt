@@ -8,6 +8,7 @@ import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.data.daysTo
+import ar.edu.ifts29.clubdeportivo.data.fecha
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.money
 import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
@@ -188,6 +189,9 @@ class ClubViewModelTest {
         assertEquals("Billetera", vm.yo.historial.first().medio)
         assertEquals(Screen.S_PAGO_OK, vm.pantalla)
         assertTrue(vm.estado.comprobante!!.startsWith("CD-2609-"))
+        assertEquals(vm.estado.comprobante, vm.yo.historial.first().comprobante)
+        assertEquals(fecha("2026-10-10"), vm.yo.cuota.proximaVence)
+        assertEquals("Pagada · próxima 10/10/2026", vm.yo.cuotaVenceLabel)
     }
 
     @Test

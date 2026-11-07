@@ -31,6 +31,8 @@ data class Cuota(
     val monto: Int,
     val vence: Fecha,
     val estado: EstadoCuota,
+    /** Vencimiento de la cuota que sigue, cuando esta ya está pagada. */
+    val proximaVence: Fecha? = null,
 )
 
 data class PagoHistorial(
@@ -38,6 +40,7 @@ data class PagoHistorial(
     val monto: Int,
     val pagada: Fecha,
     val medio: String,
+    val comprobante: String = "",
 )
 
 data class Ejercicio(

@@ -400,7 +400,8 @@ fun ColumnScope.PantallaCuotas(vm: ClubViewModel) {
                     Column(Modifier.weight(1f)) {
                         Text(h.mes, style = body(600, 15))
                         Text(
-                            "Pagada el ${h.pagada.fmt()} · ${h.medio}",
+                            "Pagada el ${h.pagada.fmt()} · ${h.medio}" +
+                                if (h.comprobante.isBlank()) "" else " · ${h.comprobante}",
                             style = body(500, 12, Pista.mut),
                             modifier = Modifier.padding(top = 2.dp),
                         )

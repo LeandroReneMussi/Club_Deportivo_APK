@@ -4,9 +4,10 @@ Implementación del prototipo [`web/index.html`](web/index.html) (Claude Design,
 `ClubDeportivo-App-v4`) como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
 en los **5 roles**, con la dirección visual **1a Pista**.
 
-Es un prototipo académico: **todos los datos viven en memoria** y se reinician al cerrar
-la app. No hay backend, base de datos ni pasarela de pago — el pago se simula, tal como
-se definió en el diseño.
+Es un prototipo académico con **SQLite en el dispositivo**. El alta, la modificación,
+la baja, el cobro de la cuota y el listado se guardan en `club_deportivo.db` y siguen
+ahí al cerrar la app. No hay backend ni pasarela de pago: el pago se registra en la
+base, tal como se definió en el diseño.
 
 ---
 
@@ -90,10 +91,12 @@ app/src/main/java/ar/edu/ifts29/clubdeportivo/
 │   ├── Format.kt        Fecha propia, formato es-AR de importes, DNI, edades
 │   ├── Models.kt        Socio, Cuota, Rutina, FichaNutricional, Screen, Rol…
 │   ├── Validaciones.kt  Datos incompletos y formatos incorrectos de los formularios
-│   └── DemoData.kt      Dataset de demostración y tablas por rol
+│   ├── DemoData.kt      Semilla de la base y tablas por rol
+│   └── db/
+│       └── ClubDbHelper.kt  SQLiteOpenHelper: tablas, ABM, login y listado
 ├── vm/
 │   ├── SocioVista.kt    Reglas derivadas: habilitación, badges, etiquetas
-│   ├── ClubRepositorio.kt Datos en memoria compartidos entre Activities
+│   ├── ClubRepositorio.kt Sesión y acceso a SQLite compartido entre Activities
 │   └── ClubViewModel.kt Estado y acciones de las 14 HU y el CRUD de socios
 └── ui/
     ├── theme/Theme.kt   Tokens de la dirección Pista + tipografías Barlow
@@ -107,7 +110,9 @@ app/src/main/java/ar/edu/ifts29/clubdeportivo/
 rol (`SocioActivity`, `AdminActivity`, `EntrenadoraActivity` o `NutricionistaActivity`) y
 se cierra; «Cerrar sesión» vuelve a `LoginActivity`. Las Activities de rol no se exportan
 y, si se abren sin una sesión de su rol, vuelven al login. Los datos viven en
-`ClubRepositorio` y se comparten entre Activities mientras la app está abierta.
+SQLite (`ClubDbHelper`) y `ClubRepositorio` los comparte entre Activities. La primera
+vez se cargan los datos de demostración; después, cada alta, baja, cobro o listado
+lee y escribe la base.
 
 Dentro de cada Activity, la navegación replica la del prototipo: una **pila de pantallas**
 donde las raíces (las de la barra inferior) reemplazan la pila y el resto se apila con un

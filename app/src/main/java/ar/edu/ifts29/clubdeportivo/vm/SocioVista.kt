@@ -10,6 +10,7 @@ import ar.edu.ifts29.clubdeportivo.data.edadA
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.fmtCorto
 import ar.edu.ifts29.clubdeportivo.data.fmtMesAnio
+import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
 import ar.edu.ifts29.clubdeportivo.data.numero
 import ar.edu.ifts29.clubdeportivo.data.unDecimal
@@ -82,7 +83,10 @@ class SocioVista(val socio: Socio) {
     val cuotaCorto = if (mora) "Mora" else "Al día"
 
     val cuotaVenceLabel = when {
-        cuotaPagada -> "Pagada · próxima 10/10"
+        cuotaPagada -> {
+            val proxima = socio.cuota.proximaVence ?: socio.cuota.vence.masMeses(1)
+            "Pagada · próxima ${proxima.fmt()}"
+        }
         diasParaVencer < 0 -> "Venció hace ${-diasParaVencer} días"
         diasParaVencer == 0 -> "Vence hoy"
         else -> "Vence en $diasParaVencer días · ${socio.cuota.vence.fmt()}"

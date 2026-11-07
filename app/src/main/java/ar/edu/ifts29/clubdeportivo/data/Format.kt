@@ -71,6 +71,25 @@ fun desdeEpochDay(dias: Long): Fecha {
 
 fun Fecha.masDias(n: Int): Fecha = desdeEpochDay(epochDay + n)
 
+/** Misma fecha [n] meses después; el día se recorta si el mes es más corto. */
+fun Fecha.masMeses(n: Int): Fecha {
+    var a = anio
+    var m = mes + n
+    while (m > 12) {
+        m -= 12
+        a += 1
+    }
+    while (m < 1) {
+        m += 12
+        a -= 1
+    }
+    return Fecha(a, m, minOf(dia, diasDelMes(a, m)))
+}
+
+/** `Octubre 2026`, el nombre de mes que usa la cuota. */
+fun Fecha.tituloMes(): String =
+    "${MESES[mes - 1].replaceFirstChar { it.uppercase() }} $anio"
+
 /** Misma fecha [n] años después; el 29/02 cae al 28/02. */
 fun Fecha.masAnios(n: Int): Fecha {
     val a = anio + n

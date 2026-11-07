@@ -7,7 +7,7 @@ import ar.edu.ifts29.clubdeportivo.R
  * usuario tenga un caso que la ejercite: Lucas está en mora, Sofía tiene el carnet
  * vencido, Natación está sin cupo y Valentina no presentó el apto físico.
  *
- * Prototipo académico: todo vive en memoria y se reinicia al cerrar la app.
+ * Semilla de la base SQLite: se carga la primera vez que se abre la app.
  */
 object DemoData {
 

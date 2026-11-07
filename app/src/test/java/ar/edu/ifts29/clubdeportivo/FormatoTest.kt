@@ -13,7 +13,9 @@ import ar.edu.ifts29.clubdeportivo.data.fmtLargo
 import ar.edu.ifts29.clubdeportivo.data.fmtMesAnio
 import ar.edu.ifts29.clubdeportivo.data.masAnios
 import ar.edu.ifts29.clubdeportivo.data.masDias
+import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.tituloMes
 import ar.edu.ifts29.clubdeportivo.data.norm
 import ar.edu.ifts29.clubdeportivo.data.numero
 import ar.edu.ifts29.clubdeportivo.data.unDecimal
@@ -52,6 +54,13 @@ class FormatoTest {
     fun `el DNI se muestra con puntos`() {
         assertEquals("38.412.907", dniFmt(38412907L))
         assertEquals("1.234.567", dniFmt("1234567"))
+    }
+
+    @Test
+    fun `sumar un mes recorta el dia si el mes es mas corto`() {
+        assertEquals("10/10/2026", fecha("2026-09-10").masMeses(1).fmt())
+        assertEquals("28/02/2027", fecha("2027-01-31").masMeses(1).fmt())
+        assertEquals("Octubre 2026", fecha("2026-10-10").tituloMes())
     }
 
     @Test
