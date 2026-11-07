@@ -4,10 +4,12 @@ Implementación del prototipo [`web/index.html`](web/index.html) (Claude Design,
 `ClubDeportivo-App-v4`) como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
 en los **5 roles**, con la dirección visual **1a Pista**.
 
-Es un prototipo académico con **SQLite en el dispositivo**. El alta, la modificación,
-la baja, el cobro de la cuota y el listado se guardan en `club_deportivo.db` y siguen
-ahí al cerrar la app. No hay backend ni pasarela de pago: el pago se registra en la
-base, tal como se definió en el diseño.
+Es un prototipo académico. Desde la **v1.3.0** la app Android guarda los datos en
+**SQLite en el dispositivo**: el alta, la modificación, la baja, el cobro de la cuota y
+el listado se escriben en `club_deportivo.db` y siguen ahí al cerrar la app. La
+[versión web](#app-web-prototipo) conserva los datos en memoria, como el prototipo
+original. No hay backend ni pasarela de pago: el pago se registra en la base (o en
+memoria, en la web), tal como se definió en el diseño.
 
 ---
 
@@ -49,7 +51,9 @@ probarlo desde un teléfono en la misma red):
 python -m http.server 8080 --directory web   # http://localhost:8080/
 ```
 
-Usa las mismas cuentas de prueba que la app Android.
+Usa las mismas cuentas de prueba que la app Android. A diferencia de ella, **sus datos
+viven en memoria** y se reinician al recargar la página: es el prototipo original, sin
+SQLite.
 
 ---
 
