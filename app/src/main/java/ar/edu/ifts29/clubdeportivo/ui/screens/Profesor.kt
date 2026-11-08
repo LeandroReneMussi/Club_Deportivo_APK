@@ -67,7 +67,11 @@ fun ColumnScope.PantallaProfesorHome(vm: ClubViewModel) {
                     style = body(600, 11, tinta.copy(alpha = 0.75f), letterSpacing = 1.2.sp),
                 )
                 Text(
-                    (if (presente) "Presente · 09:41" else "Sin marcar").uppercase(),
+                    when {
+                        !presente -> "Sin marcar"
+                        vm.estado.horaPresencia != null -> "Presente · ${vm.estado.horaPresencia}"
+                        else -> "Presente"
+                    }.uppercase(),
                     style = disp(800, 24, tinta, lineHeight = 24.sp),
                     modifier = Modifier.padding(top = 6.dp),
                 )

@@ -42,7 +42,8 @@ Alternativa manual: `git revert -m 1 <commit de merge>` en una rama, Pull Reques
 |---|---|---|---|
 | v1.3.1 | SQLite en la app Android | v2 | — |
 | v1.4.0 | Vencen hoy, pagos diarios por fecha, cobro en caja completo, pruebas de SQLite | v3 | v1.3.1 |
-| v1.5.0 | Fecha real, apellido separado, gracia/recargo/interés con vigencia, QR de ingreso, carnet con formato de tarjeta | v4 | **v1.4.0** |
+| v1.5.0 | Fecha real, apellido separado, gracia/recargo/interés con vigencia, QR de ingreso, carnet con formato de tarjeta | v4 | v1.4.0 |
+| v1.5.1 | Control de acceso: "Registrar visitante" con el DNI cargado; hora real de presencia de la entrenadora | v4 (sin cambios) | **v1.5.0** (misma base: se instala encima sin desinstalar) |
 
 ### 3.1 Plan de rollback de la v1.5.0
 

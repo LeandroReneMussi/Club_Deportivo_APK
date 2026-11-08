@@ -92,6 +92,8 @@ data class UiState(
     /** Historial de parámetros del club, más nuevo primero (v1.5). */
     val parametros: List<Parametros> = DemoData.parametrosIniciales,
     val paramError: String? = null,
+    /** Hora en que la entrenadora marcó presencia en esta sesión (HU-08). */
+    val horaPresencia: String? = null,
 )
 
 /** Socio vinculado a la cuenta de la app del socio (Andrés, en los datos de demo). */
@@ -861,6 +863,13 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(acceso = a)
     }
 
+    /** HU-05 → HU-03: un DNI que no es socio se registra como visitante, con el DNI ya cargado. */
+    fun registrarComoVisitante() {
+        val dni = dniFmt(estado.campos.dniAcceso.filter { it.isDigit() })
+        irAVisitanteNuevo()
+        estado = estado.copy(campos = estado.campos.copy(vDni = dni))
+    }
+
     fun ponerDniAcceso(dni: Long) {
         estado = estado.copy(campos = estado.campos.copy(dniAcceso = dni.toString()))
         validarAcceso()
@@ -943,8 +952,9 @@ class ClubViewModel : ViewModel() {
     // ---------------------------------------------------------------- profesor
 
     fun marcarPresencia() {
-        estado = estado.copy(profePresente = true)
-        toast("Presencia registrada · $HORA_ACTUAL")
+        val hora = HORA_ACTUAL
+        estado = estado.copy(profePresente = true, horaPresencia = hora)
+        toast("Presencia registrada · $hora")
     }
 
     fun elegirClase(id: String) {

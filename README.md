@@ -40,7 +40,7 @@ El proyecto no trae el SDK de Android; hace falta tenerlo instalado.
 ```bash
 ./gradlew assembleDebug     # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk
-./gradlew test              # 76 pruebas unitarias de la lógica
+./gradlew test              # 78 pruebas unitarias de la lógica
 ./gradlew connectedDebugAndroidTest   # capturas por Activity en un emulador
 ```
 
@@ -189,7 +189,7 @@ Andrés por vencer en dos días. Está en un solo lugar, `data/Format.kt`.
 
 ## Pruebas
 
-`./gradlew test` corre 76 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
+`./gradlew test` corre 78 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
 (`ClubViewModelTest`) y las utilidades de fecha e importe (`FormatoTest`). Cubren la
 regla central de habilitación, los cuatro casos del control de acceso, las validaciones
 de alta, el bloqueo por cupo, el bloqueo de rutina por mora o falta de apto físico y el

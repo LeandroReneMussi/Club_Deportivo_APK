@@ -9,7 +9,7 @@ Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móvi
 | Proyecto Android Studio comprimido | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_ProyectoAndroidStudio_v1.5.0.zip` (generado desde `main` con `git archive`; sin `build/` ni `local.properties`) |
 | PDF de capturas de pantalla | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Capturas_v1.5.pdf` (71 capturas de las cinco Activities, con epígrafe e historia de usuario; también en `.docx`) |
 | Casos de uso y diagramas UML 2.0 | `../doc/casos-de-uso/DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Casos_de_uso_UML.pdf` (25 casos de uso, diagrama de casos de uso, clases, 4 secuencias, máquina de estados de la cuota y actividad del alta; fuentes `.puml` y `.md` al lado) |
-| APK | Release **v1.5.0** en GitHub (`LeandroReneMussi/Club_Deportivo_APK` → Releases). Rollback: v1.4.0 |
+| APK | Release **v1.5.1** (corrige dos detalles de la v1.5.0) en GitHub (`LeandroReneMussi/Club_Deportivo_APK` → Releases). Rollback: v1.5.0, y v1.4.0 si hiciera falta |
 | Video de demostración | Enlace de YouTube "No listado": _pendiente de grabación_ (guion y checklist en `Checklist_video_v1.5.md`) |
 
 ## Cómo abrir y correr el proyecto
