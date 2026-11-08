@@ -111,8 +111,10 @@ class ClubViewModelTest {
         val lucas = vm.socios.first { it.id == 2 }
         val sofia = vm.socios.first { it.id == 3 }
 
-        assertTrue("cuota al día y carnet vigente", andres.hab)
-        assertEquals("Habilitado · Cuota al día", andres.badge)
+        assertTrue("cuota pendiente sin vencer y carnet vigente", andres.hab)
+        assertEquals("la etiqueta dice que debe la cuota", "Habilitado · Cuota pendiente · vence en 2 días", andres.badge)
+        assertEquals("Habilitado · Cuota pendiente · vence hoy", vm.socios.first { it.id == 8 }.badge)
+        assertEquals("solo la cuota pagada está al día", "Habilitado · Cuota al día", vm.socios.first { it.id == 7 }.badge)
 
         assertTrue(lucas.mora)
         assertFalse("la mora bloquea", lucas.hab)
