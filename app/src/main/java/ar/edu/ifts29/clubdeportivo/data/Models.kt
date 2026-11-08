@@ -117,12 +117,15 @@ data class Actividad(
     val inscriptos: List<Int>,
 )
 
+/** Pago diario de un no socio (HU-03): queda con la fecha y el medio con que se cobró. */
 data class Visitante(
     val nombre: String,
     val dni: String,
     val actividad: String,
     val hora: String,
     val monto: Int,
+    val fecha: Fecha,
+    val medio: String,
 )
 
 data class IngresoHoy(
@@ -186,10 +189,14 @@ data class Campos(
 
 enum class FiltroSocios(val label: String) { TODOS("Todos"), HAB("Habilitados"), MORA("En mora") }
 
-enum class ReportTab { VENCER, MORA }
+/** Pestañas de Reportes (HU-14): vencen hoy, esta semana, en mora y pagos diarios por fecha. */
+enum class ReportTab { HOY, VENCER, MORA, VISITANTES }
 
 enum class MedioPago(val nombre: String, val sub: String, val etiqueta: String) {
     TARJETA("Tarjeta de débito / crédito", "Visa terminada en 4421", "Tarjeta"),
     BILLETERA("Billetera virtual", "Transferencia con QR", "Billetera"),
     CAJA("Efectivo en el club", "Genera un cupón para pagar en recepción", "Caja"),
 }
+
+/** Medio con que el mostrador cobra el pase diario de un visitante. */
+enum class MedioVisitante(val etiqueta: String) { EFECTIVO("Efectivo"), DEBITO("Débito") }

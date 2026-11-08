@@ -22,6 +22,7 @@ import ar.edu.ifts29.clubdeportivo.data.HORA_ACTUAL
 import ar.edu.ifts29.clubdeportivo.data.Ingreso
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
@@ -66,7 +67,9 @@ data class UiState(
     val editEj: List<DiaRutina>? = null,
     val slot: String? = null,
     val filtro: FiltroSocios = FiltroSocios.TODOS,
-    val reportTab: ReportTab = ReportTab.VENCER,
+    val reportTab: ReportTab = ReportTab.HOY,
+    /** Día que muestra la pestaña Visitantes de Reportes; arranca en hoy. */
+    val fechaReporte: Fecha = HOY,
     val claseId: String = "musc",
     val asistencia: Map<String, List<Int>> = mapOf("musc" to listOf(4, 7), "func" to emptyList()),
     val profePresente: Boolean = false,
@@ -78,6 +81,7 @@ data class UiState(
     val altaError: String? = null,
     val visError: String? = null,
     val visAct: String? = null,
+    val visMedio: MedioVisitante = MedioVisitante.EFECTIVO,
     val comprobante: String? = null,
     /** Socio que se está editando; `null` cuando el formulario es un alta. */
     val editandoId: Int? = null,
@@ -86,15 +90,17 @@ data class UiState(
 /** Socio vinculado a la cuenta de la app del socio (Andrés, en los datos de demo). */
 const val ID_SOCIO_APP = 1
 
-data class ActividadVista(val act: Actividad) {
+/** Una actividad con su cupo del día: los inscriptos de base más los visitantes de hoy. */
+data class ActividadVista(val act: Actividad, val visitantesHoy: Int = 0) {
     val id get() = act.id
     val nombre get() = act.nombre
     val horario get() = act.horario
-    val libres = act.cupo - act.ocupados
-    val sinCupo = libres == 0
+    val ocupadosHoy = act.ocupados + visitantesHoy
+    val libres = act.cupo - ocupadosHoy
+    val sinCupo = libres <= 0
     val cupoJusto = libres in 1..3
     val cupoLabel = if (libres > 0) "$libres libres" else "Sin cupo"
-    val ocupacion = act.ocupados.toFloat() / act.cupo
+    val ocupacion = ocupadosHoy.toFloat() / act.cupo
     val precioLabel = money(act.precio)
 }
 
@@ -279,43 +285,92 @@ class ClubViewModel : ViewModel() {
                 }
         }
 
-    val actividades: List<ActividadVista> get() = estado.acts.map { ActividadVista(it) }
+    val actividades: List<ActividadVista>
+        get() {
+            val deHoy = visitantesDeHoy
+            return estado.acts.map { a -> ActividadVista(a, deHoy.count { it.actividad == a.nombre }) }
+        }
 
     val actividadElegida: ActividadVista?
         get() = actividades.firstOrNull { it.id == estado.visAct }
 
     /**
-     * Cuotas pendientes que vencen dentro de la semana (HU-14).
-     * Con la base abierta el filtro sale del `SELECT` del listado diario.
+     * Cuotas pendientes que vencen entre [desde] y [hasta], ordenadas por vencimiento (HU-14).
+     * Con la base abierta el filtro sale del `SELECT` del listado diario; sin base, de la
+     * copia en memoria.
      */
-    val porVencer: List<SocioVista>
-        get() {
-            val ids = ClubRepositorio.idsCuotasPorVencer(HOY.masDias(7).fmtIso())
-            val lista = if (ids == null) {
-                socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
-            } else {
-                val pedidas = ids.toSet()
-                socios.filter { it.id in pedidas }
-            }
-            return lista.sortedBy { daysTo(it.cuota.vence) }
+    private fun pendientesEntre(desde: Fecha, hasta: Fecha): List<SocioVista> {
+        val ids = ClubRepositorio.idsCuotasPorVencer(desde.fmtIso(), hasta.fmtIso())
+        val lista = if (ids == null) {
+            socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && it.cuota.vence in desde..hasta }
+        } else {
+            val pedidas = ids.toSet()
+            socios.filter { it.id in pedidas }
         }
+        return lista.sortedBy { daysTo(it.cuota.vence) }
+    }
+
+    /** Socios cuya cuota vence en la fecha (consigna, punto 5). */
+    val vencenHoy: List<SocioVista> get() = pendientesEntre(HOY, HOY)
+
+    /** Cuotas que vencen de mañana a 7 días: la semana, sin las de hoy. */
+    val porVencer: List<SocioVista> get() = pendientesEntre(HOY.masDias(1), HOY.masDias(7))
 
     val enMora: List<SocioVista> get() = socios.filter { it.mora }
 
-    val filasReporte: List<SocioVista>
-        get() = if (estado.reportTab == ReportTab.VENCER) porVencer else enMora
+    val visitantesDeHoy: List<Visitante> get() = estado.visitantes.filter { it.fecha == HOY }
 
-    val tituloReporte: String
-        get() = if (estado.reportTab == ReportTab.VENCER) {
-            "Cuotas que vencen en 7 días"
-        } else {
-            "Socios en mora · acceso bloqueado"
+    /** Pagos diarios de no socios del día elegido en Reportes. */
+    val pagosDiarios: List<Visitante>
+        get() = ClubRepositorio.visitantesPorFecha(estado.fechaReporte)
+            ?: estado.visitantes.filter { it.fecha == estado.fechaReporte }
+
+    val totalPagosDiarios: Int get() = pagosDiarios.sumOf { it.monto }
+
+    val totalPagosHoy: Int get() = visitantesDeHoy.sumOf { it.monto }
+
+    val filasReporte: List<SocioVista>
+        get() = when (estado.reportTab) {
+            ReportTab.HOY -> vencenHoy
+            ReportTab.VENCER -> porVencer
+            ReportTab.MORA -> enMora
+            ReportTab.VISITANTES -> emptyList()
         }
 
-    val totalReporte: String get() = money(filasReporte.sumOf { it.cuota.monto })
+    val tituloReporte: String
+        get() = when (estado.reportTab) {
+            ReportTab.HOY -> "Cuotas que vencen hoy · ${HOY.fmtCorto()}"
+            ReportTab.VENCER -> "Cuotas que vencen en 7 días"
+            ReportTab.MORA -> "Socios en mora · acceso bloqueado"
+            ReportTab.VISITANTES -> "Pagos diarios de no socios"
+        }
+
+    val totalReporte: String
+        get() = money(
+            if (estado.reportTab == ReportTab.VISITANTES) totalPagosDiarios else filasReporte.sumOf { it.cuota.monto },
+        )
+
+    val puedeAvanzarDia: Boolean get() = estado.fechaReporte < HOY
+
+    val fechaReporteLabel: String get() = estado.fechaReporte.fmtLargo().replaceFirstChar { it.uppercase() }
+
+    val fechaReporteSub: String
+        get() = when (daysTo(estado.fechaReporte)) {
+            0 -> "Hoy"
+            -1 -> "Ayer"
+            else -> estado.fechaReporte.fmtCorto()
+        }
+
+    fun diaReporteAnterior() {
+        estado = estado.copy(fechaReporte = estado.fechaReporte.masDias(-1))
+    }
+
+    fun diaReporteSiguiente() {
+        if (puedeAvanzarDia) estado = estado.copy(fechaReporte = estado.fechaReporte.masDias(1))
+    }
 
     val ingresosDeHoy: Int
-        get() = estado.ingresosHoy.count { it.ok } + estado.visitantes.size
+        get() = estado.ingresosHoy.count { it.ok } + visitantesDeHoy.size
 
     /** Las clases de la entrenadora logueada. */
     val clases: List<ClaseVista>
@@ -400,20 +455,32 @@ class ClubViewModel : ViewModel() {
     }
 
     /**
-     * HU-04. El socio paga su cuota: queda pagada, se guarda el comprobante y se abre
-     * la cuota del mes siguiente, con vencimiento a un mes.
+     * Marca la cuota del socio como pagada, abre la del mes siguiente (vence un mes después
+     * del vencimiento original) y antepone el pago al historial con su comprobante.
+     * Devuelve el comprobante, o `null` si la cuota ya estaba pagada: una cuota no se cobra
+     * dos veces, ni desde la app ni en caja.
+     */
+    private fun pagarCuota(id: Int, medio: String): String? {
+        val s = estado.socios.firstOrNull { it.id == id } ?: return null
+        if (s.cuota.estado == EstadoCuota.PAGADA) return null
+        val comprobante = "CD-2609-" + (1000..9999).random()
+        actualizarSocio(id) { x ->
+            x.copy(
+                cuota = x.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = x.cuota.vence.masMeses(1)),
+                historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, medio, comprobante)) + x.historial,
+            )
+        }
+        return comprobante
+    }
+
+    /**
+     * HU-04. El socio paga su cuota desde la app: queda pagada, se guarda el comprobante y
+     * se abre la cuota del mes siguiente. Si ya estaba pagada, avisa y no navega.
      */
     fun confirmarPago() {
-        val medio = estado.medio
-        val comprobante = "CD-2609-" + (1000..9999).random()
-        actualizarSocio(ID_SOCIO_APP) { s ->
-            val proxima = s.cuota.vence.masMeses(1)
-            s.copy(
-                cuota = s.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = proxima),
-                historial = listOf(
-                    PagoHistorial(s.cuota.mes, s.cuota.monto, HOY, medio.etiqueta, comprobante),
-                ) + s.historial,
-            )
+        val comprobante = pagarCuota(ID_SOCIO_APP, estado.medio.etiqueta) ?: run {
+            toast("La cuota de ${yo.cuota.mes} ya está pagada.")
+            return
         }
         estado = estado.copy(
             stack = estado.stack.dropLast(1) + Screen.S_PAGO_OK,
@@ -473,13 +540,20 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(reportTab = t)
     }
 
-    /** Cobro en caja desde la ficha del socio (HU-04 del lado del mostrador). */
+    /**
+     * Cobro en caja desde la ficha del socio (HU-04 del lado del mostrador). Hace lo mismo
+     * que el pago desde la app: cuota siguiente y comprobante. Una cuota ya pagada no abre la hoja.
+     */
     fun pedirRegistrarPago() {
         val s = seleccionado
+        if (s.cuotaPagada) {
+            toast("La cuota de ${s.cuota.mes} ya está pagada.")
+            return
+        }
         estado = estado.copy(
             sheet = SheetData(
                 titulo = "Registrar pago",
-                texto = "Cobro en caja. Al confirmar, la cuota queda pagada y el socio habilitado.",
+                texto = "Cobro en caja. Al confirmar, la cuota queda pagada, se abre la del mes siguiente y el socio queda habilitado.",
                 filas = listOf(
                     "Socio" to s.nombre,
                     "Cuota" to s.cuota.mes,
@@ -487,12 +561,7 @@ class ClubViewModel : ViewModel() {
                 ),
                 cta = "Cobrar ${s.cuotaMonto}",
                 onConfirm = {
-                    actualizarSocio(s.id) { x ->
-                        x.copy(
-                            cuota = x.cuota.copy(estado = EstadoCuota.PAGADA),
-                            historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, "Caja")) + x.historial,
-                        )
-                    }
+                    pagarCuota(s.id, "Caja")
                     cerrarSheet()
                     toast("Pago registrado · socio habilitado")
                 },
@@ -738,6 +807,7 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(
             visError = null,
             visAct = null,
+            visMedio = MedioVisitante.EFECTIVO,
             campos = estado.campos.copy(vNombre = "", vDni = ""),
         )
         ir(Screen.E_VISITANTE_NUEVO)
@@ -747,14 +817,22 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(
             visAct = a.id,
             visError = if (a.sinCupo) {
-                "${a.nombre} no tiene cupo disponible hoy (${a.act.ocupados}/${a.act.cupo}). El ingreso no puede realizarse."
+                "${a.nombre} no tiene cupo disponible hoy (${a.ocupadosHoy}/${a.act.cupo}). El ingreso no puede realizarse."
             } else {
                 null
             },
         )
     }
 
-    /** HU-03: ingreso de visitante, bloqueado si la actividad no tiene cupo. */
+    fun elegirMedioVisitante(m: MedioVisitante) {
+        estado = estado.copy(visMedio = m)
+    }
+
+    /**
+     * HU-03: pago diario de un no socio (consigna, punto 3). Queda con fecha y medio de
+     * pago; se rechaza si la actividad no tiene cupo hoy o si ese DNI ya pagó hoy.
+     * El cupo del día sale de los visitantes de hoy, así que no se toca `act.ocupados`.
+     */
     fun confirmarVisitante() {
         val nombre = estado.campos.vNombre.trim()
         val dni = estado.campos.vDni.filter { it.isDigit() }
@@ -772,14 +850,18 @@ class ClubViewModel : ViewModel() {
             estado = estado.copy(visError = "Sin cupo en ${a.nombre}. El ingreso no puede realizarse.")
             return
         }
+        val dniConPuntos = dniFmt(dni)
+        if (ClubRepositorio.contarVisitante(dniConPuntos, HOY) > 0) {
+            estado = estado.copy(visError = "Ya hay un pago diario registrado hoy con el DNI $dniConPuntos.")
+            return
+        }
         estado = estado.copy(
             visitantes = listOf(
-                Visitante(nombre, dniFmt(dni), a.nombre, HORA_ACTUAL, a.act.precio),
+                Visitante(nombre, dniConPuntos, a.nombre, HORA_ACTUAL, a.act.precio, HOY, estado.visMedio.etiqueta),
             ) + estado.visitantes,
-            acts = estado.acts.map { if (it.id == a.id) it.copy(ocupados = it.ocupados + 1) else it },
             stack = listOf(Screen.E_VISITANTES),
         )
-        toast("Ingreso registrado · cobro ${money(a.act.precio)}")
+        toast("Pago diario registrado · ${money(a.act.precio)}")
     }
 
     // ---------------------------------------------------------------- profesor

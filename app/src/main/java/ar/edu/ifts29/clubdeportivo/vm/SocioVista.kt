@@ -52,7 +52,13 @@ class SocioVista(val socio: Socio) {
     val altaLabel = socio.alta.fmtMesAnio()
     val edadLabel = "${edadA(socio.nac)} años"
 
+    /**
+     * La habilitación (HU-05) solo mira mora y carnet: una cuota pendiente que todavía no
+     * venció no bloquea el ingreso. La etiqueta igual lo dice: "al día" es solo la cuota pagada
+     * (el vencimiento va en la tarjeta de la cuota, [cuotaVenceLabel]).
+     */
     val badge = when {
+        hab && socio.cuota.estado == EstadoCuota.PENDIENTE -> "Habilitado · Cuota pendiente"
         hab -> "Habilitado · Cuota al día"
         mora -> "No habilitado · En mora"
         else -> "No habilitado · Carnet vencido"

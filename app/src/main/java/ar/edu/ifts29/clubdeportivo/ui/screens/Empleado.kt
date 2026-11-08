@@ -32,11 +32,15 @@ import androidx.compose.ui.unit.sp
 import ar.edu.ifts29.clubdeportivo.data.Acceso
 import ar.edu.ifts29.clubdeportivo.data.DemoData
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
+import ar.edu.ifts29.clubdeportivo.data.HOY
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
+import ar.edu.ifts29.clubdeportivo.data.Visitante
 import ar.edu.ifts29.clubdeportivo.data.dniFmt
 import ar.edu.ifts29.clubdeportivo.data.fmt
+import ar.edu.ifts29.clubdeportivo.data.fmtCorto
 import ar.edu.ifts29.clubdeportivo.data.money
 import ar.edu.ifts29.clubdeportivo.ui.BarraCupo
 import ar.edu.ifts29.clubdeportivo.ui.BotonBorde
@@ -85,7 +89,9 @@ fun ColumnScope.PantallaEmpleadoHome(vm: ClubViewModel) {
 
         val socios = vm.socios
         val mora = vm.enMora
+        val hoy = vm.vencenHoy
         val vencer = vm.porVencer
+        val visitantesHoy = vm.visitantesDeHoy
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,15 +113,29 @@ fun ColumnScope.PantallaEmpleadoHome(vm: ClubViewModel) {
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Kpi(
-                    "Vencen ≤ 7 días", vencer.size.toString(),
+                    "Vencen hoy", hoy.size.toString(),
+                    money(hoy.sumOf { it.cuota.monto }),
+                    Modifier.weight(1f),
+                    fondo = if (hoy.isNotEmpty()) Pista.warn else Pista.sur,
+                    tinta = if (hoy.isNotEmpty()) Pista.warnInk else Pista.ink,
+                ) { vm.elegirReportTab(ReportTab.HOY); vm.ir(Screen.E_REPORTES) }
+                Kpi(
+                    "Esta semana", vencer.size.toString(),
                     money(vencer.sumOf { it.cuota.monto }),
                     Modifier.weight(1f),
                 ) { vm.elegirReportTab(ReportTab.VENCER); vm.ir(Screen.E_REPORTES) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Kpi(
                     "Ingresos hoy", vm.ingresosDeHoy.toString(),
-                    "${vm.estado.visitantes.size} visitantes",
+                    "${visitantesHoy.size} visitantes",
                     Modifier.weight(1f),
                 ) { vm.ir(Screen.E_ACCESO) }
+                Kpi(
+                    "Pagos diarios", visitantesHoy.size.toString(),
+                    money(vm.totalPagosHoy),
+                    Modifier.weight(1f),
+                ) { vm.elegirReportTab(ReportTab.VISITANTES); vm.ir(Screen.E_REPORTES) }
             }
         }
 
@@ -814,23 +834,60 @@ fun ColumnScope.PantallaVisitantes(vm: ClubViewModel) {
             }
         }
 
-        Seccion("Ingresos de visitantes hoy · ${vm.estado.visitantes.size}")
+        val deHoy = vm.visitantesDeHoy
+        Seccion("Pagos diarios de hoy · ${HOY.fmtCorto()} · ${deHoy.size}")
         ColumnaGutter {
-            vm.estado.visitantes.forEach { v ->
-                Fila(forma = Pista.rCard) {
-                    Column(Modifier.weight(1f)) {
-                        Text(v.nombre, style = body(600, 15))
-                        Text(
-                            "DNI ${v.dni} · ${v.actividad} · ${v.hora}",
-                            style = body(500, 12, Pista.mut),
-                            modifier = Modifier.padding(top = 2.dp),
-                        )
-                    }
-                    Text(money(v.monto), style = disp(800, 16))
-                }
+            if (deHoy.isEmpty()) {
+                TextoVacio("Sin pagos diarios hoy.")
+            } else {
+                deHoy.forEach { v -> FilaPagoDiario(v) }
+                FilaTotal("Recaudado hoy · ${deHoy.size} pagos", vm.totalPagosHoy)
             }
         }
     }
+}
+
+/** Un pago diario: nombre, DNI · actividad · hora · medio, y el importe. */
+@Composable
+private fun FilaPagoDiario(v: Visitante, fondo: Color = Pista.sur2) {
+    Fila(fondo = fondo, forma = Pista.rCard) {
+        Column(Modifier.weight(1f)) {
+            Text(v.nombre, style = body(600, 15))
+            Text(
+                "DNI ${v.dni} · ${v.actividad} · ${v.hora} · ${v.medio}",
+                style = body(500, 12, Pista.mut),
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        Text(money(v.monto), style = disp(800, 16))
+    }
+}
+
+/** Fila de cierre de una lista de pagos: "Recaudado hoy · 3 pagos" y el total. */
+@Composable
+private fun FilaTotal(texto: String, monto: Int) {
+    Fila(fondo = Pista.acc, forma = Pista.rCard) {
+        Text(
+            texto.uppercase(),
+            style = disp(700, 12, Pista.accInk, letterSpacing = 1.sp),
+            modifier = Modifier.weight(1f),
+        )
+        Text(money(monto), style = disp(800, 18, Pista.accInk))
+    }
+}
+
+@Composable
+private fun TextoVacio(texto: String) {
+    Text(
+        texto,
+        style = body(500, 14, Pista.mut),
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(Pista.r)
+            .background(Pista.sur)
+            .padding(24.dp),
+    )
 }
 
 @Composable
@@ -890,6 +947,32 @@ fun ColumnScope.PantallaVisitanteNuevo(vm: ClubViewModel) {
                 }
             }
 
+            Text(
+                "Medio de pago".uppercase(),
+                style = disp(700, 13, Pista.mut, letterSpacing = 1.5.sp),
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MedioVisitante.entries.forEach { m ->
+                    val elegido = vm.estado.visMedio == m
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(Pista.rCard)
+                            .background(if (elegido) Pista.acc else Pista.sur)
+                            .border(2.dp, if (elegido) Pista.acc else Pista.line, Pista.rCard)
+                            .clickable { vm.elegirMedioVisitante(m) }
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            m.etiqueta.uppercase(),
+                            style = disp(700, 13, if (elegido) Pista.accInk else Pista.ink, letterSpacing = 0.8.sp),
+                        )
+                    }
+                }
+            }
+
             vm.estado.visError?.let { err ->
                 Text(
                     err,
@@ -902,6 +985,11 @@ fun ColumnScope.PantallaVisitanteNuevo(vm: ClubViewModel) {
                 )
             }
 
+            Fila(fondo = Pista.sur2, forma = Pista.rRow) {
+                Text("Fecha", style = body(500, 14, Pista.mut), modifier = Modifier.weight(1f))
+                Text(vm.hoyLabel, style = body(600, 14))
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -910,11 +998,11 @@ fun ColumnScope.PantallaVisitanteNuevo(vm: ClubViewModel) {
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Pago en caja", style = body(500, 14, Pista.mut), modifier = Modifier.weight(1f))
+                Text("Total a cobrar · pase diario", style = body(500, 14, Pista.mut), modifier = Modifier.weight(1f))
                 Text(vm.actividadElegida?.precioLabel ?: "—", style = disp(800, 20))
             }
 
-            BotonPrimario("Confirmar ingreso y cobro", vm::confirmarVisitante)
+            BotonPrimario("Registrar pago diario", vm::confirmarVisitante)
         }
     }
 }
@@ -935,21 +1023,36 @@ fun ColumnScope.PantallaReportes(vm: ClubViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = Pista.gutter, end = Pista.gutter, top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            val tab = vm.estado.reportTab
             TabReporte(
-                "Próximas a vencer", vm.porVencer.size,
-                activo = vm.estado.reportTab == ReportTab.VENCER,
+                "Vencen hoy", vm.vencenHoy.size,
+                activo = tab == ReportTab.HOY,
+                fondoActivo = Pista.warn, tintaActiva = Pista.warnInk,
+                modifier = Modifier.weight(1f),
+            ) { vm.elegirReportTab(ReportTab.HOY) }
+            TabReporte(
+                "Esta semana", vm.porVencer.size,
+                activo = tab == ReportTab.VENCER,
                 fondoActivo = Pista.acc, tintaActiva = Pista.accInk,
                 modifier = Modifier.weight(1f),
             ) { vm.elegirReportTab(ReportTab.VENCER) }
             TabReporte(
                 "En mora", vm.enMora.size,
-                activo = vm.estado.reportTab == ReportTab.MORA,
+                activo = tab == ReportTab.MORA,
                 fondoActivo = Pista.bad, tintaActiva = Pista.badInk,
                 modifier = Modifier.weight(1f),
             ) { vm.elegirReportTab(ReportTab.MORA) }
+            TabReporte(
+                "Visitantes", vm.pagosDiarios.size,
+                activo = tab == ReportTab.VISITANTES,
+                fondoActivo = Pista.cta, tintaActiva = Pista.ctaInk,
+                modifier = Modifier.weight(1f),
+            ) { vm.elegirReportTab(ReportTab.VISITANTES) }
         }
+
+        if (vm.estado.reportTab == ReportTab.VISITANTES) SelectorFecha(vm)
 
         Row(
             modifier = Modifier
@@ -963,6 +1066,18 @@ fun ColumnScope.PantallaReportes(vm: ClubViewModel) {
                 modifier = Modifier.weight(1f),
             )
             Text("Total ${vm.totalReporte}", style = disp(700, 14))
+        }
+
+        if (vm.estado.reportTab == ReportTab.VISITANTES) {
+            val pagos = vm.pagosDiarios
+            ColumnaGutter {
+                if (pagos.isEmpty()) {
+                    TextoVacio("Sin pagos diarios el ${vm.estado.fechaReporte.fmt()}.")
+                } else {
+                    pagos.forEach { v -> FilaPagoDiario(v, fondo = Pista.sur) }
+                }
+            }
+            return@CuerpoPantalla
         }
 
         ColumnaGutter {
@@ -985,19 +1100,50 @@ fun ColumnScope.PantallaReportes(vm: ClubViewModel) {
                     }
                 }
             }
-            if (vm.filasReporte.isEmpty()) {
-                Text(
-                    "Sin registros en este reporte.",
-                    style = body(500, 14, Pista.mut),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(Pista.r)
-                        .background(Pista.sur)
-                        .padding(24.dp),
-                )
-            }
+            if (vm.filasReporte.isEmpty()) TextoVacio("Sin registros en este reporte.")
         }
+    }
+}
+
+/** Día de la pestaña Visitantes: ‹ día anterior · fecha · día siguiente › (hasta hoy). */
+@Composable
+private fun SelectorFecha(vm: ClubViewModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = Pista.gutter, end = Pista.gutter, top = 14.dp)
+            .clip(Pista.rCard)
+            .background(Pista.sur)
+            .padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BotonDia("‹", habilitado = true) { vm.diaReporteAnterior() }
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(vm.fechaReporteLabel, style = body(600, 15))
+            Text(
+                vm.fechaReporteSub.uppercase(),
+                style = disp(700, 11, Pista.mut, letterSpacing = 1.sp),
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        BotonDia("›", habilitado = vm.puedeAvanzarDia) { vm.diaReporteSiguiente() }
+    }
+}
+
+@Composable
+private fun BotonDia(simbolo: String, habilitado: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(Pista.rs)
+            .background(if (habilitado) Pista.sur2 else Pista.sur)
+            .clickable(enabled = habilitado, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            simbolo,
+            style = disp(800, 26, if (habilitado) Pista.ink else Pista.ink.copy(alpha = 0.3f), lineHeight = 26.sp),
+        )
     }
 }
 
@@ -1017,7 +1163,7 @@ private fun TabReporte(
             .clip(Pista.rCard)
             .background(if (activo) fondoActivo else Pista.sur)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 14.dp),
+            .padding(horizontal = 8.dp, vertical = 14.dp),
     ) {
         Text("$cuenta", style = disp(800, 30, tinta, lineHeight = 30.sp))
         Text(

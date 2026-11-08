@@ -7,6 +7,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
@@ -218,20 +219,35 @@ class CapturasPorActivityTest {
             r.vm { ponerDniAcceso(99999999) }
             r.foto("Control de acceso", "HU-05", "DNI inexistente: no encontrado.")
             r.ir(Screen.E_VISITANTES)
-            r.foto("Visitantes", "HU-03", "Cupos del día e ingresos de visitantes.")
+            r.foto("Visitantes", "HU-03", "Cupos del día y pagos diarios de hoy, con el total recaudado.")
             r.vm { irAVisitanteNuevo() }
             r.vm { elegirActividadVisitante(actividades.first { it.id == "nat" }) }
             r.foto("Ingreso de visitante", "HU-03", "Natación sin cupo: el ingreso no puede realizarse.")
             r.vm {
                 campo { copy(vNombre = "Pedro Alonso", vDni = "33.120.455") }
                 elegirActividadVisitante(actividades.first { !it.sinCupo })
+                confirmarVisitante()
             }
-            r.foto("Ingreso de visitante", "HU-03", "Actividad con cupo: listo para confirmar el cobro.")
+            r.foto("Ingreso de visitante", "HU-03", "Validación: ese DNI ya tiene un pago diario registrado hoy.")
+            r.vm {
+                campo { copy(vNombre = "Marina López", vDni = "31.555.908") }
+                elegirMedioVisitante(MedioVisitante.DEBITO)
+            }
+            r.foto("Ingreso de visitante", "HU-03", "Actividad con cupo, medio de pago y total: listo para registrar el pago diario.")
+            r.vm { confirmarVisitante() }
+            r.foto("Visitantes", "HU-03", "Pago diario registrado: entra en la lista de hoy y suma al total.", espera = 500)
+            r.sinToast()
             r.ir(Screen.E_REPORTES)
+            r.vm { elegirReportTab(ReportTab.HOY) }
+            r.foto("Reportes", "HU-14", "Socios cuya cuota vence hoy, consultados en SQLite.")
             r.vm { elegirReportTab(ReportTab.VENCER) }
             r.foto("Reportes", "HU-14", "Cuotas que vencen en los próximos 7 días.")
             r.vm { elegirReportTab(ReportTab.MORA) }
             r.foto("Reportes", "HU-14", "Socios en mora con acceso bloqueado.")
+            r.vm { elegirReportTab(ReportTab.VISITANTES) }
+            r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de no socios de hoy, con el total del día.")
+            r.vm { diaReporteAnterior() }
+            r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de un día anterior, recuperados por fecha.")
         }
     }
 

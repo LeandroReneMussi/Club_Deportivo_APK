@@ -2,6 +2,7 @@ package ar.edu.ifts29.clubdeportivo.data.db
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import ar.edu.ifts29.clubdeportivo.data.Actividad
@@ -13,6 +14,7 @@ import ar.edu.ifts29.clubdeportivo.data.DiaRutina
 import ar.edu.ifts29.clubdeportivo.data.Ejercicio
 import ar.edu.ifts29.clubdeportivo.data.EstadoCuota
 import ar.edu.ifts29.clubdeportivo.data.FichaNutricional
+import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.Ingreso
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
@@ -40,7 +42,7 @@ import org.json.JSONObject
  * normalizado. Rutina, consultas, actividades del socio e ingresos se guardan
  * en JSON para no perder el resto de las historias al cerrar la app.
  */
-class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, VERSION) {
+class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper(context, nombre, null, VERSION) {
 
     override fun onConfigure(db: SQLiteDatabase) {
         db.setForeignKeyConstraintsEnabled(true)
@@ -164,6 +166,8 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
                 actividad TEXT NOT NULL,
                 hora TEXT NOT NULL,
                 monto INTEGER NOT NULL,
+                fecha TEXT NOT NULL,
+                medio TEXT NOT NULL,
                 orden INTEGER NOT NULL
             )
             """.trimIndent(),
@@ -214,6 +218,24 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
             db.execSQL("ALTER TABLE cuota ADD COLUMN proxima_vence TEXT")
             db.execSQL("ALTER TABLE pago ADD COLUMN comprobante TEXT NOT NULL DEFAULT ''")
         }
+        if (oldVersion < 3) {
+            // Los pagos diarios ya registrados quedan como de hoy y en efectivo.
+            db.execSQL("ALTER TABLE visitante ADD COLUMN fecha TEXT NOT NULL DEFAULT ''")
+            db.execSQL("UPDATE visitante SET fecha = ? WHERE fecha = ''", arrayOf(HOY.fmtIso()))
+            db.execSQL("ALTER TABLE visitante ADD COLUMN medio TEXT NOT NULL DEFAULT 'Efectivo'")
+            // Hasta la 1.3.x cada visitante cargado desde la app sumaba 1 a `ocupados`. Desde la
+            // 1.4.0 el cupo del día se deriva de los visitantes de hoy, así que se deshace esa
+            // suma para no contarlos dos veces. Pedro Alonso es el de la semilla: nunca sumó.
+            db.execSQL(
+                """
+                UPDATE actividad SET ocupados = MAX(0, ocupados - (
+                    SELECT COUNT(*) FROM visitante v
+                    WHERE v.actividad = actividad.nombre
+                      AND NOT (v.dni = '33.120.455' AND v.nombre = 'Pedro Alonso')
+                ))
+                """.trimIndent(),
+            )
+        }
     }
 
     fun estaVacia(): Boolean = contar("SELECT COUNT(*) FROM socio") == 0
@@ -241,23 +263,37 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
         contar("SELECT COUNT(alias) FROM usuario WHERE alias = ?", arrayOf(norm(alias)))
 
     /**
-     * Listado diario de E4: cuotas vigentes pendientes que vencen hasta [hastaIso],
-     * ya ordenadas. El reporte de la app usa una ventana de 7 días.
+     * Listado diario de E4: cuotas vigentes pendientes que vencen entre [desdeIso] y
+     * [hastaIso], ya ordenadas. Reportes la usa para "hoy" (ambas cotas iguales) y
+     * para "esta semana" (de mañana a 7 días).
      */
-    fun idsCuotasPorVencer(hastaIso: String): List<Int> {
+    fun idsCuotasPorVencer(desdeIso: String, hastaIso: String): List<Int> {
         val sql = """
             SELECT s.id
             FROM socio s
             INNER JOIN cuota c ON c.socio_id = s.id AND c.vigente = 1
-            WHERE c.estado = ? AND c.vence <= ?
+            WHERE c.estado = ? AND c.vence >= ? AND c.vence <= ?
             ORDER BY c.vence, s.nombre
         """.trimIndent()
         val ids = mutableListOf<Int>()
-        readableDatabase.rawQuery(sql, arrayOf(EstadoCuota.PENDIENTE.name, hastaIso)).use { c ->
+        readableDatabase.rawQuery(sql, arrayOf(EstadoCuota.PENDIENTE.name, desdeIso, hastaIso)).use { c ->
             while (c.moveToNext()) ids += c.getInt(0)
         }
         return ids
     }
+
+    /** Pagos diarios de no socios de un día, en el orden de la lista (más nuevos primero). */
+    fun visitantesPorFecha(fechaIso: String): List<Visitante> {
+        val lista = mutableListOf<Visitante>()
+        readableDatabase.rawQuery("SELECT * FROM visitante WHERE fecha = ? ORDER BY orden", arrayOf(fechaIso)).use { c ->
+            while (c.moveToNext()) lista += visitanteDe(c)
+        }
+        return lista
+    }
+
+    /** `COUNT` del DNI del visitante en un día: un pase diario por persona y por fecha. */
+    fun contarVisitante(dni: String, fechaIso: String): Int =
+        contar("SELECT COUNT(*) FROM visitante WHERE dni = ? AND fecha = ?", arrayOf(dni, fechaIso))
 
     /** Login: la combinación alias + clave sale de la tabla `usuario`. */
     fun autenticar(alias: String, clave: String): Rol? {
@@ -381,6 +417,8 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
                     put("actividad", v.actividad)
                     put("hora", v.hora)
                     put("monto", v.monto)
+                    put("fecha", v.fecha.fmtIso())
+                    put("medio", v.medio)
                     put("orden", i)
                 })
             }
@@ -492,15 +530,7 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
 
         val visitantes = mutableListOf<Visitante>()
         db.rawQuery("SELECT * FROM visitante ORDER BY orden", null).use { c ->
-            while (c.moveToNext()) {
-                visitantes += Visitante(
-                    nombre = c.getString(c.getColumnIndexOrThrow("nombre")),
-                    dni = c.getString(c.getColumnIndexOrThrow("dni")),
-                    actividad = c.getString(c.getColumnIndexOrThrow("actividad")),
-                    hora = c.getString(c.getColumnIndexOrThrow("hora")),
-                    monto = c.getInt(c.getColumnIndexOrThrow("monto")),
-                )
-            }
+            while (c.moveToNext()) visitantes += visitanteDe(c)
         }
 
         val ingresosHoy = mutableListOf<IngresoHoy>()
@@ -664,6 +694,16 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
         )
     }
 
+    private fun visitanteDe(c: Cursor) = Visitante(
+        nombre = c.getString(c.getColumnIndexOrThrow("nombre")),
+        dni = c.getString(c.getColumnIndexOrThrow("dni")),
+        actividad = c.getString(c.getColumnIndexOrThrow("actividad")),
+        hora = c.getString(c.getColumnIndexOrThrow("hora")),
+        monto = c.getInt(c.getColumnIndexOrThrow("monto")),
+        fecha = fecha(c.getString(c.getColumnIndexOrThrow("fecha"))),
+        medio = c.getString(c.getColumnIndexOrThrow("medio")),
+    )
+
     private fun contar(sql: String, args: Array<String>? = null): Int =
         readableDatabase.rawQuery(sql, args).use { c ->
             c.moveToFirst()
@@ -672,7 +712,7 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
 
     private companion object {
         const val NOMBRE = "club_deportivo.db"
-        const val VERSION = 2
+        const val VERSION = 3
     }
 }
 

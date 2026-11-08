@@ -4,6 +4,7 @@ import ar.edu.ifts29.clubdeportivo.data.Acceso
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
 import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
@@ -110,8 +111,10 @@ class ClubViewModelTest {
         val lucas = vm.socios.first { it.id == 2 }
         val sofia = vm.socios.first { it.id == 3 }
 
-        assertTrue("cuota al día y carnet vigente", andres.hab)
-        assertEquals("Habilitado · Cuota al día", andres.badge)
+        assertTrue("cuota pendiente sin vencer y carnet vigente", andres.hab)
+        assertEquals("la etiqueta dice que debe la cuota", "Habilitado · Cuota pendiente", andres.badge)
+        assertEquals("Habilitado · Cuota pendiente", vm.socios.first { it.id == 8 }.badge)
+        assertEquals("solo la cuota pagada está al día", "Habilitado · Cuota al día", vm.socios.first { it.id == 7 }.badge)
 
         assertTrue(lucas.mora)
         assertFalse("la mora bloquea", lucas.hab)
@@ -210,6 +213,41 @@ class ClubViewModelTest {
         assertNull("la hoja se cierra", vm.estado.sheet)
     }
 
+    @Test
+    fun `HU-04 - el cobro en caja abre la cuota siguiente y deja comprobante`() {
+        val vm = admin()
+        vm.abrirSocio(2) // Lucas: Agosto 2026, vencida el 10/08
+        vm.pedirRegistrarPago()
+        vm.estado.sheet!!.onConfirm()
+
+        val lucas = vm.socios.first { it.id == 2 }
+        assertEquals("un mes después del vencimiento original", fecha("2026-09-10"), lucas.cuota.proximaVence)
+        assertEquals("Caja", lucas.historial.first().medio)
+        assertTrue(lucas.historial.first().comprobante.startsWith("CD-2609-"))
+        assertEquals("Pagada · próxima 10/09/2026", lucas.cuotaVenceLabel)
+    }
+
+    @Test
+    fun `HU-04 - una cuota pagada no se cobra dos veces`() {
+        val vm = socio()
+        vm.ir(Screen.S_PAGAR)
+        vm.confirmarPago()
+        val historial = vm.yo.historial.size
+        val comprobante = vm.estado.comprobante
+
+        vm.ir(Screen.S_PAGAR)
+        vm.confirmarPago()
+
+        assertEquals("no suma otro pago", historial, vm.yo.historial.size)
+        assertEquals("conserva el comprobante original", comprobante, vm.estado.comprobante)
+        assertEquals("no navega al comprobante", Screen.S_PAGAR, vm.pantalla)
+
+        val adm = admin()
+        adm.abrirSocio(7) // Camila ya pagó septiembre
+        adm.pedirRegistrarPago()
+        assertNull("no abre la hoja de cobro", adm.estado.sheet)
+    }
+
     // ------------------------------------------------------------------ HU-07
 
     @Test
@@ -285,7 +323,7 @@ class ClubViewModelTest {
         assertEquals(Screen.E_SOCIO, vm.pantalla)
 
         val nuevo = vm.seleccionado
-        assertEquals("01507", nuevo.nro)
+        assertEquals("01508", nuevo.nro)
         assertEquals("Familiar", nuevo.plan)
         assertEquals(money(29_000), nuevo.cuotaMonto)
         assertEquals("18/09/2026", nuevo.socio.cuota.vence.fmt())
@@ -313,39 +351,119 @@ class ClubViewModelTest {
     }
 
     @Test
-    fun `HU-03 - con cupo se registra el ingreso y se descuenta`() {
+    fun `HU-03 - con cupo se registra el pago diario con fecha y medio`() {
         val vm = admin()
         vm.irAVisitanteNuevo()
         vm.campo { copy(vNombre = "Pedro Gómez", vDni = "30111222") }
         vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
-
+        vm.elegirMedioVisitante(MedioVisitante.DEBITO)
+        val libresAntes = vm.actividades.first { it.id == "func" }.libres
         val antes = vm.estado.visitantes.size
+
         vm.confirmarVisitante()
 
         assertEquals(antes + 1, vm.estado.visitantes.size)
-        assertEquals(15, vm.actividades.first { it.id == "func" }.act.ocupados)
-        assertEquals(6_000, vm.estado.visitantes.first().monto)
+        val v = vm.estado.visitantes.first()
+        assertEquals("30.111.222", v.dni)
+        assertEquals(HOY, v.fecha)
+        assertEquals("Débito", v.medio)
+        assertEquals(6_000, v.monto)
+        assertEquals("el cupo del día baja en uno", libresAntes - 1, vm.actividades.first { it.id == "func" }.libres)
+        assertEquals("la base de ocupados no se toca", 14, vm.estado.acts.first { it.id == "func" }.ocupados)
         assertEquals(Screen.E_VISITANTES, vm.pantalla)
+    }
+
+    @Test
+    fun `HU-03 - el cupo de hoy cuenta a los visitantes de hoy`() {
+        val vm = admin()
+        val funcional = vm.actividades.first { it.id == "func" }
+        assertEquals("14 de base + Pedro y Tomás; Julián fue el lunes", 16, funcional.ocupadosHoy)
+        assertEquals(4, funcional.libres)
+        assertEquals("9 de base + Lucía", 10, vm.actividades.first { it.id == "yoga" }.ocupadosHoy)
+        assertTrue("Natación sigue sin cupo", vm.actividades.first { it.id == "nat" }.sinCupo)
+    }
+
+    @Test
+    fun `HU-03 - un DNI ya cobrado hoy no se registra dos veces`() {
+        val vm = admin()
+        vm.irAVisitanteNuevo()
+        // Sin puntos: hoy figura como "33.120.455".
+        vm.campo { copy(vNombre = "Pedro Alonso", vDni = "33120455") }
+        vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
+        val antes = vm.estado.visitantes.size
+
+        vm.confirmarVisitante()
+
+        assertEquals(antes, vm.estado.visitantes.size)
+        assertEquals("Ya hay un pago diario registrado hoy con el DNI 33.120.455.", vm.estado.visError)
+        assertEquals(Screen.E_VISITANTE_NUEVO, vm.pantalla)
+
+        // El mismo DNI de un día anterior sí puede pagar hoy.
+        vm.campo { copy(vNombre = "Carla Núñez", vDni = "40.318.902") }
+        vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
+        vm.confirmarVisitante()
+        assertEquals(antes + 1, vm.estado.visitantes.size)
     }
 
     // ------------------------------------------------------------------ HU-14
 
     @Test
-    fun `HU-14 - los reportes separan proximas a vencer de la mora`() {
+    fun `HU-14 - vencen hoy, esta semana y mora salen de pestanias distintas`() {
         val vm = admin()
+        assertEquals("arranca en la pestaña de hoy", ReportTab.HOY, vm.estado.reportTab)
+        assertEquals(listOf(8), vm.vencenHoy.map { it.id })
+        assertEquals(money(18_500), vm.totalReporte)
 
-        // Prototipo, pantalla Reportes: «Próximas a vencer (2)», Andrés y Valentina, $30.500.
-        assertEquals(2, vm.porVencer.size)
-        assertEquals(
-            "ordenadas por vencimiento",
-            listOf(2, 4),
-            vm.porVencer.map { daysTo(it.cuota.vence) },
-        )
+        vm.elegirReportTab(ReportTab.VENCER)
+        assertEquals("ordenadas por vencimiento y sin las de hoy", listOf(2, 4), vm.porVencer.map { daysTo(it.cuota.vence) })
         assertEquals(money(18_500 + 12_000), vm.totalReporte)
 
-        assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         vm.elegirReportTab(ReportTab.MORA)
+        assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         assertEquals(money(12_000 + 17_000), vm.totalReporte)
+    }
+
+    @Test
+    fun `HU-14 - los pagos diarios se consultan por fecha`() {
+        val vm = admin()
+        vm.elegirReportTab(ReportTab.VISITANTES)
+        assertEquals(3, vm.pagosDiarios.size)
+        assertEquals(money(17_000), vm.totalReporte)
+        assertEquals("Hoy", vm.fechaReporteSub)
+        assertFalse(vm.puedeAvanzarDia)
+
+        vm.diaReporteSiguiente()
+        assertEquals("en hoy no avanza", HOY, vm.estado.fechaReporte)
+
+        vm.diaReporteAnterior()
+        assertEquals(fecha("2026-09-07"), vm.estado.fechaReporte)
+        assertEquals(listOf("Carla Núñez", "Julián Soto"), vm.pagosDiarios.map { it.nombre })
+        assertEquals(money(14_000), vm.totalReporte)
+        assertEquals("Ayer", vm.fechaReporteSub)
+        assertTrue(vm.puedeAvanzarDia)
+
+        vm.diaReporteAnterior()
+        assertTrue("un día sin pagos queda vacío", vm.pagosDiarios.isEmpty())
+        assertEquals(money(0), vm.totalReporte)
+        assertEquals("Dom 6 sep", vm.fechaReporteSub)
+    }
+
+    @Test
+    fun `HU-14 - cobrar la cuota que vence hoy la saca del listado`() {
+        val vm = admin()
+        vm.abrirSocio(8)
+        vm.pedirRegistrarPago()
+        vm.estado.sheet!!.onConfirm()
+        assertTrue(vm.vencenHoy.isEmpty())
+        assertEquals(money(0), vm.totalReporte)
+    }
+
+    @Test
+    fun `HU-14 - los ingresos de hoy cuentan solo a los visitantes de hoy`() {
+        val vm = admin()
+        assertEquals(3, vm.visitantesDeHoy.size)
+        assertEquals(17_000, vm.totalPagosHoy)
+        assertEquals("1 socio permitido + 3 visitantes", 4, vm.ingresosDeHoy)
     }
 
     @Test
@@ -362,7 +480,7 @@ class ClubViewModelTest {
         vm.elegirFiltro(FiltroSocios.MORA)
         assertEquals(2, vm.sociosFiltrados.size)
         vm.elegirFiltro(FiltroSocios.HAB)
-        assertEquals(4, vm.sociosFiltrados.size)
+        assertEquals(5, vm.sociosFiltrados.size)
     }
 
     // ------------------------------------------------------------------ HU-09

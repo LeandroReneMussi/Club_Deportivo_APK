@@ -3,11 +3,13 @@ package ar.edu.ifts29.clubdeportivo.vm
 import android.content.Context
 import ar.edu.ifts29.clubdeportivo.data.Actividad
 import ar.edu.ifts29.clubdeportivo.data.DemoData
+import ar.edu.ifts29.clubdeportivo.data.Fecha
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Socio
 import ar.edu.ifts29.clubdeportivo.data.Visitante
 import ar.edu.ifts29.clubdeportivo.data.db.ClubDbHelper
+import ar.edu.ifts29.clubdeportivo.data.fmtIso
 import ar.edu.ifts29.clubdeportivo.data.norm
 
 /** Lo que tiene que sobrevivir al pasar de una Activity a otra y al cerrar la app. */
@@ -76,8 +78,22 @@ object ClubRepositorio {
         return datos.socios.count { it.dni == dni && it.id != exceptoId }
     }
 
-    /** Ids del listado de cuotas a vencer. `null` cuando no hay base (pruebas). */
-    fun idsCuotasPorVencer(hastaIso: String): List<Int>? = db?.idsCuotasPorVencer(hastaIso)
+    /** Ids de las cuotas pendientes que vencen en el rango. `null` cuando no hay base (pruebas). */
+    fun idsCuotasPorVencer(desdeIso: String, hastaIso: String): List<Int>? =
+        db?.idsCuotasPorVencer(desdeIso, hastaIso)
+
+    /** Pagos diarios de un día. `null` cuando no hay base (pruebas). */
+    fun visitantesPorFecha(fecha: Fecha): List<Visitante>? = db?.visitantesPorFecha(fecha.fmtIso())
+
+    /**
+     * `COUNT` del DNI del visitante en el día. Con la base abierta es la consulta; sin
+     * ella, la copia en memoria (pruebas).
+     */
+    fun contarVisitante(dni: String, fecha: Fecha): Int {
+        val helper = db
+        if (helper != null) return helper.contarVisitante(dni, fecha.fmtIso())
+        return datos.visitantes.count { it.dni == dni && it.fecha == fecha }
+    }
 
     /** Alias y clave contra la tabla `usuario`, o las cuentas de demo si no hay base. */
     fun autenticar(alias: String, clave: String): Rol? {
