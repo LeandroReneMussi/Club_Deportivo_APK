@@ -1,0 +1,50 @@
+@startuml 08_actividad_alta_socio
+title Diagrama de actividad — Alta de socio (CU-04, HU-02)
+|Administrativo|
+start
+:Inicio → «Registrar socio»;
+|App · ClubViewModel|
+:irAAlta(): formulario limpio, plan Full, apto físico activo;
+|Administrativo|
+repeat
+  :Completa nombre, apellido (v1.5), DNI, correo, plan, apto físico y observaciones;
+  toca «Registrar socio»;
+  |App · ClubViewModel|
+  :confirmarAlta() → errorFormularioSocio();
+  if (¿nombre válido? (obligatorio, solo letras)) then (sí)
+    if (¿apellido válido? (v1.5)) then (sí)
+      if (¿DNI con 7 u 8 dígitos, solo números?) then (sí)
+        |ClubRepositorio · SQLite|
+        :SELECT COUNT(*) FROM socio WHERE dni = ?;
+        |App · ClubViewModel|
+        if (¿DNI único? contarDni(dni) == 0) then (sí)
+          if (¿correo válido? (nombre@dominio.com)) then (sí)
+            #palegreen:ok;
+          else (no)
+            :altaError;
+          endif
+        else (no)
+          :altaError;
+        endif
+      else (no)
+        :altaError;
+      endif
+    else (no)
+      :altaError;
+    endif
+  else (no)
+    :altaError;
+  endif
+  |Administrativo|
+repeat while (¿hubo error?) is (sí: corrige los datos) not (no)
+|App · ClubViewModel|
+:Generar N° de socio: 1500 + cantidad; si existe, el siguiente libre;
+:Emitir carnet: emitido = hoy · vence = hoy + 12 meses − 1 día;
+:Crear cuota inicial PENDIENTE: precio del plan · vence = hoy + 10 días;
+:Ficha nutricional inicial, sin rutina ni turno;
+|ClubRepositorio · SQLite|
+:guardar(estado): INSERT socio, carnet, cuota;
+|Administrativo|
+:Ve la ficha del socio · toast «Socio N° xxxxx registrado · carnet y cuota inicial generados»;
+stop
+@enduml

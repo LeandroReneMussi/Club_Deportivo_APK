@@ -1,0 +1,78 @@
+@startuml 01_casos_de_uso
+title Diagrama de casos de uso — App Club Deportivo v1.5.0
+left to right direction
+skinparam usecase {
+  BackgroundColor #E9F2FF
+  BackgroundColor<<v15>> #FFE0B2
+}
+actor "Usuario del club" as U
+actor Socio as S
+actor Administrativo as A
+actor Entrenadora as P
+actor Nutricionista as N
+S --|> U
+A --|> U
+P --|> U
+N --|> U
+rectangle "App Club Deportivo" {
+  usecase "CU-01 Iniciar sesión" as CU01
+  usecase "CU-02 Cerrar sesión" as CU02
+  usecase "CU-03 Consultar socios" as CU03
+  usecase "CU-04 Registrar socio" as CU04
+  usecase "CU-05 Editar socio" as CU05
+  usecase "CU-06 Dar de baja socio" as CU06
+  usecase "CU-07 Registrar pago de cuota en caja (v1.5)" as CU07 <<v15>>
+  usecase "CU-08 Emitir / renovar carnet" as CU08
+  usecase "CU-09 Validar ingreso por DNI (v1.5)" as CU09 <<v15>>
+  usecase "CU-10 Registrar ingreso del socio" as CU10
+  usecase "CU-11 Registrar pago diario de no socio" as CU11
+  usecase "CU-12 Consultar reportes (v1.5)" as CU12 <<v15>>
+  usecase "CU-13 Configurar parámetros del club (v1.5)" as CU13 <<v15>>
+  usecase "CU-14 Pagar cuota desde la app (v1.5)" as CU14 <<v15>>
+  usecase "CU-15 Consultar estado de cuenta y contador de días (v1.5)" as CU15 <<v15>>
+  usecase "CU-16 Ver carnet digital" as CU16
+  usecase "CU-17 Consultar rutina asignada" as CU17
+  usecase "CU-18 Solicitar turno de nutrición" as CU18
+  usecase "CU-19 Cancelar turno de nutrición" as CU19
+  usecase "CU-20 Consultar información nutricional propia" as CU20
+  usecase "CU-21 Registrar presencia propia" as CU21
+  usecase "CU-22 Registrar asistencia de clase" as CU22
+  usecase "CU-23 Crear y asignar rutina" as CU23
+  usecase "CU-24 Consultar agenda de turnos" as CU24
+  usecase "CU-25 Registrar consulta nutricional" as CU25
+  usecase "Calcular estado y deuda de la cuota:\ngracia, recargo e interés (v1.5)" as CALC <<v15>>
+}
+U --> CU01
+U --> CU02
+A --> CU03
+A --> CU04
+A --> CU05
+A --> CU06
+A --> CU07
+A --> CU08
+A --> CU09
+A --> CU11
+A --> CU12
+A --> CU13
+S --> CU14
+S --> CU15
+S --> CU16
+S --> CU17
+S --> CU18
+S --> CU19
+S --> CU20
+P --> CU21
+P --> CU22
+P --> CU23
+N --> CU24
+N --> CU25
+CU10 .> CU09 : <<extend>>
+CU07 .> CALC : <<include>>
+CU09 .> CALC : <<include>>
+CU14 .> CALC : <<include>>
+CU15 .> CALC : <<include>>
+note bottom of CU11
+  El No socio / Visitante no opera la app:
+  el Administrativo registra su pago diario.
+end note
+@enduml

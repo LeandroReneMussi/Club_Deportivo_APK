@@ -1,0 +1,42 @@
+@startuml 05_sec_pago_diario_visitante
+title Pago diario de un no socio (CU-11, HU-03): cupo del día y DNI repetido
+actor Administrativo as adm
+participant ":PantallaVisitanteNuevo\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : abre Visitantes → «Registrar visitante»
+ui -> vm : irAVisitanteNuevo()
+adm -> ui : escribe nombre y DNI, elige actividad y medio (Efectivo / Débito)
+ui -> vm : elegirActividadVisitante(actividad)
+vm -> vm : libres = cupo − (ocupados + visitantes de hoy)
+alt libres <= 0
+  vm --> ui : visError «{actividad} no tiene cupo disponible hoy (x/y). El ingreso no puede realizarse.»
+else con cupo
+  vm --> ui : visAct = actividad.id · visError = null
+end
+adm -> ui : toca «Registrar pago diario»
+ui -> vm : confirmarVisitante()
+vm -> vm : Validaciones.nombre(vNombre, « del visitante») ?: Validaciones.dni(vDni)
+alt nombre o DNI inválidos
+  vm --> ui : visError = mensaje de validación
+else sin actividad elegida
+  vm --> ui : visError «Seleccioná una actividad.»
+else actividad sin cupo
+  vm --> ui : visError «Sin cupo en {actividad}. El ingreso no puede realizarse.»
+else datos válidos y con cupo
+  vm -> repo : contarVisitante(dniFmt(dni), HOY)
+  repo -> db : SELECT COUNT(*) FROM visitante WHERE dni = ? AND fecha = ?
+  db --> repo : n
+  repo --> vm : n
+  alt n > 0
+    vm --> ui : visError «Ya hay un pago diario registrado hoy con el DNI xx.xxx.xxx.»
+  else n = 0
+    vm -> vm : visitantes = [Visitante(nombre, dni, actividad, HORA_ACTUAL, precio, HOY, medio)] + visitantes
+    vm -> repo : guardar(estado)
+    repo -> db : INSERT INTO visitante (...)
+    db --> repo : ok
+    vm --> ui : vuelve a Visitantes · toast «Pago diario registrado · $precio»
+  end
+end
+@enduml

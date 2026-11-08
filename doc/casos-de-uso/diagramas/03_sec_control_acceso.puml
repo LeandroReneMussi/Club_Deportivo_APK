@@ -1,0 +1,45 @@
+@startuml 03_sec_control_acceso
+title Control de acceso por DNI (CU-09 / CU-10, HU-05) con la regla v1.5
+actor Administrativo as adm
+participant ":PantallaAcceso\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : escribe el DNI y toca «Validar»
+ui -> vm : validarAcceso()
+vm -> vm : Validaciones.dni(campos.dniAcceso)
+alt DNI inválido
+  vm --> ui : acceso = null · toast(mensaje de validación)
+else DNI válido
+  vm -> vm : busca el socio por DNI en estado.socios
+  alt no hay socio con ese DNI
+    vm --> ui : acceso = «No encontrado» · sugiere visitante o alta
+  else existe el socio
+    vm -> sv : SocioVista(socio, estado.parametros)
+    note over sv : parámetros desde el estado (UiState.parametros), leídos de SQLite al iniciar; sin consulta por acceso
+    sv -> sv : gracia = parametros.vigenteEn(HOY).graciaDias · diasVencida · carnetVencido · recargo, interés, totalAdeudado
+    alt carnet vencido
+      sv --> vm : hab = false · «Carnet vencido el dd/mm/aaaa»
+      vm --> ui : acceso = «Denegado» (rojo)
+    else cuota pagada o d <= 0
+      sv --> vm : hab = true · tono OK (verde)
+      vm --> ui : acceso = «Permitido»: «Carnet vigente y cuota al día.» / «Carnet vigente · cuota {mes} pendiente, vence en N días.»
+    else 0 < d <= gracia (v1.5: en gracia)
+      sv --> vm : hab = true · enGracia · tono AVISO (naranja) · totalAdeudado
+      vm --> ui : acceso = «Permitido»: «Cuota {mes} vencida · quedan N días de gracia. Debe $total en recepción.»
+    else d > gracia (v1.5: mora)
+      sv --> vm : hab = false · mora · tono BLOQUEO (rojo) · totalAdeudado
+      vm --> ui : acceso = «Denegado»: «Cuota {mes} en mora: vencida hace N días · gracia de G días superada. Debe $total en recepción.»
+    end
+  end
+end
+opt acceso Permitido y no registrado
+  adm -> ui : toca «Registrar ingreso»
+  ui -> vm : registrarIngreso()
+  vm -> vm : ingresosHoy += IngresoHoy · socio.ingresos += Ingreso · acceso.registrado = true
+  vm -> repo : guardar(estado)
+  repo -> db : INSERT INTO ingreso_hoy · UPDATE socio SET ingresos_json
+  vm --> ui : toast «Ingreso registrado · nombre»
+end
+@enduml

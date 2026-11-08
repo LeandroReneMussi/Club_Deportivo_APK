@@ -1,0 +1,61 @@
+@startuml 02_clases_dominio
+title Diagrama de clases — modelo de dominio Club Deportivo v1.5.0
+skinparam classAttributeIconSize 0
+enum Rol { SOCIO; EMPLEADO; ADMIN; PROFESOR; NUTRICIONISTA }
+enum EstadoCuota { PENDIENTE; PAGADA; VENCIDA }
+class Usuario { alias: String {id}; clave: String; rol: Rol; socioId: Int [0..1] }
+class Plan { nombre: String {id}; precio: Int }
+class Socio {
+  id: Int {id}
+  nro: String {unique}
+  nombre: String  (Nombre Apellido)
+  dni: Long {unique, 7..8 dígitos}
+  email: String
+  plan: String
+  alta: Fecha
+  nac: Fecha
+  ficha: Boolean  (apto físico)
+  carnetEmitido: Fecha
+  carnetVence: Fecha
+}
+class "SocioVista(socio, parametros)" as SocioVista <<derivada>> {
+  /carnetVencido, /hab: Boolean
+  /cuotaVencida, /enGracia, /mora: Boolean (v1.5)
+  /diasVencida, /gracia, /diasDeGracia: Int (v1.5)
+  /recargo, /interes: Double · /totalAdeudado: Int (v1.5)
+  /badge, /contador: String · /tono: TonoCuota (v1.5)
+}
+class Cuota { mes: String; monto: Int; vence: Fecha; estado: EstadoCuota; proximaVence: Fecha [0..1] }
+class PagoHistorial { mes: String; monto: Int (v1.5: total cobrado); pagada: Fecha; medio: String; comprobante: String }
+class Actividad { id: String {id}; nombre: String; horario: String; cupo: Int; ocupados: Int; precio: Int; profesor: String }
+class Visitante { nombre: String; dni: String; actividad: String; hora: String; monto: Int; fecha: Fecha; medio: String }
+class "Parametros (v1.5)" as Parametros #FFE0B2 { graciaDias: Int {0..60}; recargo: Double ($ fijo, 0..1.000.000); interesMensual: Double (%, 0..100); vigenteDesde: Fecha; {static} INICIALES; List<Parametros>.vigenteEn(fecha) }
+class Rutina { nombre: String; profesor: String; actualizada: Fecha }
+class DiaRutina { tag: String; foco: String }
+class Ejercicio { nombre: String; series: Int {1..20}; reps: Int {1..100}; nota: String }
+class FichaNutricional { peso: Double; altura: Double; objetivo: String; antecedentes: String }
+class Consulta { fecha: Fecha; peso: Double; obs: String }
+class Turno { fecha: Fecha; hora: String }
+class Ingreso { fecha: String; estado: String }
+Usuario --> "1" Rol : rol
+Usuario "0..1" -- "1" Socio : cuenta de la app
+SocioVista ..> Socio : <<derive>>
+Socio "*" -- "1" Plan : plan (por nombre)
+Socio "1" *-- "1" Cuota : cuota vigente
+Cuota --> "1" EstadoCuota
+Socio "1" *-- "0..*" PagoHistorial : historial
+Socio "1" *-- "0..1" Turno : turno
+Socio "1" *-- "0..*" Ingreso : ingresos
+Socio "1" *-- "0..1" Rutina : rutina
+Rutina "1" *-- "1..*" DiaRutina : dias
+DiaRutina "1" *-- "0..*" Ejercicio : ejercicios
+Socio "1" *-- "1" FichaNutricional : nut
+FichaNutricional "1" *-- "0..*" Consulta : consultas
+Visitante "0..*" -- "1" Actividad : actividad (por nombre)
+Socio "0..*" -- "0..*" Actividad : inscriptos / actividades
+Parametros ..> Cuota : <<use>> estado derivado y deuda
+note bottom of SocioVista
+  hab = !mora && !carnetVencido. En v1.5 mora se deriva de la fecha:
+  d <= 0 pendiente; 0 < d <= graciaDias en gracia; d > graciaDias mora.
+end note
+@enduml
