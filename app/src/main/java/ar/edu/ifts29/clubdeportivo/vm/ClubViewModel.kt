@@ -455,20 +455,32 @@ class ClubViewModel : ViewModel() {
     }
 
     /**
-     * HU-04. El socio paga su cuota: queda pagada, se guarda el comprobante y se abre
-     * la cuota del mes siguiente, con vencimiento a un mes.
+     * Marca la cuota del socio como pagada, abre la del mes siguiente (vence un mes después
+     * del vencimiento original) y antepone el pago al historial con su comprobante.
+     * Devuelve el comprobante, o `null` si la cuota ya estaba pagada: una cuota no se cobra
+     * dos veces, ni desde la app ni en caja.
+     */
+    private fun pagarCuota(id: Int, medio: String): String? {
+        val s = estado.socios.firstOrNull { it.id == id } ?: return null
+        if (s.cuota.estado == EstadoCuota.PAGADA) return null
+        val comprobante = "CD-2609-" + (1000..9999).random()
+        actualizarSocio(id) { x ->
+            x.copy(
+                cuota = x.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = x.cuota.vence.masMeses(1)),
+                historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, medio, comprobante)) + x.historial,
+            )
+        }
+        return comprobante
+    }
+
+    /**
+     * HU-04. El socio paga su cuota desde la app: queda pagada, se guarda el comprobante y
+     * se abre la cuota del mes siguiente. Si ya estaba pagada, avisa y no navega.
      */
     fun confirmarPago() {
-        val medio = estado.medio
-        val comprobante = "CD-2609-" + (1000..9999).random()
-        actualizarSocio(ID_SOCIO_APP) { s ->
-            val proxima = s.cuota.vence.masMeses(1)
-            s.copy(
-                cuota = s.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = proxima),
-                historial = listOf(
-                    PagoHistorial(s.cuota.mes, s.cuota.monto, HOY, medio.etiqueta, comprobante),
-                ) + s.historial,
-            )
+        val comprobante = pagarCuota(ID_SOCIO_APP, estado.medio.etiqueta) ?: run {
+            toast("La cuota de ${yo.cuota.mes} ya está pagada.")
+            return
         }
         estado = estado.copy(
             stack = estado.stack.dropLast(1) + Screen.S_PAGO_OK,
@@ -528,13 +540,20 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(reportTab = t)
     }
 
-    /** Cobro en caja desde la ficha del socio (HU-04 del lado del mostrador). */
+    /**
+     * Cobro en caja desde la ficha del socio (HU-04 del lado del mostrador). Hace lo mismo
+     * que el pago desde la app: cuota siguiente y comprobante. Una cuota ya pagada no abre la hoja.
+     */
     fun pedirRegistrarPago() {
         val s = seleccionado
+        if (s.cuotaPagada) {
+            toast("La cuota de ${s.cuota.mes} ya está pagada.")
+            return
+        }
         estado = estado.copy(
             sheet = SheetData(
                 titulo = "Registrar pago",
-                texto = "Cobro en caja. Al confirmar, la cuota queda pagada y el socio habilitado.",
+                texto = "Cobro en caja. Al confirmar, la cuota queda pagada, se abre la del mes siguiente y el socio queda habilitado.",
                 filas = listOf(
                     "Socio" to s.nombre,
                     "Cuota" to s.cuota.mes,
@@ -542,12 +561,7 @@ class ClubViewModel : ViewModel() {
                 ),
                 cta = "Cobrar ${s.cuotaMonto}",
                 onConfirm = {
-                    actualizarSocio(s.id) { x ->
-                        x.copy(
-                            cuota = x.cuota.copy(estado = EstadoCuota.PAGADA),
-                            historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, "Caja")) + x.historial,
-                        )
-                    }
+                    pagarCuota(s.id, "Caja")
                     cerrarSheet()
                     toast("Pago registrado · socio habilitado")
                 },

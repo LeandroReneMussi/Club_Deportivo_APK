@@ -211,6 +211,41 @@ class ClubViewModelTest {
         assertNull("la hoja se cierra", vm.estado.sheet)
     }
 
+    @Test
+    fun `HU-04 - el cobro en caja abre la cuota siguiente y deja comprobante`() {
+        val vm = admin()
+        vm.abrirSocio(2) // Lucas: Agosto 2026, vencida el 10/08
+        vm.pedirRegistrarPago()
+        vm.estado.sheet!!.onConfirm()
+
+        val lucas = vm.socios.first { it.id == 2 }
+        assertEquals("un mes después del vencimiento original", fecha("2026-09-10"), lucas.cuota.proximaVence)
+        assertEquals("Caja", lucas.historial.first().medio)
+        assertTrue(lucas.historial.first().comprobante.startsWith("CD-2609-"))
+        assertEquals("Pagada · próxima 10/09/2026", lucas.cuotaVenceLabel)
+    }
+
+    @Test
+    fun `HU-04 - una cuota pagada no se cobra dos veces`() {
+        val vm = socio()
+        vm.ir(Screen.S_PAGAR)
+        vm.confirmarPago()
+        val historial = vm.yo.historial.size
+        val comprobante = vm.estado.comprobante
+
+        vm.ir(Screen.S_PAGAR)
+        vm.confirmarPago()
+
+        assertEquals("no suma otro pago", historial, vm.yo.historial.size)
+        assertEquals("conserva el comprobante original", comprobante, vm.estado.comprobante)
+        assertEquals("no navega al comprobante", Screen.S_PAGAR, vm.pantalla)
+
+        val adm = admin()
+        adm.abrirSocio(7) // Camila ya pagó septiembre
+        adm.pedirRegistrarPago()
+        assertNull("no abre la hoja de cobro", adm.estado.sheet)
+    }
+
     // ------------------------------------------------------------------ HU-07
 
     @Test
