@@ -26,10 +26,10 @@ Cuentas: `Andres / Socio123` (socio) · `Jorge / Admin123` (administrativo) · `
 
 - [ ] Avatar → **Perfil → Configuración del club**: mostrar gracia 5 días, recargo 0, interés 0. Explicar: lo fija el administrador y rige desde hoy; el historial queda por fecha.
 - [ ] Cambiar a **gracia 30, recargo 500, interés 3** → Guardar. Mostrar el historial con la fila "Vigente".
-- [ ] Socios → **Lucas Benítez**: etiqueta naranja "Habilitado · En gracia · queda 1 día", deuda **$12.848 = cuota $12.000 + recargo $500 + interés $348**.
+- [ ] Socios → **Lucas Benítez**: etiqueta naranja "Habilitado · En gracia · queda 1 día", deuda **$12.512 = cuota $12.000 + recargo $500 + interés $12**. Decir: el interés corre por día **desde la fecha en que se fijó** (hoy devenga un día al 3 % mensual: $12.000 × 3 % / 30); no se aplica hacia atrás, y cada cambio de tasa queda en el historial con su fecha.
 - [ ] Acceso → DNI `40120334`: **Permitido** con aviso de gracia y deuda.
 - [ ] Volver a Perfil, poner **gracia 5** → Guardar. Acceso → `40120334`: **Denegado**, "gracia de 5 días superada", deuda con recargo e interés.
-- [ ] Ficha de Lucas → **Registrar pago en caja**: cobra el total ($12.848), la cuota queda pagada, se abre la del mes siguiente y queda habilitado. Tocar de nuevo "Registrar pago": aviso de cuota ya pagada (no se cobra dos veces).
+- [ ] Ficha de Lucas → **Registrar pago en caja**: cobra el total ($12.512), la cuota queda pagada, se abre la del mes siguiente y queda habilitado. Tocar de nuevo "Registrar pago": aviso de cuota ya pagada (no se cobra dos veces).
 
 ## 4. Consultar y listar · consignas 4 y 5 (1,5 min)
 
