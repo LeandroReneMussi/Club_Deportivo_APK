@@ -248,6 +248,31 @@ class CapturasPorActivityTest {
             r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de no socios de hoy, con el total del día.")
             r.vm { diaReporteAnterior() }
             r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de un día anterior, recuperados por fecha.")
+            // v1.5: parámetros del club, gracia y deuda.
+            r.ir(Screen.PERFIL)
+            r.foto("Perfil · Configuración del club", "v1.5", "El administrador fija gracia, recargo e interés; cada cambio queda en el historial con su fecha.")
+            r.vm {
+                prepararParametros()
+                campo { copy(pGracia = "30", pRecargo = "500", pInteres = "3") }
+                guardarParametros()
+            }
+            r.foto("Perfil · Configuración del club", "v1.5", "Parámetros guardados: rigen desde hoy para todos los socios.", espera = 500)
+            r.sinToast()
+            r.vm { abrirSocio(2) }
+            r.foto("Ficha del socio", "HU-04 / v1.5", "Lucas, vencido hace 29 días con 30 de gracia: habilitado en gracia; la deuda suma recargo e interés.")
+            r.ir(Screen.E_ACCESO)
+            r.vm { ponerDniAcceso(40120334) }
+            r.foto("Control de acceso", "HU-05 / v1.5", "En gracia: acceso permitido con aviso del plazo y de la deuda.")
+            r.vm {
+                campo { copy(pGracia = "5") }
+                guardarParametros()
+                ponerDniAcceso(40120334)
+            }
+            r.foto("Control de acceso", "HU-05 / v1.5", "Gracia de 5 días superada: acceso denegado; la deuda incluye recargo e interés.", espera = 500)
+            r.sinToast()
+            r.ir(Screen.E_REPORTES)
+            r.vm { elegirReportTab(ReportTab.MORA) }
+            r.foto("Reportes", "HU-14 / v1.5", "En mora: total adeudado con recargo e interés, y parámetros vigentes.")
         }
     }
 

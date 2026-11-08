@@ -11,7 +11,11 @@ el listado se escriben en `club_deportivo.db` y siguen ahí al cerrar la app. La
 original. No hay backend ni pasarela de pago: el pago se registra en la base (o en
 memoria, en la web), tal como se definió en el diseño. La **v1.4.0** suma el listado de
 cuotas que vencen hoy, el pago diario de visitantes con fecha y medio de pago (consultable
-por día en Reportes) y pruebas instrumentadas de SQLite.
+por día en Reportes) y pruebas instrumentadas de SQLite. La **v1.5.0** usa la fecha real del
+dispositivo (los datos de demo se generan relativos a hoy), separa nombre y apellido en el alta y
+agrega los parámetros del club que fija el administrador: días de gracia, recargo e interés con
+vigencia por fecha. La cuota vencida pasa por un período de gracia antes de bloquear el acceso, y la
+deuda suma recargo e interés calculados por tramos según el parámetro vigente en cada período.
 
 ---
 
@@ -30,7 +34,7 @@ El proyecto no trae el SDK de Android; hace falta tenerlo instalado.
 ```bash
 ./gradlew assembleDebug     # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk
-./gradlew test              # 65 pruebas unitarias de la lógica
+./gradlew test              # 70 pruebas unitarias de la lógica
 ./gradlew connectedDebugAndroidTest   # capturas por Activity en un emulador
 ```
 
@@ -179,7 +183,7 @@ Andrés por vencer en dos días. Está en un solo lugar, `data/Format.kt`.
 
 ## Pruebas
 
-`./gradlew test` corre 65 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
+`./gradlew test` corre 70 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
 (`ClubViewModelTest`) y las utilidades de fecha e importe (`FormatoTest`). Cubren la
 regla central de habilitación, los cuatro casos del control de acceso, las validaciones
 de alta, el bloqueo por cupo, el bloqueo de rutina por mora o falta de apto físico y el
@@ -190,7 +194,7 @@ teléfono conectado:
 `gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest`.
 Cubren la persistencia al cerrar y reabrir la app, el listado de cuotas que vencen hoy y en
 la semana, los pagos diarios por fecha, el DNI repetido en el día y la migración de la base
-de la versión 2 a la 3.
+de la versión 2 a la 3, los parámetros del club con su vigencia y la migración a la versión 4.
 
 ---
 
@@ -201,8 +205,8 @@ de la versión 2 a la 3.
 | HU-01 | Inicio de sesión por rol | `PantallaLogin` |
 | HU-02 | Registrar socio (carnet + cuota inicial + ficha médica) | `PantallaAlta` |
 | HU-03 | Visitantes: pago diario con fecha, medio y control de cupo del día | `PantallaVisitantes`, `PantallaVisitanteNuevo` |
-| HU-04 | Consultar y pagar cuota | `PantallaCuotas`, `PantallaPagar`, ficha del socio |
-| HU-05 | Control de acceso por DNI | `PantallaAcceso` |
+| HU-04 | Consultar y pagar cuota; gracia, recargo e interés configurables (v1.5) | `PantallaCuotas`, `PantallaPagar`, ficha del socio |
+| HU-05 | Control de acceso por DNI, con período de gracia configurable (v1.5) | `PantallaAcceso` |
 | HU-06 | Carnet digital | `PantallaCarnet` |
 | HU-07 | Emitir / renovar carnet | `PantallaFichaSocio` |
 | HU-08 | Registrar asistencia | `PantallaAsistencia` |
