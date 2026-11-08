@@ -186,6 +186,10 @@ data class Campos(
     val nPeso: String = "",
     val nAltura: String = "",
     val nObs: String = "",
+    /** Configuración del club (v1.5): gracia en días, recargo en pesos e interés mensual en %. */
+    val pGracia: String = "",
+    val pRecargo: String = "",
+    val pInteres: String = "",
 )
 
 enum class FiltroSocios(val label: String) { TODOS("Todos"), HAB("Habilitados"), MORA("En mora") }
@@ -201,3 +205,26 @@ enum class MedioPago(val nombre: String, val sub: String, val etiqueta: String) 
 
 /** Medio con que el mostrador cobra el pase diario de un visitante. */
 enum class MedioVisitante(val etiqueta: String) { EFECTIVO("Efectivo"), DEBITO("Débito") }
+
+/**
+ * Parámetros del club que fija el administrador (v1.5): días de gracia después del
+ * vencimiento, recargo fijo en pesos por pagar fuera de término e interés mensual (%)
+ * prorrateado por día. Cada guardado rige desde [vigenteDesde]; el historial se conserva.
+ */
+data class Parametros(
+    val graciaDias: Int,
+    val recargo: Double,
+    val interesMensual: Double,
+    val vigenteDesde: Fecha,
+) {
+    companion object {
+        /** Semilla: 5 días de gracia, sin recargo ni interés, vigente desde el día de la instalación. */
+        val INICIALES: Parametros get() = Parametros(5, 0.0, 0.0, HOY)
+    }
+}
+
+/** El parámetro que regía en [fecha]: el más nuevo con vigencia hasta esa fecha; antes del primero, el más antiguo. */
+fun List<Parametros>.vigenteEn(fecha: Fecha): Parametros {
+    val ordenados = sortedByDescending { it.vigenteDesde }
+    return ordenados.firstOrNull { it.vigenteDesde <= fecha } ?: ordenados.last()
+}

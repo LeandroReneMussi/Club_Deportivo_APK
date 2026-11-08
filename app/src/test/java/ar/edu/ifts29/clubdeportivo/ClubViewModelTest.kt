@@ -14,8 +14,10 @@ import ar.edu.ifts29.clubdeportivo.data.daysTo
 import ar.edu.ifts29.clubdeportivo.data.fecha
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.vigenteEn
 import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
 import ar.edu.ifts29.clubdeportivo.vm.ClubViewModel
+import ar.edu.ifts29.clubdeportivo.vm.TonoCuota
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -140,9 +142,93 @@ class ClubViewModelTest {
             vm.socios.first { it.id == 1 }.cuotaVenceLabel,
         )
         assertEquals(
-            "Cuota Agosto 2026 vencida hace 29 días",
+            "En mora · cuota Agosto 2026 vencida hace 29 días · debe $12.000",
             vm.socios.first { it.id == 2 }.motivo,
         )
+    }
+
+    // ------------------------------------------------------------------ v1.5 · gracia, recargo e interés
+
+    @Test
+    fun `la gracia configurada decide si la cuota vencida bloquea`() {
+        val vm = admin()
+        assertEquals("por defecto 5 días", 5, vm.parametros.graciaDias)
+        val lucasAntes = vm.socios.first { it.id == 2 }
+        assertTrue("29 días vencida supera la gracia", lucasAntes.mora)
+        assertFalse(lucasAntes.hab)
+
+        vm.prepararParametros()
+        vm.campo { copy(pGracia = "30") }
+        vm.guardarParametros()
+
+        val lucas = vm.socios.first { it.id == 2 }
+        assertTrue(lucas.enGracia)
+        assertTrue(lucas.hab)
+        assertFalse(lucas.mora)
+        assertEquals("Habilitado · En gracia", lucas.badge)
+        assertEquals("En gracia", lucas.badgeCorto)
+        assertEquals("Queda 1 día de gracia", lucas.contador)
+        assertEquals(TonoCuota.AVISO, lucas.tono)
+        assertEquals("Tomás (60 días) sigue en mora", setOf(6), vm.enMora.map { it.id }.toSet())
+
+        vm.ponerDniAcceso(40_120_334L)
+        assertEquals("Permitido", vm.estado.acceso?.titulo)
+        assertTrue(vm.estado.acceso!!.detalle.contains("gracia"))
+    }
+
+    @Test
+    fun `el recargo y el interes vigentes se suman a la deuda del moroso`() {
+        val vm = admin()
+        vm.prepararParametros()
+        vm.campo { copy(pGracia = "5", pRecargo = "500", pInteres = "3") }
+        vm.guardarParametros()
+
+        val lucas = vm.socios.first { it.id == 2 } // $12.000, vencida hace 29 días
+        assertEquals(500.0, lucas.recargo, 0.001)
+        assertEquals("12.000 × 3% / 30 × 29 días", 348.0, lucas.interes, 0.5)
+        assertEquals(12_848, lucas.totalAdeudado)
+        assertEquals(TonoCuota.BLOQUEO, lucas.tono)
+        assertEquals("Vencida hace 29 días · gracia de 5 días superada", lucas.contador)
+
+        val tomas = vm.socios.first { it.id == 6 } // $17.000, vencida hace 60 días → $1.020 de interés
+        assertEquals(18_520, tomas.totalAdeudado)
+        vm.elegirReportTab(ReportTab.MORA)
+        assertEquals(money(12_848 + 18_520), vm.totalReporte)
+
+        vm.abrirSocio(2)
+        vm.pedirRegistrarPago()
+        vm.estado.sheet!!.onConfirm()
+        val pagado = vm.socios.first { it.id == 2 }
+        assertTrue(pagado.cuotaPagada)
+        assertEquals("se cobra el total con recargo e interés", 12_848, pagado.historial.first().monto)
+        assertTrue(pagado.hab)
+    }
+
+    @Test
+    fun `los parametros guardan su vigencia y el interes se calcula por tramos`() {
+        val vm = admin()
+        vm.prepararParametros()
+        vm.campo { copy(pInteres = "2") }
+        vm.guardarParametros()
+        assertEquals("guardar de nuevo el mismo día reemplaza", 1, vm.historialParametros.size)
+        assertNull(vm.estado.paramError)
+
+        Reloj.fijar(Fecha(2026, 9, 9))
+        vm.campo { copy(pInteres = "4") }
+        vm.guardarParametros()
+        assertEquals(2, vm.historialParametros.size)
+        assertEquals(4.0, vm.parametros.interesMensual, 0.0)
+        assertEquals(2.0, vm.estado.parametros.vigenteEn(Fecha(2026, 9, 8)).interesMensual, 0.0)
+        assertEquals("antes del primero rige el más antiguo", 2.0, vm.estado.parametros.vigenteEn(Fecha(2025, 1, 1)).interesMensual, 0.0)
+
+        // Lucas: 30 días vencida; 29 días al 2 % y 1 día al 4 %, sobre $12.000.
+        val lucas = vm.socios.first { it.id == 2 }
+        assertEquals(12_000 * 0.02 / 30 * 29 + 12_000 * 0.04 / 30 * 1, lucas.interes, 0.5)
+
+        vm.campo { copy(pGracia = "x") }
+        vm.guardarParametros()
+        assertNotNull("valida el formulario", vm.estado.paramError)
+        assertEquals("con error no guarda nada", 2, vm.historialParametros.size)
     }
 
     // ------------------------------------------------------------------ HU-05
