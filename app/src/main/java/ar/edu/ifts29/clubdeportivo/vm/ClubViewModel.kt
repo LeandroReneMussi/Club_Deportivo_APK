@@ -67,7 +67,9 @@ data class UiState(
     val editEj: List<DiaRutina>? = null,
     val slot: String? = null,
     val filtro: FiltroSocios = FiltroSocios.TODOS,
-    val reportTab: ReportTab = ReportTab.VENCER,
+    val reportTab: ReportTab = ReportTab.HOY,
+    /** Día que muestra la pestaña Visitantes de Reportes; arranca en hoy. */
+    val fechaReporte: Fecha = HOY,
     val claseId: String = "musc",
     val asistencia: Map<String, List<Int>> = mapOf("musc" to listOf(4, 7), "func" to emptyList()),
     val profePresente: Boolean = false,
@@ -286,37 +288,82 @@ class ClubViewModel : ViewModel() {
         get() = actividades.firstOrNull { it.id == estado.visAct }
 
     /**
-     * Cuotas pendientes que vencen dentro de la semana (HU-14).
-     * Con la base abierta el filtro sale del `SELECT` del listado diario.
+     * Cuotas pendientes que vencen entre [desde] y [hasta], ordenadas por vencimiento (HU-14).
+     * Con la base abierta el filtro sale del `SELECT` del listado diario; sin base, de la
+     * copia en memoria.
      */
-    val porVencer: List<SocioVista>
-        get() {
-            val ids = ClubRepositorio.idsCuotasPorVencer(HOY.fmtIso(), HOY.masDias(7).fmtIso())
-            val lista = if (ids == null) {
-                socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
-            } else {
-                val pedidas = ids.toSet()
-                socios.filter { it.id in pedidas }
-            }
-            return lista.sortedBy { daysTo(it.cuota.vence) }
+    private fun pendientesEntre(desde: Fecha, hasta: Fecha): List<SocioVista> {
+        val ids = ClubRepositorio.idsCuotasPorVencer(desde.fmtIso(), hasta.fmtIso())
+        val lista = if (ids == null) {
+            socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && it.cuota.vence in desde..hasta }
+        } else {
+            val pedidas = ids.toSet()
+            socios.filter { it.id in pedidas }
         }
+        return lista.sortedBy { daysTo(it.cuota.vence) }
+    }
+
+    /** Socios cuya cuota vence en la fecha (consigna, punto 5). */
+    val vencenHoy: List<SocioVista> get() = pendientesEntre(HOY, HOY)
+
+    /** Cuotas que vencen de mañana a 7 días: la semana, sin las de hoy. */
+    val porVencer: List<SocioVista> get() = pendientesEntre(HOY.masDias(1), HOY.masDias(7))
 
     val enMora: List<SocioVista> get() = socios.filter { it.mora }
 
-    val filasReporte: List<SocioVista>
-        get() = if (estado.reportTab == ReportTab.VENCER) porVencer else enMora
+    val visitantesDeHoy: List<Visitante> get() = estado.visitantes.filter { it.fecha == HOY }
 
-    val tituloReporte: String
-        get() = if (estado.reportTab == ReportTab.VENCER) {
-            "Cuotas que vencen en 7 días"
-        } else {
-            "Socios en mora · acceso bloqueado"
+    /** Pagos diarios de no socios del día elegido en Reportes. */
+    val pagosDiarios: List<Visitante>
+        get() = ClubRepositorio.visitantesPorFecha(estado.fechaReporte)
+            ?: estado.visitantes.filter { it.fecha == estado.fechaReporte }
+
+    val totalPagosDiarios: Int get() = pagosDiarios.sumOf { it.monto }
+
+    val totalPagosHoy: Int get() = visitantesDeHoy.sumOf { it.monto }
+
+    val filasReporte: List<SocioVista>
+        get() = when (estado.reportTab) {
+            ReportTab.HOY -> vencenHoy
+            ReportTab.VENCER -> porVencer
+            ReportTab.MORA -> enMora
+            ReportTab.VISITANTES -> emptyList()
         }
 
-    val totalReporte: String get() = money(filasReporte.sumOf { it.cuota.monto })
+    val tituloReporte: String
+        get() = when (estado.reportTab) {
+            ReportTab.HOY -> "Cuotas que vencen hoy · ${HOY.fmtCorto()}"
+            ReportTab.VENCER -> "Cuotas que vencen en 7 días"
+            ReportTab.MORA -> "Socios en mora · acceso bloqueado"
+            ReportTab.VISITANTES -> "Pagos diarios de no socios"
+        }
+
+    val totalReporte: String
+        get() = money(
+            if (estado.reportTab == ReportTab.VISITANTES) totalPagosDiarios else filasReporte.sumOf { it.cuota.monto },
+        )
+
+    val puedeAvanzarDia: Boolean get() = estado.fechaReporte < HOY
+
+    val fechaReporteLabel: String get() = estado.fechaReporte.fmtLargo().replaceFirstChar { it.uppercase() }
+
+    val fechaReporteSub: String
+        get() = when (daysTo(estado.fechaReporte)) {
+            0 -> "Hoy"
+            -1 -> "Ayer"
+            else -> estado.fechaReporte.fmtCorto()
+        }
+
+    fun diaReporteAnterior() {
+        estado = estado.copy(fechaReporte = estado.fechaReporte.masDias(-1))
+    }
+
+    fun diaReporteSiguiente() {
+        if (puedeAvanzarDia) estado = estado.copy(fechaReporte = estado.fechaReporte.masDias(1))
+    }
 
     val ingresosDeHoy: Int
-        get() = estado.ingresosHoy.count { it.ok } + estado.visitantes.size
+        get() = estado.ingresosHoy.count { it.ok } + visitantesDeHoy.size
 
     /** Las clases de la entrenadora logueada. */
     val clases: List<ClaseVista>

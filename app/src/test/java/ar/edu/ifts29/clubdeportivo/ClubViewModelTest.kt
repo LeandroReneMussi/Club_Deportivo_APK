@@ -331,22 +331,62 @@ class ClubViewModelTest {
     // ------------------------------------------------------------------ HU-14
 
     @Test
-    fun `HU-14 - los reportes separan proximas a vencer de la mora`() {
+    fun `HU-14 - vencen hoy, esta semana y mora salen de pestanias distintas`() {
         val vm = admin()
+        assertEquals("arranca en la pestaña de hoy", ReportTab.HOY, vm.estado.reportTab)
+        assertEquals(listOf(8), vm.vencenHoy.map { it.id })
+        assertEquals(money(18_500), vm.totalReporte)
 
-        // Martín vence hoy; Andrés y Valentina en la semana. (La separación "hoy" / "semana"
-        // llega con la pestaña Vencen hoy.)
-        assertEquals(3, vm.porVencer.size)
-        assertEquals(
-            "ordenadas por vencimiento",
-            listOf(0, 2, 4),
-            vm.porVencer.map { daysTo(it.cuota.vence) },
-        )
-        assertEquals(money(18_500 + 18_500 + 12_000), vm.totalReporte)
+        vm.elegirReportTab(ReportTab.VENCER)
+        assertEquals("ordenadas por vencimiento y sin las de hoy", listOf(2, 4), vm.porVencer.map { daysTo(it.cuota.vence) })
+        assertEquals(money(18_500 + 12_000), vm.totalReporte)
 
-        assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         vm.elegirReportTab(ReportTab.MORA)
+        assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         assertEquals(money(12_000 + 17_000), vm.totalReporte)
+    }
+
+    @Test
+    fun `HU-14 - los pagos diarios se consultan por fecha`() {
+        val vm = admin()
+        vm.elegirReportTab(ReportTab.VISITANTES)
+        assertEquals(3, vm.pagosDiarios.size)
+        assertEquals(money(17_000), vm.totalReporte)
+        assertEquals("Hoy", vm.fechaReporteSub)
+        assertFalse(vm.puedeAvanzarDia)
+
+        vm.diaReporteSiguiente()
+        assertEquals("en hoy no avanza", HOY, vm.estado.fechaReporte)
+
+        vm.diaReporteAnterior()
+        assertEquals(fecha("2026-09-07"), vm.estado.fechaReporte)
+        assertEquals(listOf("Carla Núñez", "Julián Soto"), vm.pagosDiarios.map { it.nombre })
+        assertEquals(money(14_000), vm.totalReporte)
+        assertEquals("Ayer", vm.fechaReporteSub)
+        assertTrue(vm.puedeAvanzarDia)
+
+        vm.diaReporteAnterior()
+        assertTrue("un día sin pagos queda vacío", vm.pagosDiarios.isEmpty())
+        assertEquals(money(0), vm.totalReporte)
+        assertEquals("Dom 6 sep", vm.fechaReporteSub)
+    }
+
+    @Test
+    fun `HU-14 - cobrar la cuota que vence hoy la saca del listado`() {
+        val vm = admin()
+        vm.abrirSocio(8)
+        vm.pedirRegistrarPago()
+        vm.estado.sheet!!.onConfirm()
+        assertTrue(vm.vencenHoy.isEmpty())
+        assertEquals(money(0), vm.totalReporte)
+    }
+
+    @Test
+    fun `HU-14 - los ingresos de hoy cuentan solo a los visitantes de hoy`() {
+        val vm = admin()
+        assertEquals(3, vm.visitantesDeHoy.size)
+        assertEquals(17_000, vm.totalPagosHoy)
+        assertEquals("1 socio permitido + 3 visitantes", 4, vm.ingresosDeHoy)
     }
 
     @Test
