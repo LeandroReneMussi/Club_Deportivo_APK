@@ -1,0 +1,25 @@
+@startuml sec_cu08_carnet
+title CU-08: Emitir / renovar carnet
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaFichaSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Renovar carnet» (vencido) o «Reemitir carnet» (vigente)
+ui -> vm : pedirRenovarCarnet()
+vm -> vm : desde = HOY · hasta = HOY + 1 año − 1 día · título = seleccionado.carnetAccion
+vm --> ui : hoja: Socio · Nueva vigencia {desde} → {hasta} · CTA «Emitir carnet»
+alt confirma «Emitir carnet»
+  ui -> vm : sheet.onConfirm()
+  vm -> vm : actualizarSocio(id): carnetEmitido = desde · carnetVence = hasta
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: carnet
+  db --> repo : ok
+  vm --> ui : cerrarSheet() · toast «Carnet emitido · vigente hasta {hasta}»
+else cancela
+  ui -> vm : cerrarSheet()
+  vm --> ui : el carnet no cambia
+end
+@enduml

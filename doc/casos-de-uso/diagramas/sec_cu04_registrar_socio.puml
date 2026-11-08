@@ -1,0 +1,33 @@
+@startuml sec_cu04_registrar_socio
+title CU-04: Registrar socio
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaAlta\n(E_ALTA)\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Registrar socio» en el Inicio
+ui -> vm : irAAlta()
+vm --> ui : formulario limpio · plan Full · apto físico = true
+adm -> ui : completa nombre, apellido, DNI, correo, plan, apto y observaciones y toca «Registrar socio»
+ui -> vm : confirmarAlta()
+vm -> vm : errorFormularioSocio(): nombrePropio(nombre) ?: nombrePropio(apellido) ?: dni ?: email
+alt alguna validación de formato falla
+  vm --> ui : altaError: «Ingresá el nombre.» / «El apellido solo puede contener letras y espacios.» / «El DNI debe tener 7 u 8 dígitos.» / «Ingresá el correo electrónico.» …
+else formato válido
+  vm -> repo : contarDni(dni, null)
+  repo -> db : SELECT COUNT(dni) FROM socio WHERE dni = ?
+  db --> repo : n
+  repo --> vm : n
+  alt n > 0 (DNI ya registrado)
+    vm --> ui : altaError «Ya existe un socio con ese DNI.»
+  else n = 0
+    vm -> vm : Socio(id = máx + 1, nro = proximoNroSocio(), carnet hoy → hoy + 12 meses − 1 día, Cuota(mes, precio del plan, vence hoy + 10 días, PENDIENTE), FichaNutricional inicial)
+    vm -> repo : guardar(estado)  (setter de estado)
+    repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio, carnet, cuota
+    db --> repo : ok
+    vm --> ui : stack = [E_SOCIOS, E_SOCIO] · toast «Socio N° xxxxx registrado · carnet y cuota inicial generados»
+  end
+end
+@enduml

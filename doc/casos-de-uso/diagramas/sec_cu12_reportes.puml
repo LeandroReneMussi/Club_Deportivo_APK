@@ -1,0 +1,36 @@
+@startuml sec_cu12_reportes
+title CU-12: Consultar reportes
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaReportes\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : abre Reportes y elige una pestaña
+ui -> vm : elegirReportTab(HOY | VENCER | MORA | VISITANTES)
+alt Vencen hoy / Esta semana
+  vm -> repo : idsCuotasPorVencer(desde, hasta)
+  repo -> db : SELECT s.id FROM socio s JOIN cuota c (vigente = 1) WHERE c.estado = 'PENDIENTE' AND c.vence BETWEEN ? AND ? ORDER BY c.vence, s.nombre
+  db --> repo : ids
+  repo --> vm : ids → filasReporte ordenadas por vencimiento
+else En mora
+  vm -> sv : enMora = socios.filter { mora }
+  sv --> vm : totalAdeudado de cada uno
+  vm --> ui : filas con total adeudado · «Rige: gracia … recargo … interés … desde dd/mm/aaaa»
+else Visitantes
+  vm -> repo : visitantesPorFecha(fechaReporte)
+  repo -> db : SELECT * FROM visitante WHERE fecha = ? ORDER BY orden
+  db --> repo : pagos del día
+  repo --> vm : pagosDiarios
+  opt navega de día
+    ui -> vm : diaReporteAnterior() / diaReporteSiguiente() (solo si fechaReporte < HOY)
+  end
+end
+alt la pestaña no tiene filas
+  vm --> ui : «Sin registros en este reporte.» / «Sin pagos diarios el dd/mm/aaaa.» · Total $0
+else hay filas
+  vm --> ui : filas + «Total {totalReporte}»; tocar una fila abre la ficha del socio (abrirSocio)
+end
+@enduml

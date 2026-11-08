@@ -380,6 +380,51 @@ stop
 @enduml
 """
 
+
+# ---- secuencias por caso de uso (generadas desde cu_secuencias.py)
+import cu_secuencias as _S
+
+
+def _q(t):
+    return t.replace(chr(10), chr(92) + "n").replace(chr(34), chr(39))
+
+
+def _pasos(pasos, out, nivel=0):
+    ind = "  " * nivel
+    for p in pasos:
+        t = p[0]
+        if t == "msg":
+            out.append(f"{ind}{p[1]} -> {p[2]} : {_q(p[3])}")
+        elif t == "ret":
+            out.append(f"{ind}{p[1]} --> {p[2]} : {_q(p[3])}")
+        elif t == "self":
+            out.append(f"{ind}{p[1]} -> {p[1]} : {_q(p[2])}")
+        elif t == "note":
+            out.append(f"{ind}note right of {p[1]} : {_q(p[2])}")
+        elif t == "sep":
+            out.append(f"{ind}== {_q(p[1])} ==")
+        elif t == "alt":
+            for i, (g, sub) in enumerate(p[1]):
+                out.append(f"{ind}{'alt' if i == 0 else 'else'} {_q(g)}")
+                _pasos(sub, out, nivel + 1)
+            out.append(f"{ind}end")
+        elif t in ("opt", "loop"):
+            out.append(f"{ind}{t} {_q(p[1])}")
+            _pasos(p[2], out, nivel + 1)
+            out.append(f"{ind}end")
+
+
+for _cu, _slug, _tit, _sub, _sec in _S.SEC:
+    _o = [f"@startuml {_slug}", f"title {_cu}: {_tit}", "autonumber", "skinparam sequenceMessageAlign center"]
+    for _k, _lab, _tipo in _sec.participantes:
+        _o.append(f'{"actor" if _tipo == "actor" else "participant"} "{_q(_lab)}" as {_k}')
+    _pasos(_sec.pasos, _o)
+    _o.append("@enduml")
+    PUML[_slug + ".puml"] = chr(10).join(_o) + chr(10)
+
+for _k in [k for k in PUML if k[:3] in ("03_", "04_", "05_", "06_")]:
+    del PUML[_k]
+
 if __name__ == "__main__":
     for nombre, texto in PUML.items():
         with open(os.path.join(DIAG, nombre), "w", encoding="utf-8") as f:

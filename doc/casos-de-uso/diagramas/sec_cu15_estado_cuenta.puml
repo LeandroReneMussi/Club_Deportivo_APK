@@ -1,0 +1,27 @@
+@startuml sec_cu15_estado_cuenta
+title CU-15: Consultar estado de cuenta, deuda y contador de días
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaSocioHome\nPantallaCuotas\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+soc -> ui : abre Inicio o «Ver estado de cuenta →»
+ui -> vm : yo
+vm -> sv : SocioVista(socio 1, estado.parametros)
+sv -> sv : diasVencida · enGracia · mora · recargo · interés por día · totalAdeudado
+sv --> vm : badge · contadorCorto · cuotaSubLabel · deudaDetalle · totalLabel
+vm --> ui : aviso con badge, tarjeta de la cuota (cápsula contadorCorto, cuotaSubLabel, deudaDetalle) y total
+alt cuota pagada
+  ui --> soc : cápsula «Pagada» · «Próxima cuota dd/mm/aaaa» · sin botón de pago
+else pendiente sin vencer
+  ui --> soc : «Vence en N días» / «Vence hoy» (verde) · «Vencimiento dd/mm/aaaa» · botón «Pagar»
+else en gracia (0 < d <= gracia)
+  ui --> soc : «Quedan N días de gracia» / «Queda 1 día de gracia» / «Último día de gracia» (naranja) · detalle de la deuda · «Pagar»
+else mora (d > gracia)
+  ui --> soc : «Vencida hace N días» (rojo) · «Venció el … · gracia de G días superada» · detalle de la deuda · «Pagar»
+end
+opt Estado de cuenta
+  ui --> soc : Historial: mes, «Pagada el … · medio · comprobante» e importe, o «Sin pagos registrados.»
+end
+@enduml

@@ -1,0 +1,27 @@
+@startuml sec_cu18_solicitar_turno
+title CU-18: Solicitar turno de nutrición
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaNutriSocio\nPantallaTurno\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+soc -> ui : en Nutrición toca «Solicitar turno» (no tiene turno)
+ui -> vm : ir(S_TURNO)
+ui -> vm : slots
+vm --> ui : días y horarios; ocupado = otro socio ya tiene esa fecha y hora
+soc -> ui : toca un horario libre
+ui -> vm : elegirSlot(key)
+soc -> ui : toca «Confirmar turno»  (deshabilitado mientras no haya horario)
+ui -> vm : confirmarTurno()
+alt slot == null
+  vm --> ui : toast «Elegí un horario disponible»
+else hay horario elegido
+  vm -> vm : actualizarSocio(1): turno = Turno(fecha, hora) · volver()
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio (turno_fecha, turno_hora)
+  db --> repo : ok
+  vm --> ui : vuelve a Nutrición · toast «Turno confirmado · dd/mm hh:mm»
+end
+@enduml

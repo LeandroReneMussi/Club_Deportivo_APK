@@ -25,7 +25,7 @@ class Secuencia:
         self.pasos = pasos
         self.ancho = ancho
         n = len(participantes)
-        paso = (ancho - 2 * margen_x) / (n - 1)
+        paso = (ancho - margen_x - 250) / (n - 1)
         self.x = {k: margen_x + i * paso for i, (k, _, _) in enumerate(participantes)}
         self.orden = {k: i for i, (k, _, _) in enumerate(participantes)}
         self.paso = paso
@@ -65,7 +65,7 @@ class Secuencia:
             elif t == "self":
                 _, quien, texto = p
                 x = self.x[quien]
-                lineas = self._lineas(L, texto, 260)
+                lineas = self._lineas(L, texto, max(120, min(260, self.ancho - self.x[quien] - 60)))
                 y += 10
                 if dibujar:
                     L.polilinea([(x, y), (x + 26, y), (x + 26, y + 18), (x + 6, y + 18)], uml.NEGRO, 1.5, flecha="filled")
@@ -99,7 +99,7 @@ class Secuencia:
                 ks = self._involucrados([p])
                 xs = [self.x[k] for k in ks]
                 margen = 48 + 14 * (3 - nivel)
-                fx1, fx2 = min(xs) - margen, max(xs) + margen
+                fx1, fx2 = max(12, min(xs) - margen), min(self.ancho - 12, max(xs) + margen)
                 y0 = y + 10
                 y = y0 + 24
                 seps = []

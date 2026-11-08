@@ -1,0 +1,41 @@
+@startuml sec_cu23_rutina
+title CU-23: Crear y asignar rutina
+autonumber
+skinparam sequenceMessageAlign center
+actor "Entrenadora" as ent
+participant ":PantallaRutinasProfesor\nPantallaRutinaEdit\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+ent -> ui : en Rutinas toca un socio («Crear» o «Ver»)
+ui -> vm : abrirRutina(id)
+vm -> vm : editEj = rutina del socio o tres días vacíos (Día 1, 2 y 3) · editDia = 0 · ir(P_RUTINA_EDIT)
+ui -> sv : seleccionado.bloqueaRutina  (= !(hab && ficha))
+alt bloqueado
+  sv --> ui : bloqueoMotivo: «cuota en mora» / «carnet vencido» / «falta la ficha médica»
+  ui --> ent : «No se puede asignar rutina: {motivo}. El socio debe regularizar la situación en recepción.» (sin formulario)
+else habilitado y con apto físico
+  ent -> ui : elige el día, escribe ejercicio, series y repeticiones y toca «+ Agregar ejercicio»
+  ui -> vm : elegirDiaEdicion(i) · agregarEjercicio()
+  alt nombre vacío, o series (1..20) / repeticiones (1..100) inválidas
+    vm --> ui : toast «Ingresá el nombre del ejercicio» / «Las series deben estar entre 1 y 20.» / «Las repeticiones deben estar entre 1 y 100.»
+  else datos válidos
+    vm -> vm : editEj[día].ejercicios += Ejercicio(nombre, series ?: 3, reps ?: 12) · limpia el formulario
+  end
+  opt quita un ejercicio
+    ui -> vm : quitarEjercicio(indice)
+  end
+  ent -> ui : toca «Guardar y asignar rutina»
+  ui -> vm : guardarRutina()
+  alt ningún día con ejercicios
+    vm --> ui : toast «Agregá al menos un ejercicio»
+  else al menos un día con ejercicios
+    vm -> vm : actualizarSocio(id): rutina = Rutina(nombre previo o «Rutina personalizada», profesora, HOY, días con ejercicios)
+    vm -> repo : guardar(estado)  (setter de estado)
+    repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio (rutina_json)
+    db --> repo : ok
+    vm --> ui : stack = [P_RUTINAS] · toast «Rutina asignada a {nombre} · visible en su app»
+  end
+end
+@enduml

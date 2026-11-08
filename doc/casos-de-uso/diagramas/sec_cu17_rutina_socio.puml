@@ -1,0 +1,21 @@
+@startuml sec_cu17_rutina_socio
+title CU-17: Consultar rutina asignada
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaRutinaSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+soc -> ui : toca la pestaña Rutina (o la tarjeta «Rutina · hoy» del Inicio)
+ui -> vm : ir(S_RUTINA)
+ui -> vm : diasDeRutina  (= yo.rutina?.dias)
+alt el socio no tiene rutina
+  vm --> ui : «Todavía no tenés una rutina asignada. Tu profesor la va a cargar en tu próxima clase.»  (Inicio: «Sin rutina» · «Pedile a tu profe»)
+else tiene rutina
+  vm --> ui : nombre · «Prof. {profesora}» · «actualizada dd/mm/aaaa» · pestañas de días
+  opt cambia de día
+    soc -> ui : toca otro día
+    ui -> vm : elegirDiaRutina(i)
+    vm --> ui : diaDeRutina: ejercicios numerados con series×repeticiones y nota
+  end
+end
+@enduml

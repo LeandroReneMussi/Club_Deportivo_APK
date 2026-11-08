@@ -1,0 +1,22 @@
+@startuml sec_cu21_presencia
+title CU-21: Registrar presencia propia
+autonumber
+skinparam sequenceMessageAlign center
+actor "Entrenadora" as ent
+participant ":PantallaProfesorHome\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+alt profePresente == true
+  ui --> ent : se muestra «Presente · 09:41» y no hay botón
+else profePresente == false
+  ui --> ent : se muestra «Sin marcar» y el botón «Marcar presencia»
+  ent -> ui : toca «Marcar presencia»
+  ui -> vm : marcarPresencia()
+  vm -> vm : profePresente = true
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: sesion (profe_presente)
+  db --> repo : ok
+  vm --> ui : toast «Presencia registrada · hh:mm» (HORA_ACTUAL)
+end
+@enduml

@@ -1,0 +1,34 @@
+@startuml sec_cu05_editar_socio
+title CU-05: Editar socio
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaAlta\n(E_EDITAR)\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Editar datos» en la ficha del socio
+ui -> vm : irAEditar()
+vm -> vm : editandoId = id · precarga nombre (hasta el 1.er espacio), apellido (resto), DNI, correo, plan, apto y antecedentes
+vm --> ui : formulario «Editar socio» con los datos cargados
+adm -> ui : modifica los datos y toca «Guardar cambios»
+ui -> vm : confirmarAlta()  (editando = true)
+vm -> vm : errorFormularioSocio(): nombre, apellido, DNI, correo
+alt formato inválido
+  vm --> ui : altaError con el mensaje de Validaciones · sigue en «Editar socio»
+else formato válido
+  vm -> repo : contarDni(dni, editandoId)
+  repo -> db : SELECT COUNT(dni) FROM socio WHERE dni = ? AND id <> ?
+  db --> repo : n
+  repo --> vm : n
+  alt n > 0 (lo usa otro socio)
+    vm --> ui : altaError «Ya existe un socio con ese DNI.»
+  else n = 0
+    vm -> vm : guardarEdicion(): actualizarSocio(id) cambia nombre, DNI, correo, plan, ficha y antecedentes; cuota, carnet e historial quedan
+    vm -> repo : guardar(estado)  (setter de estado)
+    repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio
+    db --> repo : ok
+    vm --> ui : stack = [E_SOCIOS, E_SOCIO] · toast «Datos del socio actualizados»
+  end
+end
+@enduml
