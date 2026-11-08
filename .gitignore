@@ -19,3 +19,6 @@ entrega/*.apk
 entrega/*.zip
 entrega/Capturas_ClubDeportivo_v1.2.*
 entrega/Registro_uso_IA_ClubDeportivo_v1.2.*
+
+# Compilados de Python de los generadores de documentación.
+__pycache__/

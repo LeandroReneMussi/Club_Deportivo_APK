@@ -95,10 +95,11 @@ class Doc:
         self.headings.append((nivel, text, nombre))
         return self._bm, nombre
 
-    def h1(self, text):
+    def h1(self, text, nueva_pagina=False):
+        """nueva_pagina: el título empieza página sin un párrafo de salto aparte (evita páginas en blanco tras una tabla que llena la hoja)."""
         i, n = self._bookmark(1, text)
         self._p(f'<w:bookmarkStart w:id="{i}" w:name="{n}"/><w:r><w:t xml:space="preserve">{esc(text)}</w:t></w:r><w:bookmarkEnd w:id="{i}"/>',
-                '<w:pStyle w:val="Heading1"/>')
+                '<w:pStyle w:val="Heading1"/>' + ('<w:pageBreakBefore/>' if nueva_pagina else ''))
 
     def h2(self, text):
         i, n = self._bookmark(2, text)
@@ -154,7 +155,7 @@ class Doc:
         p.alignment = 1
         p.add_run().add_picture(ruta, width=Emu(ancho_emu), height=Emu(alto_emu))
 
-    def capturas(self, entradas, carpeta):
+    def capturas(self, entradas, carpeta, cierre=True):
         """entradas: lista de (archivo, pantalla, hu, epigrafe). Tres por fila, como en la v1.2."""
         tbl = self.d.add_table(rows=0, cols=3)
         self.body.remove(tbl._tbl)
@@ -178,7 +179,8 @@ class Doc:
                 p0.add_run().add_picture(f"{carpeta}/{archivo}", width=Emu(1655999), height=Emu(3679998))
                 celda._tc.append(parse_xml(f'<w:p {nsdecls("w")}><w:pPr><w:jc w:val="center"/></w:pPr>{self._run(pantalla, b=True, sz=18)}</w:p>'))
                 celda._tc.append(parse_xml(f'<w:p {nsdecls("w")}><w:pPr><w:spacing w:after="200"/><w:jc w:val="center"/></w:pPr>{self._run(hu + " — " + epi, sz=16)}</w:p>'))
-        self._p("")
+        if cierre:
+            self._p("")
 
     # ---------------------------------------------------------------- indice
     def marcar_indice(self):

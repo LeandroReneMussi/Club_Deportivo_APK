@@ -70,7 +70,7 @@ VCODE = re.search(r"versionCode = (\d+)", gradle).group(1)
 assert VERSION == "1.5.1", VERSION
 indice = [l.rstrip("\n").split("|") for l in open(os.path.join(CAPT, "indice.txt"), encoding="utf8") if l.strip()]
 N_CAPT = len(indice)
-assert N_CAPT == 71, N_CAPT
+assert N_CAPT == 72, N_CAPT
 CAPT_RED = _capturas_reducidas()
 CASOS = "doc/casos-de-uso/DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Casos_de_uso_UML.pdf"
 
@@ -343,11 +343,10 @@ ACT = [
 ]
 num = 7
 for pref, nombre, desc in ACT:
-    doc.salto()
-    doc.h1(f"{num}. Capturas — {nombre}")
+    doc.h1(f"{num}. Capturas — {nombre}", nueva_pagina=True)
     doc.parrafo(desc)
     entradas = [(f[0][:-4] + ".jpg", f[2], f[3], f[4]) for f in indice if f[0].startswith(pref)]
-    doc.capturas(entradas, CAPT_RED)
+    doc.capturas(entradas, CAPT_RED, cierre=False)
     num += 1
 assert num == 12
 doc.parrafo(f"Total: {N_CAPT} capturas, generadas por la prueba instrumentada CapturasPorActivityTest y listadas con su epígrafe en entrega/capturas/indice.txt. "
@@ -480,6 +479,31 @@ doc.tabla(
         ["(a completar por el equipo)", "", ""],
     ],
     [2600, 1500, 4971])
+doc.h2("16.1 Uso de IA en Figma, documentación y pruebas")
+doc.parrafo(
+    "Resumen por área. Las cifras salen del historial de git: se cuentan los commits que llevan el trailer «Co-Authored-By: Claude». "
+    "Lo que el repositorio no registra queda marcado «a completar por el equipo»; no se completó por suposición.")
+doc.tabla(
+    ["Área", "Uso de IA", "Evidencia en el repositorio", "A completar"],
+    [
+        ["Diseño en Figma (CLUB DEPORTIVO MOBILE)",
+         "El equipo indicó el 08/11/2026 que usó IA como apoyo en el diseño de Figma.",
+         "El commit 03273b7 (04/10/2026) agrega solo el enlace y la exportación en PDF (doc/diseno), sin trailer de IA. "
+         "El prototipo web web/index.html (ClubDeportivo-App-v4), base visual de la app Android, se armó con Claude Design según el README del commit b8cd601 (13/09/2026).",
+         "Herramienta usada en Figma, pantallas en las que se usó y qué decidió el equipo."],
+        ["Documentación",
+         "Generación con scripts en Python de la documentación general, del documento de casos de uso con sus diagramas UML 2.0 y del PDF de capturas; "
+         "redacción de README, INSTALAR.md, plan de versionado y rollback y guion de presentación.",
+         "doc/herramientas_documentacion: 2 de 2 commits con trailer. doc/casos-de-uso: 5 de 5. entrega/: 11 de 14. "
+         "Los textos se generan a partir del código, de git y de los documentos de la entrega.",
+         "Revisión y aprobación del contenido por cada integrante (sección 27)."],
+        ["Pruebas",
+         "Escritura y ampliación de pruebas unitarias e instrumentadas, y de la prueba que genera las capturas. Cada prueba se ejecutó y se leyó su resultado antes de incorporarla.",
+         "ClubViewModelTest: 13 de 16 commits con trailer. ClubDbHelperTest: 6 de 6. QrCarnetTest: 1 de 1. CapturasPorActivityTest: 5 de 8. "
+         "CrudSociosTest: 3 de 6. FormatoTest, ValidacionesTest y NavegacionActivitiesTest: 1 commit con trailer cada una.",
+         "Qué pruebas escribió o revisó a mano cada integrante."],
+    ],
+    [1700, 2500, 3171, 1700], sz=16)
 doc.h1("17. Registro de consultas — sesión del 03 y 04/10/2026 (Leandro Mussi)")
 doc.parrafo("Las indicaciones se transcriben como fueron escritas. La columna «Decisión del equipo» registra lo que el equipo aceptó, modificó o resolvió sobre cada propuesta. Esta sección se conserva sin cambios respecto de la v1.2.")
 SES1 = [
@@ -497,11 +521,11 @@ doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido
 
 doc.h1("18. Registro de consultas — sesión del 07 y 08/11/2026 (Leandro Mussi)")
 doc.parrafo(
-    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de diseño de doc/superpowers. "
+    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de diseño de doc/especificaciones. "
     "En el repositorio no constan las indicaciones textuales ni las decisiones del equipo más allá de lo que dicen los commits; esas celdas quedan marcadas «a completar» y se listan en «A confirmar».")
 A = "(a completar: transcribir la indicación)"
 SES2 = [
-    ["10", "Diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/superpowers/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporado a la rama; decisión del equipo a completar."],
+    ["10", "Diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/especificaciones/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporado a la rama; decisión del equipo a completar."],
     ["11", "SQLite v3 y consultas de la v1.4.0", A, "Fecha y medio de pago en visitante, socio que vence hoy, vencimientos por rango de fechas, pagos diarios por fecha, DNI repetido en el día y pruebas de la base (commits 26d9299, bd6b47a). Migración 2→3 que descuenta del cupo los visitantes que la 1.3.x ya había sumado, con prueba instrumentada (ed5a4c7).", "Incorporado (v1.4.0)."],
     ["12", "Reportes, visitantes y cobro en caja (HU-14, HU-03, HU-04)", A, "Reportes con cuatro pestañas y selector de fecha, KPIs de hoy, pago diario con fecha, medio, DNI único por día y cupo del día, y cobro en caja igual al pago por app con rechazo del doble pago (c9ce74d, c5c09b4, d5db561, 414eca8).", "Incorporado (v1.4.0)."],
     ["13", "Ajuste de la etiqueta de la ficha del socio", A, "La habilitación (HU-05) no cambia; «Cuota al día» queda solo para la cuota pagada y la etiqueta pasa a «Habilitado · Cuota pendiente» (fe32a33, db5aabe).", "Incorporado (v1.4.0)."],
@@ -614,7 +638,7 @@ CONF = [
     ["2", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
     ["3", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
     ["4", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
-    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/superpowers."],
+    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
     ["6", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
     ["7", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
     ["8", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],

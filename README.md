@@ -1,7 +1,7 @@
 # Club Deportivo — app Android (Kotlin + Jetpack Compose)
 
-Implementación del prototipo [`web/index.html`](web/index.html) (Claude Design,
-`ClubDeportivo-App-v4`) como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
+Implementación del prototipo [`web/index.html`](web/index.html)
+(`ClubDeportivo-App-v4`) como app Android nativa. Cubre las **14 historias de usuario** del documento de análisis
 en los **5 roles**, con la dirección visual **1a Pista**.
 
 Es un prototipo académico. Desde la **v1.3.0** la app Android guarda los datos en

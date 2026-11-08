@@ -220,7 +220,9 @@ class CapturasPorActivityTest {
             r.vm { ponerDniAcceso(35887210) }
             r.foto("Control de acceso", "HU-05", "Carnet vencido: acceso denegado.")
             r.vm { ponerDniAcceso(99999999) }
-            r.foto("Control de acceso", "HU-05", "DNI inexistente: no encontrado.")
+            r.foto("Control de acceso", "HU-05 / v1.5.1", "DNI inexistente: no encontrado; ofrece registrar visitante o registrar socio.")
+            r.vm { registrarComoVisitante() }
+            r.foto("Ingreso de visitante", "HU-03 / v1.5.1", "Desde «No encontrado»: el formulario de visitante abre con el DNI ya cargado.")
             r.ir(Screen.E_VISITANTES)
             r.foto("Visitantes", "HU-03", "Cupos del día y pagos diarios de hoy, con el total recaudado.")
             r.vm { irAVisitanteNuevo() }
@@ -291,7 +293,7 @@ class CapturasPorActivityTest {
             val r = Recorrido(sc, "4_EntrenadoraActivity", "EntrenadoraActivity")
             r.foto("Inicio", "HU-08", "Presencia del día, clases y rutinas pendientes.")
             r.vm { marcarPresencia() }
-            r.foto("Inicio", "HU-08", "Presencia registrada.", espera = 400)
+            r.foto("Inicio", "HU-08 / v1.5.1", "Presencia registrada con la hora real del dispositivo.", espera = 400)
             r.sinToast()
             r.vm { abrirAsistencia("musc") }
             r.foto("Asistencia", "HU-08", "Presentes y ausentes de la clase; socios no habilitados señalados.")
