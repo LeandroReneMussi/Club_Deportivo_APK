@@ -223,6 +223,18 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             db.execSQL("ALTER TABLE visitante ADD COLUMN fecha TEXT NOT NULL DEFAULT ''")
             db.execSQL("UPDATE visitante SET fecha = ? WHERE fecha = ''", arrayOf(HOY.fmtIso()))
             db.execSQL("ALTER TABLE visitante ADD COLUMN medio TEXT NOT NULL DEFAULT 'Efectivo'")
+            // Hasta la 1.3.x cada visitante cargado desde la app sumaba 1 a `ocupados`. Desde la
+            // 1.4.0 el cupo del día se deriva de los visitantes de hoy, así que se deshace esa
+            // suma para no contarlos dos veces. Pedro Alonso es el de la semilla: nunca sumó.
+            db.execSQL(
+                """
+                UPDATE actividad SET ocupados = MAX(0, ocupados - (
+                    SELECT COUNT(*) FROM visitante v
+                    WHERE v.actividad = actividad.nombre
+                      AND NOT (v.dni = '33.120.455' AND v.nombre = 'Pedro Alonso')
+                ))
+                """.trimIndent(),
+            )
         }
     }
 

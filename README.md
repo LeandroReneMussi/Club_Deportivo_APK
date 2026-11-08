@@ -30,7 +30,7 @@ El proyecto no trae el SDK de Android; hace falta tenerlo instalado.
 ```bash
 ./gradlew assembleDebug     # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk
-./gradlew test              # 57 pruebas unitarias de la lógica
+./gradlew test              # 65 pruebas unitarias de la lógica
 ./gradlew connectedDebugAndroidTest   # capturas por Activity en un emulador
 ```
 

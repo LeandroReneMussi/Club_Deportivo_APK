@@ -46,6 +46,11 @@ class ClubDbHelperTest {
         val archivo = context.getDatabasePath(nombre)
         archivo.parentFile?.mkdirs()
         SQLiteDatabase.openOrCreateDatabase(archivo, null).use { db ->
+            // Una base 1.3.x siempre tiene `actividad`; acá alcanza con la tabla vacía.
+            db.execSQL(
+                "CREATE TABLE actividad (id TEXT PRIMARY KEY, nombre TEXT NOT NULL, horario TEXT NOT NULL, " +
+                    "cupo INTEGER NOT NULL, ocupados INTEGER NOT NULL, precio INTEGER NOT NULL, profesor TEXT NOT NULL, orden INTEGER NOT NULL)",
+            )
             db.execSQL(
                 "CREATE TABLE visitante (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, " +
                     "dni TEXT NOT NULL, actividad TEXT NOT NULL, hora TEXT NOT NULL, monto INTEGER NOT NULL, orden INTEGER NOT NULL)",
@@ -62,6 +67,40 @@ class ClubDbHelperTest {
             assertEquals("2026-09-08", c.getString(0))
             assertEquals("Efectivo", c.getString(1))
             assertEquals("Pedro Alonso", c.getString(2))
+        }
+        h.close()
+    }
+
+    @Test
+    fun unaBaseVersion2DescuentaDelCupoLosVisitantesQueYaHabiaSumado() {
+        // En la 1.3.x cada visitante cargado desde la app sumaba 1 a `ocupados`; la 1.4.0
+        // deriva el cupo del día de los visitantes, así que la migración tiene que deshacerlo.
+        val archivo = context.getDatabasePath(nombre)
+        archivo.parentFile?.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(archivo, null).use { db ->
+            db.execSQL(
+                "CREATE TABLE actividad (id TEXT PRIMARY KEY, nombre TEXT NOT NULL, horario TEXT NOT NULL, " +
+                    "cupo INTEGER NOT NULL, ocupados INTEGER NOT NULL, precio INTEGER NOT NULL, profesor TEXT NOT NULL, orden INTEGER NOT NULL)",
+            )
+            db.execSQL("INSERT INTO actividad VALUES ('func', 'Funcional', '19:30', 20, 16, 6000, 'Ana', 0)")
+            db.execSQL("INSERT INTO actividad VALUES ('yoga', 'Yoga', '08:30', 15, 9, 5000, 'Inés', 1)")
+            db.execSQL(
+                "CREATE TABLE visitante (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, " +
+                    "dni TEXT NOT NULL, actividad TEXT NOT NULL, hora TEXT NOT NULL, monto INTEGER NOT NULL, orden INTEGER NOT NULL)",
+            )
+            // Dos cargados desde la app (sumaron) y Pedro, el de la semilla (no sumaba).
+            db.execSQL("INSERT INTO visitante (nombre, dni, actividad, hora, monto, orden) VALUES ('Marina López', '31.555.908', 'Funcional', '09:41', 6000, 0)")
+            db.execSQL("INSERT INTO visitante (nombre, dni, actividad, hora, monto, orden) VALUES ('Tomás Vega', '42.101.877', 'Funcional', '09:41', 6000, 1)")
+            db.execSQL("INSERT INTO visitante (nombre, dni, actividad, hora, monto, orden) VALUES ('Pedro Alonso', '33.120.455', 'Funcional', '18:10', 6000, 2)")
+            db.version = 2
+        }
+        val h = ClubDbHelper(context, nombre)
+        h.readableDatabase.rawQuery("SELECT id, ocupados FROM actividad ORDER BY orden", null).use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("func", c.getString(0))
+            assertEquals("vuelve a la base: 16 - 2 cargados desde la app", 14, c.getInt(1))
+            assertTrue(c.moveToNext())
+            assertEquals("sin visitantes no cambia", 9, c.getInt(1))
         }
         h.close()
     }
