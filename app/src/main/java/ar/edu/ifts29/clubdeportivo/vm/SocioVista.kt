@@ -130,6 +130,39 @@ class SocioVista(val socio: Socio, private val parametros: List<Parametros> = li
         else -> "Quedan $diasDeGracia días de gracia"
     }
 
+    private val graciaCorta = when (diasDeGracia) {
+        0 -> "Último día de gracia"
+        1 -> "Queda 1 día"
+        else -> "Quedan $diasDeGracia días"
+    }
+
+    /** Cápsula del aviso de habilitación: qué hacer o cuánto falta, en dos o tres palabras. */
+    val estadoCorto = when {
+        mora -> "Debe $totalLabel"
+        enGracia -> graciaCorta
+        carnetVencido -> "Renovar carnet"
+        cuotaPagada -> "Al día"
+        diasParaVencer == 0 -> "Vence hoy"
+        else -> "Vence en $diasParaVencer días"
+    }
+
+    /** Cápsula de la tarjeta de la cuota. */
+    val contadorCorto = when {
+        cuotaPagada -> "Pagada"
+        mora -> "Vencida hace $diasVencida días"
+        enGracia -> graciaRestanteLabel
+        diasParaVencer == 0 -> "Vence hoy"
+        else -> "Vence en $diasParaVencer días"
+    }
+
+    /** Línea secundaria de la tarjeta de la cuota: la fecha y la gracia que aplica. */
+    val cuotaSubLabel = when {
+        cuotaPagada -> "Próxima cuota ${(socio.cuota.proximaVence ?: socio.cuota.vence.masMeses(1)).fmt()}"
+        mora -> "Venció el ${socio.cuota.vence.fmt()} · gracia de $gracia días superada"
+        enGracia -> "Venció el ${socio.cuota.vence.fmt()} · gracia de $gracia días"
+        else -> "Vencimiento ${socio.cuota.vence.fmt()}"
+    }
+
     /** El contador que ven el administrador y el socio, con su color en [tono]. */
     val contador = when {
         cuotaPagada -> "Pagada"

@@ -100,15 +100,14 @@ fun ColumnScope.PantallaSocioHome(vm: ClubViewModel) {
 
         // Cuota del mes (HU-04), con el contador de días y la deuda (v1.5)
         Tarjeta(Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp)) {
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Cuota ${yo.cuota.mes}".uppercase(), style = label(), modifier = Modifier.weight(1f))
-                Text(
-                    yo.contador.uppercase(),
-                    style = disp(700, 12, if (yo.cuotaPagada) Pista.mut else colorTono(yo.tono), letterSpacing = 1.sp),
-                )
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(yo)
             }
+            Text(yo.cuotaSubLabel, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
             yo.deudaDetalle?.let {
-                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
+                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 2.dp))
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
@@ -389,11 +388,11 @@ fun ColumnScope.PantallaCuotas(vm: ClubViewModel) {
                     tamano = 12,
                 )
             }
-            Text(
-                yo.cuotaVenceLabel,
-                style = body(600, 13, if (yo.cuotaPagada) Pista.mut else colorTono(yo.tono)),
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(yo.cuotaSubLabel, style = body(500, 13, Pista.mut), modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(yo)
+            }
             yo.deudaDetalle?.let {
                 Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 4.dp))
             }
@@ -965,6 +964,32 @@ private fun CampoParametro(etiqueta: String, valor: String, decimal: Boolean = f
         modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
     )
     CampoTexto(valor, onChange, etiqueta, tecladoNumerico = !decimal, tecladoDecimal = decimal)
+}
+
+/** Cápsula compacta de texto, para el margen derecho de una fila sin pisar el título. */
+@Composable
+internal fun Capsula(texto: String, fondo: Color, tinta: Color, modifier: Modifier = Modifier) {
+    Text(
+        texto,
+        style = body(700, 11, tinta),
+        maxLines = 1,
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(fondo)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    )
+}
+
+/** Cápsula de la cuota: rojo en mora, naranja en gracia, verde pendiente, gris pagada. */
+@Composable
+internal fun CapsulaCuota(s: SocioVista) {
+    val (fondo, tinta) = when {
+        s.mora -> Pista.bad to Pista.badInk
+        s.enGracia -> Pista.warn to Pista.warnInk
+        s.cuotaPagada -> Pista.sur2 to Pista.mut
+        else -> Pista.ok to Pista.okInk
+    }
+    Capsula(s.contadorCorto, fondo, tinta)
 }
 
 /** Fondo según la situación del socio: rojo si no puede ingresar, naranja en gracia, verde si está bien. */

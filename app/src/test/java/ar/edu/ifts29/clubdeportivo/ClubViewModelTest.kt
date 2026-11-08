@@ -208,6 +208,35 @@ class ClubViewModelTest {
     }
 
     @Test
+    fun `las capsulas de estado y de cuota resumen la situacion en pocas palabras`() {
+        val vm = admin()
+        val lucas = vm.socios.first { it.id == 2 } // mora, sin recargo ni interés cargados
+        assertEquals("Debe $12.000", lucas.estadoCorto)
+        assertEquals("Vencida hace 29 días", lucas.contadorCorto)
+        assertEquals("Venció el 10/08/2026 · gracia de 5 días superada", lucas.cuotaSubLabel)
+
+        val andres = vm.socios.first { it.id == 1 }
+        assertEquals("Vence en 2 días", andres.estadoCorto)
+        assertEquals("Vence en 2 días", andres.contadorCorto)
+        assertEquals("Vencimiento 10/09/2026", andres.cuotaSubLabel)
+
+        val camila = vm.socios.first { it.id == 7 }
+        assertEquals("Al día", camila.estadoCorto)
+        assertEquals("Pagada", camila.contadorCorto)
+        assertEquals("Próxima cuota 10/10/2026", camila.cuotaSubLabel)
+
+        assertEquals("Renovar carnet", vm.socios.first { it.id == 3 }.estadoCorto)
+
+        vm.prepararParametros()
+        vm.campo { copy(pGracia = "30") }
+        vm.guardarParametros()
+        val enGracia = vm.socios.first { it.id == 2 }
+        assertEquals("Queda 1 día", enGracia.estadoCorto)
+        assertEquals("Queda 1 día de gracia", enGracia.contadorCorto)
+        assertEquals("Venció el 10/08/2026 · gracia de 30 días", enGracia.cuotaSubLabel)
+    }
+
+    @Test
     fun `el detalle de la deuda siempre suma el total aunque haya centavos`() {
         val vm = admin()
         vm.prepararParametros()

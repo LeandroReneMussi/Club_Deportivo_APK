@@ -150,6 +150,9 @@ fun ColumnScope.PantallaEmpleadoHome(vm: ClubViewModel) {
             ) { vm.ir(Screen.E_ACCESO) }
             AccionRapida("Registrar socio", "Alta con carnet, cuota inicial y ficha médica") { vm.irAAlta() }
             AccionRapida("Registrar visitante", "Ingreso ocasional con actividad y pago") { vm.irAVisitanteNuevo() }
+            if (vm.estado.rol == Rol.ADMIN) {
+                AccionRapida("Parámetros del club", "Gracia, recargo e interés de la cuota vencida") { vm.ir(Screen.PERFIL) }
+            }
         }
 
         // Supervisión: sólo el administrativo la ve.
@@ -360,10 +363,12 @@ fun ColumnScope.PantallaFichaSocio(vm: ClubViewModel) {
             val tinta = tintaEstado(s)
             Text(
                 s.badge.uppercase(),
-                style = disp(700, 16, tinta, letterSpacing = 0.8.sp),
+                style = disp(700, 15, tinta, letterSpacing = 0.8.sp, lineHeight = 19.sp),
                 modifier = Modifier.weight(1f),
+                maxLines = 2,
             )
-            Text(s.motivo, style = body(600, 12, tinta.copy(alpha = 0.85f)))
+            Spacer(Modifier.width(12.dp))
+            Capsula(s.estadoCorto, Color.Black.copy(alpha = 0.18f), tinta)
         }
 
         Tarjeta(
@@ -376,10 +381,12 @@ fun ColumnScope.PantallaFichaSocio(vm: ClubViewModel) {
                     style = disp(700, 13, Pista.mut, letterSpacing = 1.5.sp),
                     modifier = Modifier.weight(1f),
                 )
-                Text(s.cuotaVenceLabel, style = body(600, 12, if (s.cuotaPagada) Pista.mut else colorTono(s.tono)))
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(s)
             }
+            Text(s.cuotaSubLabel, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
             s.deudaDetalle?.let {
-                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
+                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 2.dp))
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
