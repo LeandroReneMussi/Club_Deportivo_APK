@@ -19,6 +19,12 @@ deuda suma recargo e interés calculados por tramos según el parámetro vigente
 
 ---
 
+## Instalar la app
+
+Guía paso a paso para teléfono, emulador y Android Studio: [INSTALAR.md](INSTALAR.md). En Windows, `instalar.cmd` instala el APK en el emulador o teléfono conectado con doble clic.
+
+---
+
 ## Compilar el APK
 
 El proyecto no trae el SDK de Android; hace falta tenerlo instalado.
