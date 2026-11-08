@@ -17,7 +17,7 @@ Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móvi
 1. Descomprimir el zip y abrir la carpeta en Android Studio (Ladybug o posterior, JDK 17). Gradle se sincroniza solo (`gradlew`).
 2. Correr la app en un emulador o teléfono con Android 7.0 (API 24) o superior. La primera vez carga los datos de demo en SQLite (`club_deportivo.db`).
 3. Cuentas: `Andres / Socio123`, `Jorge / Admin123`, `Ana / Prof123`, `Leandro / Nut123`.
-4. Pruebas: `gradlew :app:testDebugUnitTest` (70 unitarias). Con un emulador conectado, `gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest` (8 pruebas de SQLite).
+4. Pruebas: `gradlew :app:testDebugUnitTest` (78 unitarias). Con un emulador conectado, `gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest` (8 pruebas de SQLite).
 
 ## Mínimos de la consigna y dónde están
 
