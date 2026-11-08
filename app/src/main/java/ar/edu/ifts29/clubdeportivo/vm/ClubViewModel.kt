@@ -291,7 +291,7 @@ class ClubViewModel : ViewModel() {
      */
     val porVencer: List<SocioVista>
         get() {
-            val ids = ClubRepositorio.idsCuotasPorVencer(HOY.masDias(7).fmtIso())
+            val ids = ClubRepositorio.idsCuotasPorVencer(HOY.fmtIso(), HOY.masDias(7).fmtIso())
             val lista = if (ids == null) {
                 socios.filter { it.cuota.estado == EstadoCuota.PENDIENTE && daysTo(it.cuota.vence) <= 7 }
             } else {

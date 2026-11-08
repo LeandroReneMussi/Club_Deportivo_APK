@@ -2,6 +2,7 @@ package ar.edu.ifts29.clubdeportivo.data.db
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import ar.edu.ifts29.clubdeportivo.data.Actividad
@@ -250,23 +251,37 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
         contar("SELECT COUNT(alias) FROM usuario WHERE alias = ?", arrayOf(norm(alias)))
 
     /**
-     * Listado diario de E4: cuotas vigentes pendientes que vencen hasta [hastaIso],
-     * ya ordenadas. El reporte de la app usa una ventana de 7 días.
+     * Listado diario de E4: cuotas vigentes pendientes que vencen entre [desdeIso] y
+     * [hastaIso], ya ordenadas. Reportes la usa para "hoy" (ambas cotas iguales) y
+     * para "esta semana" (de mañana a 7 días).
      */
-    fun idsCuotasPorVencer(hastaIso: String): List<Int> {
+    fun idsCuotasPorVencer(desdeIso: String, hastaIso: String): List<Int> {
         val sql = """
             SELECT s.id
             FROM socio s
             INNER JOIN cuota c ON c.socio_id = s.id AND c.vigente = 1
-            WHERE c.estado = ? AND c.vence <= ?
+            WHERE c.estado = ? AND c.vence >= ? AND c.vence <= ?
             ORDER BY c.vence, s.nombre
         """.trimIndent()
         val ids = mutableListOf<Int>()
-        readableDatabase.rawQuery(sql, arrayOf(EstadoCuota.PENDIENTE.name, hastaIso)).use { c ->
+        readableDatabase.rawQuery(sql, arrayOf(EstadoCuota.PENDIENTE.name, desdeIso, hastaIso)).use { c ->
             while (c.moveToNext()) ids += c.getInt(0)
         }
         return ids
     }
+
+    /** Pagos diarios de no socios de un día, en el orden de la lista (más nuevos primero). */
+    fun visitantesPorFecha(fechaIso: String): List<Visitante> {
+        val lista = mutableListOf<Visitante>()
+        readableDatabase.rawQuery("SELECT * FROM visitante WHERE fecha = ? ORDER BY orden", arrayOf(fechaIso)).use { c ->
+            while (c.moveToNext()) lista += visitanteDe(c)
+        }
+        return lista
+    }
+
+    /** `COUNT` del DNI del visitante en un día: un pase diario por persona y por fecha. */
+    fun contarVisitante(dni: String, fechaIso: String): Int =
+        contar("SELECT COUNT(*) FROM visitante WHERE dni = ? AND fecha = ?", arrayOf(dni, fechaIso))
 
     /** Login: la combinación alias + clave sale de la tabla `usuario`. */
     fun autenticar(alias: String, clave: String): Rol? {
@@ -503,17 +518,7 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
 
         val visitantes = mutableListOf<Visitante>()
         db.rawQuery("SELECT * FROM visitante ORDER BY orden", null).use { c ->
-            while (c.moveToNext()) {
-                visitantes += Visitante(
-                    nombre = c.getString(c.getColumnIndexOrThrow("nombre")),
-                    dni = c.getString(c.getColumnIndexOrThrow("dni")),
-                    actividad = c.getString(c.getColumnIndexOrThrow("actividad")),
-                    hora = c.getString(c.getColumnIndexOrThrow("hora")),
-                    monto = c.getInt(c.getColumnIndexOrThrow("monto")),
-                    fecha = fecha(c.getString(c.getColumnIndexOrThrow("fecha"))),
-                    medio = c.getString(c.getColumnIndexOrThrow("medio")),
-                )
-            }
+            while (c.moveToNext()) visitantes += visitanteDe(c)
         }
 
         val ingresosHoy = mutableListOf<IngresoHoy>()
@@ -676,6 +681,16 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             email = c.getString(c.getColumnIndexOrThrow("email")),
         )
     }
+
+    private fun visitanteDe(c: Cursor) = Visitante(
+        nombre = c.getString(c.getColumnIndexOrThrow("nombre")),
+        dni = c.getString(c.getColumnIndexOrThrow("dni")),
+        actividad = c.getString(c.getColumnIndexOrThrow("actividad")),
+        hora = c.getString(c.getColumnIndexOrThrow("hora")),
+        monto = c.getInt(c.getColumnIndexOrThrow("monto")),
+        fecha = fecha(c.getString(c.getColumnIndexOrThrow("fecha"))),
+        medio = c.getString(c.getColumnIndexOrThrow("medio")),
+    )
 
     private fun contar(sql: String, args: Array<String>? = null): Int =
         readableDatabase.rawQuery(sql, args).use { c ->

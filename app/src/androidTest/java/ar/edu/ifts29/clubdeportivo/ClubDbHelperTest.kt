@@ -65,4 +65,31 @@ class ClubDbHelperTest {
         }
         h.close()
     }
+
+    @Test
+    fun elListadoDeVencimientosFiltraPorRangoDeFechas() {
+        val h = conSemilla()
+        assertEquals("solo Martín vence hoy", listOf(8), h.idsCuotasPorVencer("2026-09-08", "2026-09-08"))
+        assertEquals("Andrés y Valentina en la semana", listOf(1, 5), h.idsCuotasPorVencer("2026-09-09", "2026-09-15"))
+        assertTrue(h.idsCuotasPorVencer("2026-09-16", "2026-09-30").isEmpty())
+        h.close()
+    }
+
+    @Test
+    fun losPagosDiariosSeConsultanPorFecha() {
+        val h = conSemilla()
+        assertEquals(listOf("Carla Núñez", "Julián Soto"), h.visitantesPorFecha("2026-09-07").map { it.nombre })
+        assertEquals(3, h.visitantesPorFecha("2026-09-08").size)
+        assertEquals(17_000, h.visitantesPorFecha("2026-09-08").sumOf { it.monto })
+        assertTrue(h.visitantesPorFecha("2026-09-06").isEmpty())
+        h.close()
+    }
+
+    @Test
+    fun elDniRepetidoSeCuentaSoloEnSuDia() {
+        val h = conSemilla()
+        assertEquals(1, h.contarVisitante("33.120.455", "2026-09-08"))
+        assertEquals(0, h.contarVisitante("33.120.455", "2026-09-07"))
+        h.close()
+    }
 }
