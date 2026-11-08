@@ -81,6 +81,7 @@ data class UiState(
     val altaError: String? = null,
     val visError: String? = null,
     val visAct: String? = null,
+    val visMedio: MedioVisitante = MedioVisitante.EFECTIVO,
     val comprobante: String? = null,
     /** Socio que se está editando; `null` cuando el formulario es un alta. */
     val editandoId: Int? = null,
@@ -89,15 +90,17 @@ data class UiState(
 /** Socio vinculado a la cuenta de la app del socio (Andrés, en los datos de demo). */
 const val ID_SOCIO_APP = 1
 
-data class ActividadVista(val act: Actividad) {
+/** Una actividad con su cupo del día: los inscriptos de base más los visitantes de hoy. */
+data class ActividadVista(val act: Actividad, val visitantesHoy: Int = 0) {
     val id get() = act.id
     val nombre get() = act.nombre
     val horario get() = act.horario
-    val libres = act.cupo - act.ocupados
-    val sinCupo = libres == 0
+    val ocupadosHoy = act.ocupados + visitantesHoy
+    val libres = act.cupo - ocupadosHoy
+    val sinCupo = libres <= 0
     val cupoJusto = libres in 1..3
     val cupoLabel = if (libres > 0) "$libres libres" else "Sin cupo"
-    val ocupacion = act.ocupados.toFloat() / act.cupo
+    val ocupacion = ocupadosHoy.toFloat() / act.cupo
     val precioLabel = money(act.precio)
 }
 
@@ -282,7 +285,11 @@ class ClubViewModel : ViewModel() {
                 }
         }
 
-    val actividades: List<ActividadVista> get() = estado.acts.map { ActividadVista(it) }
+    val actividades: List<ActividadVista>
+        get() {
+            val deHoy = visitantesDeHoy
+            return estado.acts.map { a -> ActividadVista(a, deHoy.count { it.actividad == a.nombre }) }
+        }
 
     val actividadElegida: ActividadVista?
         get() = actividades.firstOrNull { it.id == estado.visAct }
@@ -786,6 +793,7 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(
             visError = null,
             visAct = null,
+            visMedio = MedioVisitante.EFECTIVO,
             campos = estado.campos.copy(vNombre = "", vDni = ""),
         )
         ir(Screen.E_VISITANTE_NUEVO)
@@ -795,14 +803,22 @@ class ClubViewModel : ViewModel() {
         estado = estado.copy(
             visAct = a.id,
             visError = if (a.sinCupo) {
-                "${a.nombre} no tiene cupo disponible hoy (${a.act.ocupados}/${a.act.cupo}). El ingreso no puede realizarse."
+                "${a.nombre} no tiene cupo disponible hoy (${a.ocupadosHoy}/${a.act.cupo}). El ingreso no puede realizarse."
             } else {
                 null
             },
         )
     }
 
-    /** HU-03: ingreso de visitante, bloqueado si la actividad no tiene cupo. */
+    fun elegirMedioVisitante(m: MedioVisitante) {
+        estado = estado.copy(visMedio = m)
+    }
+
+    /**
+     * HU-03: pago diario de un no socio (consigna, punto 3). Queda con fecha y medio de
+     * pago; se rechaza si la actividad no tiene cupo hoy o si ese DNI ya pagó hoy.
+     * El cupo del día sale de los visitantes de hoy, así que no se toca `act.ocupados`.
+     */
     fun confirmarVisitante() {
         val nombre = estado.campos.vNombre.trim()
         val dni = estado.campos.vDni.filter { it.isDigit() }
@@ -820,14 +836,18 @@ class ClubViewModel : ViewModel() {
             estado = estado.copy(visError = "Sin cupo en ${a.nombre}. El ingreso no puede realizarse.")
             return
         }
+        val dniConPuntos = dniFmt(dni)
+        if (ClubRepositorio.contarVisitante(dniConPuntos, HOY) > 0) {
+            estado = estado.copy(visError = "Ya hay un pago diario registrado hoy con el DNI $dniConPuntos.")
+            return
+        }
         estado = estado.copy(
             visitantes = listOf(
-                Visitante(nombre, dniFmt(dni), a.nombre, HORA_ACTUAL, a.act.precio, HOY, MedioVisitante.EFECTIVO.etiqueta),
+                Visitante(nombre, dniConPuntos, a.nombre, HORA_ACTUAL, a.act.precio, HOY, estado.visMedio.etiqueta),
             ) + estado.visitantes,
-            acts = estado.acts.map { if (it.id == a.id) it.copy(ocupados = it.ocupados + 1) else it },
             stack = listOf(Screen.E_VISITANTES),
         )
-        toast("Ingreso registrado · cobro ${money(a.act.precio)}")
+        toast("Pago diario registrado · ${money(a.act.precio)}")
     }
 
     // ---------------------------------------------------------------- profesor

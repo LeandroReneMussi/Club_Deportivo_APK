@@ -4,6 +4,7 @@ import ar.edu.ifts29.clubdeportivo.data.Acceso
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
 import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
@@ -313,19 +314,58 @@ class ClubViewModelTest {
     }
 
     @Test
-    fun `HU-03 - con cupo se registra el ingreso y se descuenta`() {
+    fun `HU-03 - con cupo se registra el pago diario con fecha y medio`() {
         val vm = admin()
         vm.irAVisitanteNuevo()
         vm.campo { copy(vNombre = "Pedro Gómez", vDni = "30111222") }
         vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
-
+        vm.elegirMedioVisitante(MedioVisitante.DEBITO)
+        val libresAntes = vm.actividades.first { it.id == "func" }.libres
         val antes = vm.estado.visitantes.size
+
         vm.confirmarVisitante()
 
         assertEquals(antes + 1, vm.estado.visitantes.size)
-        assertEquals(15, vm.actividades.first { it.id == "func" }.act.ocupados)
-        assertEquals(6_000, vm.estado.visitantes.first().monto)
+        val v = vm.estado.visitantes.first()
+        assertEquals("30.111.222", v.dni)
+        assertEquals(HOY, v.fecha)
+        assertEquals("Débito", v.medio)
+        assertEquals(6_000, v.monto)
+        assertEquals("el cupo del día baja en uno", libresAntes - 1, vm.actividades.first { it.id == "func" }.libres)
+        assertEquals("la base de ocupados no se toca", 14, vm.estado.acts.first { it.id == "func" }.ocupados)
         assertEquals(Screen.E_VISITANTES, vm.pantalla)
+    }
+
+    @Test
+    fun `HU-03 - el cupo de hoy cuenta a los visitantes de hoy`() {
+        val vm = admin()
+        val funcional = vm.actividades.first { it.id == "func" }
+        assertEquals("14 de base + Pedro y Tomás; Julián fue el lunes", 16, funcional.ocupadosHoy)
+        assertEquals(4, funcional.libres)
+        assertEquals("9 de base + Lucía", 10, vm.actividades.first { it.id == "yoga" }.ocupadosHoy)
+        assertTrue("Natación sigue sin cupo", vm.actividades.first { it.id == "nat" }.sinCupo)
+    }
+
+    @Test
+    fun `HU-03 - un DNI ya cobrado hoy no se registra dos veces`() {
+        val vm = admin()
+        vm.irAVisitanteNuevo()
+        // Sin puntos: hoy figura como "33.120.455".
+        vm.campo { copy(vNombre = "Pedro Alonso", vDni = "33120455") }
+        vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
+        val antes = vm.estado.visitantes.size
+
+        vm.confirmarVisitante()
+
+        assertEquals(antes, vm.estado.visitantes.size)
+        assertEquals("Ya hay un pago diario registrado hoy con el DNI 33.120.455.", vm.estado.visError)
+        assertEquals(Screen.E_VISITANTE_NUEVO, vm.pantalla)
+
+        // El mismo DNI de un día anterior sí puede pagar hoy.
+        vm.campo { copy(vNombre = "Carla Núñez", vDni = "40.318.902") }
+        vm.elegirActividadVisitante(vm.actividades.first { it.id == "func" })
+        vm.confirmarVisitante()
+        assertEquals(antes + 1, vm.estado.visitantes.size)
     }
 
     // ------------------------------------------------------------------ HU-14
