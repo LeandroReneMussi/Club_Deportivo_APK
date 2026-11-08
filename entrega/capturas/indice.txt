@@ -3,17 +3,18 @@
 1_LoginActivity_03.png|LoginActivity|Inicio de sesión|HU-01|Validación: credenciales incorrectas, el acceso se rechaza.
 2_SocioActivity_01.png|SocioActivity|Inicio|HU-04|Estado de habilitación, cuota pendiente, rutina de hoy y turno de nutrición.
 2_SocioActivity_02.png|SocioActivity|Carnet digital|HU-06|Carnet vigente con datos del socio y estado de cuota.
-2_SocioActivity_03.png|SocioActivity|Estado de cuenta|HU-04|Cuota actual e historial de pagos.
-2_SocioActivity_04.png|SocioActivity|Método de pago|HU-04|Selección del medio de pago (pago simulado).
-2_SocioActivity_05.png|SocioActivity|Pago registrado|HU-04|Comprobante del pago; el socio queda al día.
-2_SocioActivity_06.png|SocioActivity|Mi rutina|HU-10|Rutina asignada por la entrenadora, por día.
-2_SocioActivity_07.png|SocioActivity|Nutrición|HU-13|Peso, altura, IMC, objetivo y consultas anteriores.
-2_SocioActivity_08.png|SocioActivity|Cancelar turno|HU-11|Confirmación antes de cancelar el turno reservado.
-2_SocioActivity_09.png|SocioActivity|Reservar turno|HU-11|Validación: confirmar sin elegir horario.
-2_SocioActivity_10.png|SocioActivity|Reservar turno|HU-11|Horario elegido entre los disponibles.
-2_SocioActivity_11.png|SocioActivity|Nutrición|HU-11|Turno confirmado.
-2_SocioActivity_12.png|SocioActivity|Perfil|HU-01|Datos del socio y accesos rápidos.
-2_SocioActivity_13.png|SocioActivity|Cerrar sesión|HU-01|Confirmación de cierre de sesión: vuelve a LoginActivity.
+2_SocioActivity_03.png|SocioActivity|QR de ingreso|HU-06 / v1.5|QR de ingreso: al escanearlo se leen los datos del carnet digital.
+2_SocioActivity_04.png|SocioActivity|Estado de cuenta|HU-04|Cuota actual e historial de pagos.
+2_SocioActivity_05.png|SocioActivity|Método de pago|HU-04|Selección del medio de pago (pago simulado).
+2_SocioActivity_06.png|SocioActivity|Pago registrado|HU-04|Comprobante del pago; el socio queda al día.
+2_SocioActivity_07.png|SocioActivity|Mi rutina|HU-10|Rutina asignada por la entrenadora, por día.
+2_SocioActivity_08.png|SocioActivity|Nutrición|HU-13|Peso, altura, IMC, objetivo y consultas anteriores.
+2_SocioActivity_09.png|SocioActivity|Cancelar turno|HU-11|Confirmación antes de cancelar el turno reservado.
+2_SocioActivity_10.png|SocioActivity|Reservar turno|HU-11|Validación: confirmar sin elegir horario.
+2_SocioActivity_11.png|SocioActivity|Reservar turno|HU-11|Horario elegido entre los disponibles.
+2_SocioActivity_12.png|SocioActivity|Nutrición|HU-11|Turno confirmado.
+2_SocioActivity_13.png|SocioActivity|Perfil|HU-01|Datos del socio y accesos rápidos.
+2_SocioActivity_14.png|SocioActivity|Cerrar sesión|HU-01|Confirmación de cierre de sesión: vuelve a LoginActivity.
 3_AdminActivity_01.png|AdminActivity|Inicio|HU-14|Indicadores del día y acciones rápidas.
 3_AdminActivity_02.png|AdminActivity|Socios|CRUD socios: Leer|Padrón de socios con búsqueda y filtros.
 3_AdminActivity_03.png|AdminActivity|Socios|CRUD socios: Leer|Filtro: socios en mora.
