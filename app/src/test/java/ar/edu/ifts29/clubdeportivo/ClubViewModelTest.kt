@@ -285,7 +285,7 @@ class ClubViewModelTest {
         assertEquals(Screen.E_SOCIO, vm.pantalla)
 
         val nuevo = vm.seleccionado
-        assertEquals("01507", nuevo.nro)
+        assertEquals("01508", nuevo.nro)
         assertEquals("Familiar", nuevo.plan)
         assertEquals(money(29_000), nuevo.cuotaMonto)
         assertEquals("18/09/2026", nuevo.socio.cuota.vence.fmt())
@@ -334,14 +334,15 @@ class ClubViewModelTest {
     fun `HU-14 - los reportes separan proximas a vencer de la mora`() {
         val vm = admin()
 
-        // Prototipo, pantalla Reportes: «Próximas a vencer (2)», Andrés y Valentina, $30.500.
-        assertEquals(2, vm.porVencer.size)
+        // Martín vence hoy; Andrés y Valentina en la semana. (La separación "hoy" / "semana"
+        // llega con la pestaña Vencen hoy.)
+        assertEquals(3, vm.porVencer.size)
         assertEquals(
             "ordenadas por vencimiento",
-            listOf(2, 4),
+            listOf(0, 2, 4),
             vm.porVencer.map { daysTo(it.cuota.vence) },
         )
-        assertEquals(money(18_500 + 12_000), vm.totalReporte)
+        assertEquals(money(18_500 + 18_500 + 12_000), vm.totalReporte)
 
         assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
         vm.elegirReportTab(ReportTab.MORA)
@@ -362,7 +363,7 @@ class ClubViewModelTest {
         vm.elegirFiltro(FiltroSocios.MORA)
         assertEquals(2, vm.sociosFiltrados.size)
         vm.elegirFiltro(FiltroSocios.HAB)
-        assertEquals(4, vm.sociosFiltrados.size)
+        assertEquals(5, vm.sociosFiltrados.size)
     }
 
     // ------------------------------------------------------------------ HU-09

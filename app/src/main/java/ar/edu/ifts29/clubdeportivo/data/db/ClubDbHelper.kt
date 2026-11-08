@@ -13,6 +13,7 @@ import ar.edu.ifts29.clubdeportivo.data.DiaRutina
 import ar.edu.ifts29.clubdeportivo.data.Ejercicio
 import ar.edu.ifts29.clubdeportivo.data.EstadoCuota
 import ar.edu.ifts29.clubdeportivo.data.FichaNutricional
+import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.Ingreso
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
@@ -40,7 +41,7 @@ import org.json.JSONObject
  * normalizado. Rutina, consultas, actividades del socio e ingresos se guardan
  * en JSON para no perder el resto de las historias al cerrar la app.
  */
-class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, VERSION) {
+class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper(context, nombre, null, VERSION) {
 
     override fun onConfigure(db: SQLiteDatabase) {
         db.setForeignKeyConstraintsEnabled(true)
@@ -164,6 +165,8 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
                 actividad TEXT NOT NULL,
                 hora TEXT NOT NULL,
                 monto INTEGER NOT NULL,
+                fecha TEXT NOT NULL,
+                medio TEXT NOT NULL,
                 orden INTEGER NOT NULL
             )
             """.trimIndent(),
@@ -213,6 +216,12 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE cuota ADD COLUMN proxima_vence TEXT")
             db.execSQL("ALTER TABLE pago ADD COLUMN comprobante TEXT NOT NULL DEFAULT ''")
+        }
+        if (oldVersion < 3) {
+            // Los pagos diarios ya registrados quedan como de hoy y en efectivo.
+            db.execSQL("ALTER TABLE visitante ADD COLUMN fecha TEXT NOT NULL DEFAULT ''")
+            db.execSQL("UPDATE visitante SET fecha = ? WHERE fecha = ''", arrayOf(HOY.fmtIso()))
+            db.execSQL("ALTER TABLE visitante ADD COLUMN medio TEXT NOT NULL DEFAULT 'Efectivo'")
         }
     }
 
@@ -381,6 +390,8 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
                     put("actividad", v.actividad)
                     put("hora", v.hora)
                     put("monto", v.monto)
+                    put("fecha", v.fecha.fmtIso())
+                    put("medio", v.medio)
                     put("orden", i)
                 })
             }
@@ -499,6 +510,8 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
                     actividad = c.getString(c.getColumnIndexOrThrow("actividad")),
                     hora = c.getString(c.getColumnIndexOrThrow("hora")),
                     monto = c.getInt(c.getColumnIndexOrThrow("monto")),
+                    fecha = fecha(c.getString(c.getColumnIndexOrThrow("fecha"))),
+                    medio = c.getString(c.getColumnIndexOrThrow("medio")),
                 )
             }
         }
@@ -672,7 +685,7 @@ class ClubDbHelper(context: Context) : SQLiteOpenHelper(context, NOMBRE, null, V
 
     private companion object {
         const val NOMBRE = "club_deportivo.db"
-        const val VERSION = 2
+        const val VERSION = 3
     }
 }
 

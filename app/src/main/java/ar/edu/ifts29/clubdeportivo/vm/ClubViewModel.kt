@@ -22,6 +22,7 @@ import ar.edu.ifts29.clubdeportivo.data.HORA_ACTUAL
 import ar.edu.ifts29.clubdeportivo.data.Ingreso
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
@@ -774,7 +775,7 @@ class ClubViewModel : ViewModel() {
         }
         estado = estado.copy(
             visitantes = listOf(
-                Visitante(nombre, dniFmt(dni), a.nombre, HORA_ACTUAL, a.act.precio),
+                Visitante(nombre, dniFmt(dni), a.nombre, HORA_ACTUAL, a.act.precio, HOY, MedioVisitante.EFECTIVO.etiqueta),
             ) + estado.visitantes,
             acts = estado.acts.map { if (it.id == a.id) it.copy(ocupados = it.ocupados + 1) else it },
             stack = listOf(Screen.E_VISITANTES),

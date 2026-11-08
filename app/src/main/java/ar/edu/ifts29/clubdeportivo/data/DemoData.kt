@@ -351,6 +351,26 @@ object DemoData {
             turno = null,
             ingresos = emptyList(),
         ),
+        Socio(
+            id = 8,
+            nombre = "Martín Ledesma",
+            dni = 36_410_228,
+            nro = "01490",
+            plan = "Full",
+            alta = fecha("2025-09-15"),
+            nac = fecha("1992-03-14"),
+            carnetEmitido = fecha("2026-01-10"),
+            carnetVence = fecha("2027-01-09"),
+            ficha = true,
+            actividades = listOf(ActividadSocio("Musculación", "Lun · Mié · Vie")),
+            // Vence hoy: es el caso del listado "Vencen hoy" de Reportes (consigna, punto 5).
+            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-08"), EstadoCuota.PENDIENTE),
+            historial = listOf(PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-07"), "Caja")),
+            rutina = null,
+            nut = FichaNutricional(78.0, 1.80, "Fuerza", "Sin antecedentes", emptyList()),
+            turno = null,
+            ingresos = emptyList(),
+        ),
     )
 
     val actividades = listOf(
@@ -360,8 +380,14 @@ object DemoData {
         Actividad("yoga", "Yoga", "08:30", cupo = 15, ocupados = 9, precio = 5_000, profesor = "Inés Robledo", inscriptos = listOf(3)),
     )
 
+    // Más nuevos primero. Los de hoy suman $17.000 y los del lunes 7 $14.000: es lo que
+    // muestra el selector de fecha de Reportes al pasar de un día al otro.
     val visitantesIniciales = listOf(
-        Visitante("Pedro Alonso", "33.120.455", "Funcional", "18:10", 6_000),
+        Visitante("Pedro Alonso", "33.120.455", "Funcional", "18:10", 6_000, HOY, "Efectivo"),
+        Visitante("Tomás Vega", "42.101.877", "Funcional", "18:02", 6_000, HOY, "Efectivo"),
+        Visitante("Lucía Ferreyra", "39.552.014", "Yoga", "08:35", 5_000, HOY, "Débito"),
+        Visitante("Carla Núñez", "40.318.902", "Natación", "19:05", 8_000, fecha("2026-09-07"), "Efectivo"),
+        Visitante("Julián Soto", "37.904.115", "Funcional", "18:20", 6_000, fecha("2026-09-07"), "Débito"),
     )
 
     val ingresosHoyIniciales = listOf(
