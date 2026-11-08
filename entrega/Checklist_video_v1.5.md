@@ -45,7 +45,7 @@ Cuentas: `Andres / Socio123` (socio) · `Jorge / Admin123` (administrativo) · `
 ## 6. SQLite y cierre (1 min)
 
 - [ ] Cerrar la app por completo y volver a abrirla: los cambios siguen (socio nuevo, pago, parámetros). Decir que todo se guarda en `club_deportivo.db` (SQLite, versión 4 del esquema).
-- [ ] Mencionar: 70 pruebas unitarias y 8 pruebas instrumentadas de SQLite; versionado con releases en GitHub y rollback a la versión anterior.
+- [ ] Mencionar: 76 pruebas unitarias y 14 instrumentadas (8 de SQLite y 6 recorridos de pantallas); versionado con releases en GitHub y rollback a la versión anterior.
 
 ## Antes de subir
 
