@@ -3,6 +3,7 @@ package ar.edu.ifts29.clubdeportivo
 import ar.edu.ifts29.clubdeportivo.data.Acceso
 import ar.edu.ifts29.clubdeportivo.data.Fecha
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
+import ar.edu.ifts29.clubdeportivo.data.HORA_ACTUAL
 import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
 import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
@@ -356,6 +357,32 @@ class ClubViewModelTest {
         vm.ponerDniAcceso(11_111_111L)
         assertEquals("No encontrado", vm.estado.acceso?.titulo)
         assertNull(vm.estado.acceso?.socioId)
+    }
+
+    @Test
+    fun `HU-05 - un DNI no encontrado se puede registrar como visitante con el DNI cargado`() {
+        val vm = admin()
+        vm.ponerDniAcceso(11_111_111L)
+        assertEquals("No encontrado", vm.estado.acceso?.titulo)
+
+        vm.registrarComoVisitante()
+
+        assertEquals(Screen.E_VISITANTE_NUEVO, vm.pantalla)
+        assertEquals("11.111.111", vm.estado.campos.vDni)
+        assertEquals("", vm.estado.campos.vNombre)
+    }
+
+    @Test
+    fun `HU-08 - la presencia de la entrenadora guarda la hora en que se marco`() {
+        val vm = profe()
+        assertNull(vm.estado.horaPresencia)
+        vm.marcarPresencia()
+        assertTrue(vm.estado.profePresente)
+        assertEquals("la hora del reloj, no una fija", "09:41", vm.estado.horaPresencia)
+        Reloj.fijar(null)
+        val real = ClubViewModel().apply { campo { copy(email = "Ana", pass = "Prof123") }; login() }
+        real.marcarPresencia()
+        assertEquals(HORA_ACTUAL, real.estado.horaPresencia)
     }
 
     @Test

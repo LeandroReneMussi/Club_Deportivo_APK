@@ -1,4 +1,4 @@
-# Entrega final · Club Deportivo v1.5.0 · Grupo 3
+# Entrega final · Club Deportivo v1.5.1 · Grupo 3
 
 Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móviles, IFTS N° 29 — 8 de noviembre de 2026.
 
@@ -6,10 +6,10 @@ Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móvi
 
 | Entregable | Archivo |
 |---|---|
-| Proyecto Android Studio comprimido | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_ProyectoAndroidStudio_v1.5.0.zip` (generado desde `main` con `git archive`; sin `build/` ni `local.properties`) |
-| PDF de capturas de pantalla | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Capturas_v1.5.pdf` (71 capturas de las cinco Activities, con epígrafe e historia de usuario; también en `.docx`) |
+| Proyecto Android Studio comprimido | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_ProyectoAndroidStudio_v1.5.1.zip` (generado con `git archive`; sin `build/` ni `local.properties`) |
+| PDF de capturas de pantalla | `DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Capturas_v1.5.pdf` (72 capturas de las cinco Activities, con epígrafe e historia de usuario; también en `.docx`) |
 | Casos de uso y diagramas UML 2.0 | `../doc/casos-de-uso/DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Casos_de_uso_UML.pdf` (25 casos de uso, diagrama de casos de uso, clases, 4 secuencias, máquina de estados de la cuota y actividad del alta; fuentes `.puml` y `.md` al lado) |
-| APK | Release **v1.5.0** en GitHub (`LeandroReneMussi/Club_Deportivo_APK` → Releases). Rollback: v1.4.0 |
+| APK | Release **v1.5.1** (corrige dos detalles de la v1.5.0) en GitHub (`LeandroReneMussi/Club_Deportivo_APK` → Releases). Rollback: v1.5.0, y v1.4.0 si hiciera falta |
 | Video de demostración | Enlace de YouTube "No listado": _pendiente de grabación_ (guion y checklist en `Checklist_video_v1.5.md`) |
 
 ## Cómo abrir y correr el proyecto
@@ -17,7 +17,7 @@ Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móvi
 1. Descomprimir el zip y abrir la carpeta en Android Studio (Ladybug o posterior, JDK 17). Gradle se sincroniza solo (`gradlew`).
 2. Correr la app en un emulador o teléfono con Android 7.0 (API 24) o superior. La primera vez carga los datos de demo en SQLite (`club_deportivo.db`).
 3. Cuentas: `Andres / Socio123`, `Jorge / Admin123`, `Ana / Prof123`, `Leandro / Nut123`.
-4. Pruebas: `gradlew :app:testDebugUnitTest` (70 unitarias). Con un emulador conectado, `gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest` (8 pruebas de SQLite).
+4. Pruebas: `gradlew :app:testDebugUnitTest` (78 unitarias). Con un emulador conectado, `gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest` (8 pruebas de SQLite).
 
 ## Mínimos de la consigna y dónde están
 

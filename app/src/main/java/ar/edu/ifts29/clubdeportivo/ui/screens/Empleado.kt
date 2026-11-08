@@ -782,12 +782,13 @@ private fun ResultadoAcceso(vm: ClubViewModel, a: Acceso) {
                 )
             }
         } else {
-            BotonBorde(
-                "Registrar socio",
-                { vm.irAAlta() },
-                Modifier.padding(top = 16.dp),
-                alto = 48.dp,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                BotonBorde("Registrar visitante", vm::registrarComoVisitante, Modifier.weight(1f), alto = 48.dp)
+                BotonBorde("Registrar socio", { vm.irAAlta() }, Modifier.weight(1f), alto = 48.dp)
+            }
         }
     }
 }

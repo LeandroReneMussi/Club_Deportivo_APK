@@ -1,4 +1,4 @@
-# Cómo instalar Club Deportivo (v1.5.0)
+# Cómo instalar Club Deportivo (v1.5.1)
 
 Tres caminos, del más simple al más técnico. Cualquiera sirve para probar la app o grabar la demo.
 
@@ -11,8 +11,8 @@ Tres caminos, del más simple al más técnico. Cualquiera sirve para probar la 
 ## 1. En un teléfono Android (lo más fácil)
 
 1. Descargá el APK:
-   - desde GitHub: repositorio `LeandroReneMussi/Club_Deportivo_APK` → **Releases** → `v1.5.0` → archivo `.apk`;
-   - o usá el que viene en la carpeta de entrega: `ClubDeportivo-v1.5.0-debug.apk`.
+   - desde GitHub: repositorio `LeandroReneMussi/Club_Deportivo_APK` → **Releases** → `v1.5.1` → archivo `.apk`;
+   - o usá el que viene en la carpeta de entrega: `ClubDeportivo-v1.5.1-debug.apk`.
 2. Pasalo al teléfono (cable, Drive, WhatsApp, correo) y tocalo.
 3. Si Android pregunta, permití **"Instalar apps desconocidas"** para la app con la que lo abriste (Archivos, Chrome, Drive).
 4. Tocá **Instalar** y después **Abrir**.

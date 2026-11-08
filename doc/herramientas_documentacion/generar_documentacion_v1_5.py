@@ -67,14 +67,14 @@ N_INSTR = sum(n for t, n in TESTS.values() if t == "instr")
 gradle = open(os.path.join(RAIZ, "app", "build.gradle.kts"), encoding="utf8").read()
 VERSION = re.search(r'versionName = "([^"]+)"', gradle).group(1)
 VCODE = re.search(r"versionCode = (\d+)", gradle).group(1)
-assert VERSION == "1.5.0", VERSION
+assert VERSION == "1.5.1", VERSION
 indice = [l.rstrip("\n").split("|") for l in open(os.path.join(CAPT, "indice.txt"), encoding="utf8") if l.strip()]
 N_CAPT = len(indice)
-assert N_CAPT == 71, N_CAPT
+assert N_CAPT == 72, N_CAPT
 CAPT_RED = _capturas_reducidas()
 CASOS = "doc/casos-de-uso/DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_Casos_de_uso_UML.pdf"
 
-doc = Doc(PLANTILLA, "Club Deportivo — App Android v1.5.0 — Documentación general de la Etapa Entrega")
+doc = Doc(PLANTILLA, "Club Deportivo — App Android v1.5.1 — Documentación general de la Etapa Entrega")
 
 # ------------------------------------------------------------------ portada
 doc.vacio(5)
@@ -88,7 +88,7 @@ doc.vacio(4)
 doc.centro("Club Deportivo — Aplicación Android", 26, b=True, after=80)
 doc.centro("Etapa Entrega", 32, b=True, color="1F3A5F")
 doc.centro("Documentación general del proyecto", 32, b=True, color="1F3A5F", after=240)
-doc.centro("Versión de la app 1.5.0 — 2026-11-08", 22, b=False)
+doc.centro("Versión de la app 1.5.1 — 2026-11-08", 22, b=False)
 doc.centro("Apellidos: Alvarez · Aquino Lesme · Mussi · Weitzel", 22, b=False)
 doc.salto()
 
@@ -96,9 +96,9 @@ doc.salto()
 doc.h1("Índice")
 doc.headings.pop()  # el titulo del indice no se lista a si mismo
 doc.parrafo(
-    "Entregables que acompañan a este documento (Etapa Entrega, v1.5.0): carpeta comprimida del proyecto de Android Studio "
-    "(DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_ProyectoAndroidStudio_v1.5.0.zip), APK de la aplicación (Release v1.5.0 en GitHub), "
-    "PDF de capturas, casos de uso y diagramas UML 2.0, y video de demostración. El estado de cada uno figura en la sección «A confirmar».",
+    "Entregables que acompañan a este documento (Etapa Entrega, v1.5.1): carpeta comprimida del proyecto de Android Studio "
+    "(DAM_Entrega_GRUPO3_ALVAREZ_AQUINO_MUSSI_WEITZEL_ProyectoAndroidStudio_v1.5.1.zip), APK de la aplicación (ClubDeportivo-v1.5.1-debug.apk), "
+    "PDF de capturas, casos de uso y diagramas UML 2.0, diagramas de contexto y de casos de uso (sección 15), y video de demostración. El estado de cada uno figura en la sección «A confirmar».",
     jc="left", after=200)
 doc.marcar_indice()
 doc.salto()
@@ -107,10 +107,10 @@ doc.salto()
 doc.parte("I", "Video de demostración del proyecto")
 doc.h1("1. Video de demostración del proyecto")
 doc.parrafo(
-    "Video del grupo con el funcionamiento de la aplicación v1.5.0 y la explicación de las funcionalidades de la Etapa Entrega "
+    "Video del grupo con el funcionamiento de la aplicación v1.5.1 y la explicación de las funcionalidades de la Etapa Entrega "
     "(enlace de YouTube «No listado»). Según entrega/README_entrega_v1.5.md, el video está pendiente de grabación; el guion y el checklist "
     "están en entrega/Checklist_video_v1.5.md y entrega/Guion_presentacion_por_rol_v1.5.md.")
-doc.boton("VIDEO v1.5.0 — ENLACE A CONFIRMAR")
+doc.boton("VIDEO v1.5.1 — ENLACE A CONFIRMAR")
 doc.centro("Enlace: a confirmar (ver «A confirmar», punto 1)", 22, b=False)
 doc.parrafo(
     "Video de la etapa anterior (v1.2.0, Etapa Desarrollo): https://www.youtube.com/watch?v=bwIpHXsPboc", jc="center")
@@ -343,11 +343,10 @@ ACT = [
 ]
 num = 7
 for pref, nombre, desc in ACT:
-    doc.salto()
-    doc.h1(f"{num}. Capturas — {nombre}")
+    doc.h1(f"{num}. Capturas — {nombre}", nueva_pagina=True)
     doc.parrafo(desc)
     entradas = [(f[0][:-4] + ".jpg", f[2], f[3], f[4]) for f in indice if f[0].startswith(pref)]
-    doc.capturas(entradas, CAPT_RED)
+    doc.capturas(entradas, CAPT_RED, cierre=False)
     num += 1
 assert num == 12
 doc.parrafo(f"Total: {N_CAPT} capturas, generadas por la prueba instrumentada CapturasPorActivityTest y listadas con su epígrafe en entrega/capturas/indice.txt. "
@@ -402,7 +401,7 @@ doc.tabla(
 # ---------------------------------------------------------------- 13. versionado
 doc.h1("13. Versionado y rollback")
 doc.parrafo("Resumen de doc/VERSIONADO_Y_ROLLBACK.md.")
-doc.vineta("", partes=[("Versión del código: ", True), ("versionName y versionCode en app/build.gradle.kts (SemVer X.Y.Z); la versión actual es 1.5.0 (versionCode 6).", False)])
+doc.vineta("", partes=[("Versión del código: ", True), ("versionName y versionCode en app/build.gradle.kts (SemVer X.Y.Z); la versión actual es 1.5.1 (versionCode 7).", False)])
 doc.vineta("", partes=[("Publicación: ", True), ("el workflow Release (.github/workflows/release.yml) corre en cada merge a main las pruebas unitarias, crea el tag vX.Y.Z y una GitHub Release con el APK y SHA256SUMS.txt. Si la versión ya tiene tag, publica el siguiente parche. Cada release es inmutable.", False)])
 doc.vineta("", partes=[("Integración continua: ", True), ("el workflow CI (ci.yml) corre las pruebas unitarias y lint informativo en cada push a main, release/** y feature-**, y en cada Pull Request.", False)])
 doc.vineta("", partes=[("APK a demanda: ", True), ("el workflow apk.yml se ejecuta a mano y arma un APK debug descargable por 14 días, sin tag ni Release.", False)])
@@ -412,6 +411,7 @@ doc.tabla(
         ["v1.3.1", "SQLite en la app Android", "v2", "—"],
         ["v1.4.0", "Vencen hoy, pagos diarios por fecha, cobro en caja completo, pruebas de SQLite", "v3", "v1.3.1"],
         ["v1.5.0", "Fecha real, apellido separado, gracia / recargo / interés con vigencia, QR de ingreso, carnet con formato de tarjeta", "v4", "v1.4.0"],
+        ["v1.5.1", "«No encontrado» en el control de acceso ofrece «Registrar visitante»; la presencia de la Entrenadora muestra la hora real", "v4 (sin cambios)", "v1.5.0, sin desinstalar"],
     ],
     [1100, 4571, 1500, 1900])
 doc.h2("13.1 Rollback de la v1.5.0 a la v1.4.0")
@@ -428,10 +428,44 @@ doc.parrafo(
     "Requiere Android 7.0 (API 24) o superior. No se repite aquí su contenido.")
 
 # ---------------------------------------------------------------- 15. casos de uso
-doc.h1("15. Casos de uso y diagramas UML")
+doc.h1("15. Diagramas de contexto y de casos de uso")
+DIAG = os.path.join(RAIZ, "doc", "casos-de-uso", "diagramas")
+
+
+def girado(nombre):
+    """Copia girada 90° del diagrama para ocupar una página vertical completa."""
+    import tempfile
+    from PIL import Image
+    destino = os.path.join(tempfile.gettempdir(), "girado_" + nombre)
+    Image.open(os.path.join(DIAG, nombre)).rotate(90, expand=True).save(destino)
+    return destino
+
+
+doc.h2("15.1 Diagrama de contexto")
 doc.parrafo(
-    f"Los casos de uso especificados y los diagramas UML 2.0 de la v1.5.0 (casos de uso, clases del dominio, secuencias, máquina de estados de la cuota y actividad del alta) están en un documento aparte: {CASOS}. "
-    "No se copian en este documento.")
+    "Muestra la aplicación como un único proceso y lo que intercambia con su entorno. Las entidades externas son los cuatro roles con cuenta "
+    "(Socio, Administrativo, Entrenadora y Nutricionista) y el No socio / Visitante, que no usa la app: el Administrativo registra su pago diario en el mostrador. "
+    "Dentro del dispositivo, la app toma la fecha y la hora del reloj del sistema y guarda todo en la base SQLite local club_deportivo.db.")
+doc.parrafo(
+    "La app no tiene conexión a Internet: el manifiesto no declara el permiso INTERNET. Por eso no hay servidor, pasarela de pago ni lector de QR. "
+    "El pago desde la app es simulado y el QR de ingreso solo se muestra en pantalla.")
+doc.parrafo("El diagrama ocupa la página siguiente, girado para leerlo en horizontal. La imagen original está en doc/casos-de-uso/diagramas/00_contexto.png.")
+doc.salto()
+doc.imagen(girado("00_contexto.png"), 5400000, 7714286)
+doc.salto()
+doc.h2("15.2 Diagrama de casos de uso (UML 2.0)")
+doc.parrafo(
+    "Reúne los 26 casos de uso por actor. Socio, Administrativo, Entrenadora y Nutricionista especializan a «Usuario del club», que inicia y cierra sesión. "
+    "«Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15. CU-10 extiende a CU-09 y CU-26 (QR de ingreso) extiende a CU-16 (carnet digital). "
+    "El fondo naranja marca los casos nuevos o modificados en la v1.5.")
+doc.parrafo("El diagrama ocupa la página siguiente, girado para leerlo en horizontal. La imagen original está en doc/casos-de-uso/diagramas/01_casos_de_uso.png.")
+doc.salto()
+doc.imagen(girado("01_casos_de_uso.png"), 5760000, 7200000)
+doc.salto()
+doc.h2("15.3 Especificación de los casos de uso")
+doc.parrafo(
+    f"La plantilla de cada caso de uso, su diagrama de secuencia y los diagramas de clases del dominio, de estados de la cuota y de actividad del alta están en un documento aparte: {CASOS}. "
+    "Los dos diagramas de esta sección se generan con Python y Pillow desde doc/casos-de-uso/herramientas (dia_contexto.py y dia_casos_de_uso.py).")
 
 # ================================================================== PARTE IV
 doc.salto()
@@ -445,6 +479,31 @@ doc.tabla(
         ["(a completar por el equipo)", "", ""],
     ],
     [2600, 1500, 4971])
+doc.h2("16.1 Uso de IA en Figma, documentación y pruebas")
+doc.parrafo(
+    "Resumen por área. Las cifras salen del historial de git: se cuentan los commits que llevan el trailer «Co-Authored-By: Claude». "
+    "Lo que el repositorio no registra queda marcado «a completar por el equipo»; no se completó por suposición.")
+doc.tabla(
+    ["Área", "Uso de IA", "Evidencia en el repositorio", "A completar"],
+    [
+        ["Diseño en Figma (CLUB DEPORTIVO MOBILE)",
+         "El equipo indicó el 08/11/2026 que usó IA como apoyo en el diseño de Figma.",
+         "El commit 03273b7 (04/10/2026) agrega solo el enlace y la exportación en PDF (doc/diseno), sin trailer de IA. "
+         "El prototipo web web/index.html (ClubDeportivo-App-v4), base visual de la app Android, se armó con Claude Design según el README del commit b8cd601 (13/09/2026).",
+         "Herramienta usada en Figma, pantallas en las que se usó y qué decidió el equipo."],
+        ["Documentación",
+         "Generación con scripts en Python de la documentación general, del documento de casos de uso con sus diagramas UML 2.0 y del PDF de capturas; "
+         "redacción de README, INSTALAR.md, plan de versionado y rollback y guion de presentación.",
+         "doc/herramientas_documentacion: 2 de 2 commits con trailer. doc/casos-de-uso: 5 de 5. entrega/: 11 de 14. "
+         "Los textos se generan a partir del código, de git y de los documentos de la entrega.",
+         "Revisión y aprobación del contenido por cada integrante (sección 27)."],
+        ["Pruebas",
+         "Escritura y ampliación de pruebas unitarias e instrumentadas, y de la prueba que genera las capturas. Cada prueba se ejecutó y se leyó su resultado antes de incorporarla.",
+         "ClubViewModelTest: 13 de 16 commits con trailer. ClubDbHelperTest: 6 de 6. QrCarnetTest: 1 de 1. CapturasPorActivityTest: 5 de 8. "
+         "CrudSociosTest: 3 de 6. FormatoTest, ValidacionesTest y NavegacionActivitiesTest: 1 commit con trailer cada una.",
+         "Qué pruebas escribió o revisó a mano cada integrante."],
+    ],
+    [1700, 2500, 3171, 1700], sz=16)
 doc.h1("17. Registro de consultas — sesión del 03 y 04/10/2026 (Leandro Mussi)")
 doc.parrafo("Las indicaciones se transcriben como fueron escritas. La columna «Decisión del equipo» registra lo que el equipo aceptó, modificó o resolvió sobre cada propuesta. Esta sección se conserva sin cambios respecto de la v1.2.")
 SES1 = [
@@ -462,11 +521,11 @@ doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido
 
 doc.h1("18. Registro de consultas — sesión del 07 y 08/11/2026 (Leandro Mussi)")
 doc.parrafo(
-    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de diseño de doc/superpowers. "
+    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de diseño de doc/especificaciones. "
     "En el repositorio no constan las indicaciones textuales ni las decisiones del equipo más allá de lo que dicen los commits; esas celdas quedan marcadas «a completar» y se listan en «A confirmar».")
 A = "(a completar: transcribir la indicación)"
 SES2 = [
-    ["10", "Diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/superpowers/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporado a la rama; decisión del equipo a completar."],
+    ["10", "Diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/especificaciones/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporado a la rama; decisión del equipo a completar."],
     ["11", "SQLite v3 y consultas de la v1.4.0", A, "Fecha y medio de pago en visitante, socio que vence hoy, vencimientos por rango de fechas, pagos diarios por fecha, DNI repetido en el día y pruebas de la base (commits 26d9299, bd6b47a). Migración 2→3 que descuenta del cupo los visitantes que la 1.3.x ya había sumado, con prueba instrumentada (ed5a4c7).", "Incorporado (v1.4.0)."],
     ["12", "Reportes, visitantes y cobro en caja (HU-14, HU-03, HU-04)", A, "Reportes con cuatro pestañas y selector de fecha, KPIs de hoy, pago diario con fecha, medio, DNI único por día y cupo del día, y cobro en caja igual al pago por app con rechazo del doble pago (c9ce74d, c5c09b4, d5db561, 414eca8).", "Incorporado (v1.4.0)."],
     ["13", "Ajuste de la etiqueta de la ficha del socio", A, "La habilitación (HU-05) no cambia; «Cuota al día» queda solo para la cuota pagada y la etiqueta pasa a «Habilitado · Cuota pendiente» (fe32a33, db5aabe).", "Incorporado (v1.4.0)."],
@@ -575,11 +634,11 @@ doc.salto()
 doc.h1("28. A confirmar")
 doc.parrafo("Lo que no se pudo verificar en el código ni en git al generar este documento. Ninguno de estos puntos se completó por suposición.")
 CONF = [
-    ["1", "Enlace del video de YouTube «No listado» de la v1.5.0.", "entrega/README_entrega_v1.5.md lo marca como pendiente de grabación."],
-    ["2", "Zip del proyecto (…_ProyectoAndroidStudio_v1.5.0.zip) y APK de la Release v1.5.0.", "No están en entrega/ (solo los de la v1.2) y los tags locales llegan hasta v1.3.1; la Release v1.5.0 no se pudo comprobar desde el repositorio local. INSTALAR.md menciona ClubDeportivo-v1.5.0-debug.apk."],
-    ["3", "Cantidad de pruebas y capturas en los README.", f"README.md y README_entrega_v1.5.md dicen 70 unitarias y 68 capturas; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
+    ["1", "Enlace del video de YouTube «No listado» de la v1.5.1.", "entrega/README_entrega_v1.5.md lo marca como pendiente de grabación."],
+    ["2", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
+    ["3", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
     ["4", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
-    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/superpowers."],
+    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
     ["6", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
     ["7", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
     ["8", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],

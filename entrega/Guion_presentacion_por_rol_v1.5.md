@@ -55,7 +55,7 @@ Grupo 3 · Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicac
 
 ### 1.6 Control de acceso por DNI (HU-05)
 👉 **Acceso**. Usar los DNI de prueba de la pantalla.
-✅ `38.412.907` Permitido (al día) · `39.876.540` Permitido con aviso de gracia y deuda · `40.120.334` **Denegado**: "gracia de 5 días superada", con la deuda · `35.887.210` Denegado por carnet vencido · `11.111.111` No encontrado. En un permitido, **Registrar ingreso** lo suma a "Ingresos de hoy".
+✅ `38.412.907` Permitido (al día) · `39.876.540` Permitido con aviso de gracia y deuda · `40.120.334` **Denegado**: "gracia de 5 días superada", con la deuda · `35.887.210` Denegado por carnet vencido · `11.111.111` No encontrado, con los botones **Registrar visitante** (abre el ingreso con el DNI cargado) y Registrar socio. En un permitido, **Registrar ingreso** lo suma a "Ingresos de hoy".
 
 ### 1.7 Cobro de cuota en caja (HU-04 · consigna 2)
 👉 Ficha de Lucas → **Registrar pago en caja** → confirmar.
@@ -98,7 +98,7 @@ Grupo 3 · Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicac
 
 ### 3.1 Presencia y asistencia (HU-08)
 👉 Inicio → **Marcar presencia**.
-✅ Presencia registrada con la hora.
+✅ La tarjeta pasa a "Presente · HH:MM" con la hora real en que se marcó.
 👉 **Asistencia** de la clase: presentes y ausentes.
 ✅ Los socios no habilitados aparecen señalados (por ejemplo, el que está en mora).
 

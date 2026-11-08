@@ -14,7 +14,7 @@ INTRO = [
     "SocioVista.kt (reglas derivadas), ClubRepositorio.kt y ClubDbHelper.kt (persistencia SQLite), Models.kt, Validaciones.kt, "
     "las pantallas de ui/screens y la tabla de historias de usuario del README. Las reglas nuevas de la v1.5.0 (gracia configurable, "
     "recargo e interés sobre la deuda, contador de días, parámetros con vigencia, apellido separado y fecha real del dispositivo) "
-    "salen del spec doc/superpowers/specs/2026-11-08-v1.5.0-gracia-recargos-design.md y se marcan con «(v1.5)». Los escenarios de "
+    "salen del spec doc/especificaciones/specs/2026-11-08-v1.5.0-gracia-recargos-design.md y se marcan con «(v1.5)». Los escenarios de "
     "las pruebas unitarias (ClubViewModelTest, CrudSociosTest, ValidacionesTest) se usaron para los flujos alternativos.",
     "Cada caso de uso corresponde a una función existente en ClubViewModel o a una regla del spec v1.5. Lo que no quedó claro se anota "
     "en la lista final «A confirmar» en lugar de suponerse.",
