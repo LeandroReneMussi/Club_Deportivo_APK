@@ -34,11 +34,22 @@
 3_AdminActivity_18.png|AdminActivity|Control de acceso|HU-05|Socio en mora: acceso denegado con el motivo.
 3_AdminActivity_19.png|AdminActivity|Control de acceso|HU-05|Carnet vencido: acceso denegado.
 3_AdminActivity_20.png|AdminActivity|Control de acceso|HU-05|DNI inexistente: no encontrado.
-3_AdminActivity_21.png|AdminActivity|Visitantes|HU-03|Cupos del día e ingresos de visitantes.
+3_AdminActivity_21.png|AdminActivity|Visitantes|HU-03|Cupos del día y pagos diarios de hoy, con el total recaudado.
 3_AdminActivity_22.png|AdminActivity|Ingreso de visitante|HU-03|Natación sin cupo: el ingreso no puede realizarse.
-3_AdminActivity_23.png|AdminActivity|Ingreso de visitante|HU-03|Actividad con cupo: listo para confirmar el cobro.
-3_AdminActivity_24.png|AdminActivity|Reportes|HU-14|Cuotas que vencen en los próximos 7 días.
-3_AdminActivity_25.png|AdminActivity|Reportes|HU-14|Socios en mora con acceso bloqueado.
+3_AdminActivity_23.png|AdminActivity|Ingreso de visitante|HU-03|Validación: ese DNI ya tiene un pago diario registrado hoy.
+3_AdminActivity_24.png|AdminActivity|Ingreso de visitante|HU-03|Actividad con cupo, medio de pago y total: listo para registrar el pago diario.
+3_AdminActivity_25.png|AdminActivity|Visitantes|HU-03|Pago diario registrado: entra en la lista de hoy y suma al total.
+3_AdminActivity_26.png|AdminActivity|Reportes|HU-14|Socios cuya cuota vence hoy, consultados en SQLite.
+3_AdminActivity_27.png|AdminActivity|Reportes|HU-14|Cuotas que vencen en los próximos 7 días.
+3_AdminActivity_28.png|AdminActivity|Reportes|HU-14|Socios en mora con acceso bloqueado.
+3_AdminActivity_29.png|AdminActivity|Reportes|HU-14 / HU-03|Pagos diarios de no socios de hoy, con el total del día.
+3_AdminActivity_30.png|AdminActivity|Reportes|HU-14 / HU-03|Pagos diarios de un día anterior, recuperados por fecha.
+3_AdminActivity_31.png|AdminActivity|Perfil · Configuración del club|v1.5|El administrador fija gracia, recargo e interés; cada cambio queda en el historial con su fecha.
+3_AdminActivity_32.png|AdminActivity|Perfil · Configuración del club|v1.5|Parámetros guardados: rigen desde hoy para todos los socios.
+3_AdminActivity_33.png|AdminActivity|Ficha del socio|HU-04 / v1.5|Lucas, vencido hace 29 días con 30 de gracia: habilitado en gracia; la deuda suma recargo e interés.
+3_AdminActivity_34.png|AdminActivity|Control de acceso|HU-05 / v1.5|En gracia: acceso permitido con aviso del plazo y de la deuda.
+3_AdminActivity_35.png|AdminActivity|Control de acceso|HU-05 / v1.5|Gracia de 5 días superada: acceso denegado; la deuda incluye recargo e interés.
+3_AdminActivity_36.png|AdminActivity|Reportes|HU-14 / v1.5|En mora: total adeudado con recargo e interés, y parámetros vigentes.
 4_EntrenadoraActivity_01.png|EntrenadoraActivity|Inicio|HU-08|Presencia del día, clases y rutinas pendientes.
 4_EntrenadoraActivity_02.png|EntrenadoraActivity|Inicio|HU-08|Presencia registrada.
 4_EntrenadoraActivity_03.png|EntrenadoraActivity|Asistencia|HU-08|Presentes y ausentes de la clase; socios no habilitados señalados.
