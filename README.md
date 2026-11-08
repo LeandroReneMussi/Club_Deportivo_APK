@@ -9,7 +9,9 @@ Es un prototipo académico. Desde la **v1.3.0** la app Android guarda los datos 
 el listado se escriben en `club_deportivo.db` y siguen ahí al cerrar la app. La
 [versión web](#app-web-prototipo) conserva los datos en memoria, como el prototipo
 original. No hay backend ni pasarela de pago: el pago se registra en la base (o en
-memoria, en la web), tal como se definió en el diseño.
+memoria, en la web), tal como se definió en el diseño. La **v1.4.0** suma el listado de
+cuotas que vencen hoy, el pago diario de visitantes con fecha y medio de pago (consultable
+por día en Reportes) y pruebas instrumentadas de SQLite.
 
 ---
 
@@ -177,11 +179,18 @@ Andrés por vencer en dos días. Está en un solo lugar, `data/Format.kt`.
 
 ## Pruebas
 
-`./gradlew test` corre 57 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
+`./gradlew test` corre 65 pruebas sobre la lógica: las reglas de las 14 HU, la navegación entre Activities, el CRUD de socios y las validaciones
 (`ClubViewModelTest`) y las utilidades de fecha e importe (`FormatoTest`). Cubren la
 regla central de habilitación, los cuatro casos del control de acceso, las validaciones
 de alta, el bloqueo por cupo, el bloqueo de rutina por mora o falta de apto físico y el
 comportamiento de la pila de navegación.
+
+Las pruebas de SQLite (`ClubDbHelperTest`) son instrumentadas y corren en un emulador o
+teléfono conectado:
+`gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=ar.edu.ifts29.clubdeportivo.ClubDbHelperTest`.
+Cubren la persistencia al cerrar y reabrir la app, el listado de cuotas que vencen hoy y en
+la semana, los pagos diarios por fecha, el DNI repetido en el día y la migración de la base
+de la versión 2 a la 3.
 
 ---
 
@@ -191,7 +200,7 @@ comportamiento de la pila de navegación.
 |----|-----|-------|
 | HU-01 | Inicio de sesión por rol | `PantallaLogin` |
 | HU-02 | Registrar socio (carnet + cuota inicial + ficha médica) | `PantallaAlta` |
-| HU-03 | Visitantes con control de cupo | `PantallaVisitantes`, `PantallaVisitanteNuevo` |
+| HU-03 | Visitantes: pago diario con fecha, medio y control de cupo del día | `PantallaVisitantes`, `PantallaVisitanteNuevo` |
 | HU-04 | Consultar y pagar cuota | `PantallaCuotas`, `PantallaPagar`, ficha del socio |
 | HU-05 | Control de acceso por DNI | `PantallaAcceso` |
 | HU-06 | Carnet digital | `PantallaCarnet` |
@@ -202,4 +211,4 @@ comportamiento de la pila de navegación.
 | HU-11 | Turnos de nutrición (socio y profesional) | `PantallaTurno`, `PantallaAgenda` |
 | HU-12 | Ficha nutricional | `PantallaFichaNutricional` |
 | HU-13 | Información nutricional propia | `PantallaNutriSocio` |
-| HU-14 | Reportes: por vencer y en mora | `PantallaReportes` |
+| HU-14 | Reportes: vencen hoy, esta semana, en mora y pagos diarios por fecha | `PantallaReportes` |
