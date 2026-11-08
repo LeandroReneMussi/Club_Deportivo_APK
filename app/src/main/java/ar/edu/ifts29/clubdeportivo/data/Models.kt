@@ -173,6 +173,7 @@ data class Campos(
     val pass: String = "",
     val busq: String = "",
     val nombre: String = "",
+    val apellido: String = "",
     val dni: String = "",
     val mail: String = "",
     val obs: String = "",

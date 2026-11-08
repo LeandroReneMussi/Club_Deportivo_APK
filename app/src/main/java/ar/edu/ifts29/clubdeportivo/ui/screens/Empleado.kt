@@ -485,7 +485,8 @@ fun ColumnScope.PantallaAlta(vm: ClubViewModel) {
                 .padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            CampoTexto(f.nombre, { v -> vm.campo { copy(nombre = v) } }, "Nombre y apellido")
+            CampoTexto(f.nombre, { v -> vm.campo { copy(nombre = v) } }, "Nombre")
+            CampoTexto(f.apellido, { v -> vm.campo { copy(apellido = v) } }, "Apellido")
             CampoTexto(f.dni, { v -> vm.campo { copy(dni = v) } }, "DNI (sin puntos)", tecladoNumerico = true)
             CampoTexto(f.mail, { v -> vm.campo { copy(mail = v) } }, "Correo electrónico", tecladoEmail = true)
 

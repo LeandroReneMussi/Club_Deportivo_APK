@@ -1,5 +1,7 @@
 package ar.edu.ifts29.clubdeportivo
 
+import ar.edu.ifts29.clubdeportivo.data.Fecha
+import ar.edu.ifts29.clubdeportivo.data.Reloj
 import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
 import ar.edu.ifts29.clubdeportivo.vm.ClubViewModel
@@ -25,11 +27,15 @@ class CrudSociosTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        Reloj.fijar(Fecha(2026, 9, 8))
         ClubRepositorio.reiniciar()
     }
 
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        Dispatchers.resetMain()
+        Reloj.fijar(null)
+    }
 
     private fun admin() = ClubViewModel().apply {
         campo { copy(email = "Jorge", pass = "Admin123") }
@@ -42,10 +48,11 @@ class CrudSociosTest {
         vm.abrirSocio(2)
         vm.irAEditar()
         assertEquals(Screen.E_EDITAR, vm.pantalla)
-        assertEquals("Lucas Benítez", vm.estado.campos.nombre)
+        assertEquals("Lucas", vm.estado.campos.nombre)
+        assertEquals("Benítez", vm.estado.campos.apellido)
         assertEquals("40120334", vm.estado.campos.dni)
 
-        vm.campo { copy(nombre = "Lucas Benítez Paz", mail = "lucas@club.com") }
+        vm.campo { copy(apellido = "Benítez Paz", mail = "lucas@club.com") }
         vm.elegirPlan(2)
         vm.confirmarAlta()
 

@@ -19,6 +19,17 @@ object Validaciones {
         }
     }
 
+    /** Nombre o apellido por separado (alta de socio): obligatorio y solo letras. */
+    fun nombrePropio(valor: String, campo: String): String? {
+        val v = valor.trim()
+        return when {
+            v.isEmpty() -> "Ingresá el $campo."
+            !NOMBRE.matches(v) -> "El $campo solo puede contener letras y espacios."
+            v.length < 2 -> "El $campo es demasiado corto."
+            else -> null
+        }
+    }
+
     /** Acepta el DNI con o sin puntos; cualquier otro carácter es un formato incorrecto. */
     fun dni(valor: String): String? {
         val v = valor.trim()

@@ -45,6 +45,7 @@ import ar.edu.ifts29.clubdeportivo.data.masAnios
 import ar.edu.ifts29.clubdeportivo.data.masDias
 import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.tituloMes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -613,7 +614,7 @@ class ClubViewModel : ViewModel() {
             editandoId = null,
             apto = true,
             planIdx = 1,
-            campos = estado.campos.copy(nombre = "", dni = "", mail = "", obs = ""),
+            campos = estado.campos.copy(nombre = "", apellido = "", dni = "", mail = "", obs = ""),
         )
         ir(Screen.E_ALTA)
     }
@@ -627,7 +628,9 @@ class ClubViewModel : ViewModel() {
             apto = s.ficha,
             planIdx = DemoData.planes.indexOfFirst { it.nombre == s.plan }.coerceAtLeast(0),
             campos = estado.campos.copy(
-                nombre = s.nombre,
+                // Nombre y apellido viven juntos en el socio: el primer espacio los separa.
+                nombre = s.nombre.substringBefore(' '),
+                apellido = s.nombre.substringAfter(' ', ""),
                 dni = s.dni.toString(),
                 mail = s.email,
                 obs = s.nut.antecedentes,
@@ -636,10 +639,14 @@ class ClubViewModel : ViewModel() {
         ir(Screen.E_EDITAR)
     }
 
+    /** El socio se guarda con nombre y apellido juntos, como lo muestran todas las pantallas. */
+    private fun nombreCompleto(c: Campos): String = "${c.nombre.trim()} ${c.apellido.trim()}".trim()
+
     /** Valida el formulario de alta / edición; devuelve el primer error o `null`. */
     private fun errorFormularioSocio(): String? {
         val c = estado.campos
-        Validaciones.nombre(c.nombre)?.let { return it }
+        Validaciones.nombrePropio(c.nombre, "nombre")?.let { return it }
+        Validaciones.nombrePropio(c.apellido, "apellido")?.let { return it }
         Validaciones.dni(c.dni)?.let { return it }
         Validaciones.email(c.mail)?.let { return it }
         val dni = c.dni.filter { it.isDigit() }.toLongOrNull()
@@ -659,7 +666,7 @@ class ClubViewModel : ViewModel() {
             guardarEdicion()
             return
         }
-        val nombre = estado.campos.nombre.trim()
+        val nombre = nombreCompleto(estado.campos)
         val dni = estado.campos.dni.filter { it.isDigit() }
         val plan = planSeleccionado
         val nuevo = Socio(
@@ -675,7 +682,7 @@ class ClubViewModel : ViewModel() {
             carnetVence = HOY.masAnios(1).masDias(-1),
             ficha = estado.apto,
             actividades = emptyList(),
-            cuota = Cuota("Septiembre 2026", plan.precio, venceCuotaInicial, EstadoCuota.PENDIENTE),
+            cuota = Cuota(HOY.tituloMes(), plan.precio, venceCuotaInicial, EstadoCuota.PENDIENTE),
             historial = emptyList(),
             rutina = null,
             nut = FichaNutricional(
@@ -711,7 +718,7 @@ class ClubViewModel : ViewModel() {
         val c = estado.campos
         actualizarSocio(id) { s ->
             s.copy(
-                nombre = c.nombre.trim(),
+                nombre = nombreCompleto(c),
                 dni = c.dni.filter { it.isDigit() }.toLong(),
                 email = c.mail.trim(),
                 plan = planSeleccionado.nombre,

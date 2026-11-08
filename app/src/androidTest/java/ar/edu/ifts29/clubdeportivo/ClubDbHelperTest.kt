@@ -4,9 +4,12 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import ar.edu.ifts29.clubdeportivo.data.Fecha
+import ar.edu.ifts29.clubdeportivo.data.Reloj
 import ar.edu.ifts29.clubdeportivo.data.db.ClubDbHelper
 import ar.edu.ifts29.clubdeportivo.data.fecha
 import ar.edu.ifts29.clubdeportivo.vm.DatosClub
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -22,8 +25,13 @@ class ClubDbHelperTest {
 
     @Before
     fun limpiar() {
+        // La semilla es relativa al reloj: se fija el "hoy" del prototipo para que las fechas coincidan.
+        Reloj.fijar(Fecha(2026, 9, 8))
         context.deleteDatabase(nombre)
     }
+
+    @After
+    fun soltarReloj() = Reloj.fijar(null)
 
     private fun conSemilla(): ClubDbHelper = ClubDbHelper(context, nombre).also { it.guardar(DatosClub()) }
 

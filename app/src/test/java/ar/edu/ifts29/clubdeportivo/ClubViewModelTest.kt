@@ -1,10 +1,12 @@
 package ar.edu.ifts29.clubdeportivo
 
 import ar.edu.ifts29.clubdeportivo.data.Acceso
+import ar.edu.ifts29.clubdeportivo.data.Fecha
 import ar.edu.ifts29.clubdeportivo.data.FiltroSocios
 import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
 import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
+import ar.edu.ifts29.clubdeportivo.data.Reloj
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
@@ -42,11 +44,15 @@ class ClubViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        Reloj.fijar(Fecha(2026, 9, 8))
         ClubRepositorio.reiniciar()
     }
 
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        Dispatchers.resetMain()
+        Reloj.fijar(null)
+    }
 
     private fun ingresar(usuario: String, clave: String) = ClubViewModel().apply {
         campo { copy(email = usuario, pass = clave) }
@@ -275,13 +281,17 @@ class ClubViewModelTest {
 
         vm.campo { copy(nombre = "Ana", dni = "30111222", mail = "ana@club.com") }
         vm.confirmarAlta()
-        assertNotNull("nombre demasiado corto", vm.estado.altaError)
+        assertEquals("falta el apellido", "Ingresá el apellido.", vm.estado.altaError)
 
-        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "123") }
+        vm.campo { copy(nombre = "", apellido = "Ferreyra") }
+        vm.confirmarAlta()
+        assertEquals("falta el nombre", "Ingresá el nombre.", vm.estado.altaError)
+
+        vm.campo { copy(nombre = "Marcos", apellido = "Ferreyra", dni = "123") }
         vm.confirmarAlta()
         assertTrue(vm.estado.altaError!!.contains("7 u 8"))
 
-        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "38412907") }
+        vm.campo { copy(dni = "38412907") }
         vm.confirmarAlta()
         assertTrue(vm.estado.altaError!!.contains("Ya existe"))
     }
@@ -291,11 +301,11 @@ class ClubViewModelTest {
         val vm = admin()
         vm.irAAlta()
 
-        vm.campo { copy(nombre = "Marcos Ferr3yra", dni = "30111222", mail = "m@club.com") }
+        vm.campo { copy(nombre = "Marcos", apellido = "Ferr3yra", dni = "30111222", mail = "m@club.com") }
         vm.confirmarAlta()
         assertTrue(vm.estado.altaError!!.contains("letras"))
 
-        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "30A11222") }
+        vm.campo { copy(apellido = "Ferreyra", dni = "30A11222") }
         vm.confirmarAlta()
         assertTrue(vm.estado.altaError!!.contains("números"))
 
@@ -315,7 +325,7 @@ class ClubViewModelTest {
         vm.irAAlta()
         val cuantos = vm.estado.socios.size
 
-        vm.campo { copy(nombre = "Marcos Ferreyra", dni = "30111222", mail = "marcos@club.com") }
+        vm.campo { copy(nombre = "Marcos", apellido = "Ferreyra", dni = "30111222", mail = "marcos@club.com") }
         vm.elegirPlan(2)
         vm.confirmarAlta()
 
@@ -323,6 +333,7 @@ class ClubViewModelTest {
         assertEquals(Screen.E_SOCIO, vm.pantalla)
 
         val nuevo = vm.seleccionado
+        assertEquals("nombre y apellido juntos", "Marcos Ferreyra", nuevo.nombre)
         assertEquals("01508", nuevo.nro)
         assertEquals("Familiar", nuevo.plan)
         assertEquals(money(29_000), nuevo.cuotaMonto)

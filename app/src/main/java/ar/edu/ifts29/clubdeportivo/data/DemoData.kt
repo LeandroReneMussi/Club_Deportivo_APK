@@ -86,10 +86,10 @@ object DemoData {
     const val NUTRICIONISTA = "Lic. Leandro Mussi"
     const val PROFESORA = "Ana Alvarez"
 
-    private val rutinaHipertrofia = Rutina(
+    private val rutinaHipertrofia: Rutina get() = Rutina(
         nombre = "Hipertrofia 3 días",
         profesor = PROFESORA,
-        actualizada = fecha("2026-09-01"),
+        actualizada = HOY.masDias(-7),
         dias = listOf(
             DiaRutina(
                 "D1", "Tren inferior",
@@ -125,7 +125,7 @@ object DemoData {
         ),
     )
 
-    val socios: List<Socio> = listOf(
+    val socios: List<Socio> get() = listOf(
         Socio(
             id = 1,
             foto = R.drawable.avatar_andres,
@@ -133,20 +133,20 @@ object DemoData {
             dni = 38_412_907,
             nro = "01245",
             plan = "Full",
-            alta = fecha("2024-03-12"),
+            alta = HOY.masDias(-910),
             nac = fecha("1994-06-21"),
-            carnetEmitido = fecha("2026-04-01"),
-            carnetVence = fecha("2027-03-31"),
+            carnetEmitido = HOY.masDias(-160),
+            carnetVence = HOY.masDias(204),
             ficha = true,
             actividades = listOf(
                 ActividadSocio("Musculación", "Lun · Mié · Vie"),
                 ActividadSocio("Natación", "Mar · Jue 19:00"),
             ),
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-10"), EstadoCuota.PENDIENTE),
+            cuota = Cuota(HOY.tituloMes(), 18_500, HOY.masDias(2), EstadoCuota.PENDIENTE),
             historial = listOf(
-                PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-05"), "Tarjeta"),
-                PagoHistorial("Julio 2026", 17_000, fecha("2026-07-08"), "Caja"),
-                PagoHistorial("Junio 2026", 17_000, fecha("2026-06-03"), "Tarjeta"),
+                PagoHistorial(HOY.masMeses(-1).tituloMes(), 18_500, HOY.masDias(-34), "Tarjeta"),
+                PagoHistorial(HOY.masMeses(-2).tituloMes(), 17_000, HOY.masDias(-62), "Caja"),
+                PagoHistorial(HOY.masMeses(-3).tituloMes(), 17_000, HOY.masDias(-97), "Tarjeta"),
             ),
             rutina = rutinaHipertrofia,
             nut = FichaNutricional(
@@ -154,12 +154,12 @@ object DemoData {
                 objetivo = "Recomposición corporal, +masa muscular",
                 antecedentes = "Sin antecedentes relevantes",
                 consultas = listOf(
-                    Consulta(fecha("2026-08-14"), 62.4, "Buena adherencia. Sube proteína a 1,8 g/kg. Colación post-entreno."),
-                    Consulta(fecha("2026-07-10"), 63.8, "Ajuste de porciones en cena. Hidratación insuficiente."),
-                    Consulta(fecha("2026-06-05"), 64.5, "Primera consulta. Plan base 4 comidas."),
+                    Consulta(HOY.masDias(-25), 62.4, "Buena adherencia. Sube proteína a 1,8 g/kg. Colación post-entreno."),
+                    Consulta(HOY.masDias(-60), 63.8, "Ajuste de porciones en cena. Hidratación insuficiente."),
+                    Consulta(HOY.masDias(-95), 64.5, "Primera consulta. Plan base 4 comidas."),
                 ),
             ),
-            turno = Turno(fecha("2026-09-11"), "17:30"),
+            turno = Turno(HOY.masDias(3), "17:30"),
             ingresos = listOf(
                 Ingreso("Lun 7 sep · 18:52", "Permitido"),
                 Ingreso("Vie 4 sep · 19:10", "Permitido"),
@@ -172,20 +172,20 @@ object DemoData {
             dni = 40_120_334,
             nro = "01302",
             plan = "Básico",
-            alta = fecha("2025-01-20"),
+            alta = HOY.masDias(-596),
             nac = fecha("1997-02-11"),
-            carnetEmitido = fecha("2026-01-20"),
-            carnetVence = fecha("2027-01-19"),
+            carnetEmitido = HOY.masDias(-231),
+            carnetVence = HOY.masDias(133),
             ficha = true,
             actividades = listOf(ActividadSocio("Musculación", "Lun · Mié · Vie")),
-            cuota = Cuota("Agosto 2026", 12_000, fecha("2026-08-10"), EstadoCuota.VENCIDA),
-            historial = listOf(PagoHistorial("Julio 2026", 11_000, fecha("2026-07-15"), "Caja")),
+            cuota = Cuota(HOY.masMeses(-1).tituloMes(), 12_000, HOY.masDias(-29), EstadoCuota.VENCIDA),
+            historial = listOf(PagoHistorial(HOY.masMeses(-2).tituloMes(), 11_000, HOY.masDias(-55), "Caja")),
             rutina = null,
             nut = FichaNutricional(
                 peso = 81.0, altura = 1.79,
                 objetivo = "Descenso de grasa",
                 antecedentes = "Hipertensión leve controlada",
-                consultas = listOf(Consulta(fecha("2026-05-20"), 81.0, "Primera consulta. Reducir sodio.")),
+                consultas = listOf(Consulta(HOY.masDias(-111), 81.0, "Primera consulta. Reducir sodio.")),
             ),
             turno = null,
             ingresos = emptyList(),
@@ -196,24 +196,24 @@ object DemoData {
             dni = 35_887_210,
             nro = "00877",
             plan = "Full",
-            alta = fecha("2021-09-01"),
+            alta = HOY.masDias(-1833),
             nac = fecha("1991-11-03"),
-            carnetEmitido = fecha("2025-08-31"),
-            carnetVence = fecha("2026-08-31"),
+            carnetEmitido = HOY.masDias(-373),
+            carnetVence = HOY.masDias(-8),
             ficha = true,
             actividades = listOf(
                 ActividadSocio("Yoga", "Mar · Jue 08:30"),
                 ActividadSocio("Funcional", "Sáb 10:00"),
             ),
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-10"), EstadoCuota.PAGADA),
+            cuota = Cuota(HOY.tituloMes(), 18_500, HOY.masDias(2), EstadoCuota.PAGADA),
             historial = listOf(
-                PagoHistorial("Septiembre 2026", 18_500, fecha("2026-09-02"), "App"),
-                PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-04"), "App"),
+                PagoHistorial(HOY.tituloMes(), 18_500, HOY.masDias(-6), "App"),
+                PagoHistorial(HOY.masMeses(-1).tituloMes(), 18_500, HOY.masDias(-35), "App"),
             ),
             rutina = Rutina(
                 nombre = "Movilidad y fuerza",
                 profesor = PROFESORA,
-                actualizada = fecha("2026-08-20"),
+                actualizada = HOY.masDias(-19),
                 dias = listOf(
                     DiaRutina(
                         "D1", "Fuerza general",
@@ -229,9 +229,9 @@ object DemoData {
                 peso = 58.2, altura = 1.63,
                 objetivo = "Mantenimiento",
                 antecedentes = "Intolerancia a la lactosa",
-                consultas = listOf(Consulta(fecha("2026-08-21"), 58.2, "Estable. Mantener plan.")),
+                consultas = listOf(Consulta(HOY.masDias(-18), 58.2, "Estable. Mantener plan.")),
             ),
-            turno = Turno(fecha("2026-09-08"), "16:30"),
+            turno = Turno(HOY, "16:30"),
             ingresos = emptyList(),
         ),
         Socio(
@@ -240,21 +240,21 @@ object DemoData {
             dni = 42_501_118,
             nro = "01410",
             plan = "Full",
-            alta = fecha("2025-11-05"),
+            alta = HOY.masDias(-307),
             nac = fecha("2000-08-30"),
-            carnetEmitido = fecha("2025-11-05"),
-            carnetVence = fecha("2026-11-04"),
+            carnetEmitido = HOY.masDias(-307),
+            carnetVence = HOY.masDias(57),
             ficha = true,
             actividades = listOf(
                 ActividadSocio("Musculación", "Lun · Mié · Vie"),
                 ActividadSocio("Funcional", "Mar · Jue 19:30"),
             ),
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-10"), EstadoCuota.PAGADA),
-            historial = listOf(PagoHistorial("Septiembre 2026", 18_500, fecha("2026-09-01"), "App")),
+            cuota = Cuota(HOY.tituloMes(), 18_500, HOY.masDias(2), EstadoCuota.PAGADA),
+            historial = listOf(PagoHistorial(HOY.tituloMes(), 18_500, HOY.masDias(-7), "App")),
             rutina = Rutina(
                 nombre = "Fuerza 4 días",
                 profesor = PROFESORA,
-                actualizada = fecha("2026-09-03"),
+                actualizada = HOY.masDias(-5),
                 dias = listOf(
                     DiaRutina(
                         "D1", "Empuje",
@@ -274,7 +274,7 @@ object DemoData {
                 ),
             ),
             nut = FichaNutricional(76.0, 1.82, "Ganancia muscular", "Sin antecedentes", emptyList()),
-            turno = Turno(fecha("2026-09-08"), "18:00"),
+            turno = Turno(HOY, "18:00"),
             ingresos = emptyList(),
         ),
         Socio(
@@ -283,17 +283,17 @@ object DemoData {
             dni = 39_004_567,
             nro = "01188",
             plan = "Básico",
-            alta = fecha("2023-06-14"),
+            alta = HOY.masDias(-1182),
             nac = fecha("1995-12-09"),
-            carnetEmitido = fecha("2026-06-14"),
-            carnetVence = fecha("2027-06-13"),
+            carnetEmitido = HOY.masDias(-86),
+            carnetVence = HOY.masDias(278),
             ficha = false,
             actividades = listOf(ActividadSocio("Natación", "Mar · Jue 19:00")),
-            cuota = Cuota("Septiembre 2026", 12_000, fecha("2026-09-12"), EstadoCuota.PENDIENTE),
-            historial = listOf(PagoHistorial("Agosto 2026", 12_000, fecha("2026-08-11"), "Caja")),
+            cuota = Cuota(HOY.tituloMes(), 12_000, HOY.masDias(4), EstadoCuota.PENDIENTE),
+            historial = listOf(PagoHistorial(HOY.masMeses(-1).tituloMes(), 12_000, HOY.masDias(-28), "Caja")),
             rutina = null,
             nut = FichaNutricional(66.0, 1.70, "Rendimiento en natación", "Asma leve", emptyList()),
-            turno = Turno(fecha("2026-09-09"), "17:00"),
+            turno = Turno(HOY.masDias(1), "17:00"),
             ingresos = emptyList(),
         ),
         Socio(
@@ -302,14 +302,14 @@ object DemoData {
             dni = 41_777_320,
             nro = "01355",
             plan = "Full",
-            alta = fecha("2025-05-02"),
+            alta = HOY.masDias(-494),
             nac = fecha("1999-04-17"),
-            carnetEmitido = fecha("2026-05-02"),
-            carnetVence = fecha("2027-05-01"),
+            carnetEmitido = HOY.masDias(-129),
+            carnetVence = HOY.masDias(235),
             ficha = true,
             actividades = listOf(ActividadSocio("Funcional", "Mar · Jue 19:30")),
-            cuota = Cuota("Julio 2026", 17_000, fecha("2026-07-10"), EstadoCuota.VENCIDA),
-            historial = listOf(PagoHistorial("Junio 2026", 17_000, fecha("2026-06-09"), "Caja")),
+            cuota = Cuota(HOY.masMeses(-2).tituloMes(), 17_000, HOY.masDias(-60), EstadoCuota.VENCIDA),
+            historial = listOf(PagoHistorial(HOY.masMeses(-3).tituloMes(), 17_000, HOY.masDias(-91), "Caja")),
             rutina = null,
             nut = FichaNutricional(70.0, 1.75, "Tonificación", "Sin antecedentes", emptyList()),
             turno = null,
@@ -321,22 +321,22 @@ object DemoData {
             dni = 43_210_987,
             nro = "01466",
             plan = "Full",
-            alta = fecha("2026-02-10"),
+            alta = HOY.masDias(-210),
             nac = fecha("2001-01-25"),
-            carnetEmitido = fecha("2026-02-10"),
-            carnetVence = fecha("2027-02-09"),
+            carnetEmitido = HOY.masDias(-210),
+            carnetVence = HOY.masDias(154),
             ficha = true,
             actividades = listOf(ActividadSocio("Musculación", "Lun · Mié · Vie")),
             // Al día: el prototipo lista solo a Andrés y Valentina como próximos a vencer ($30.500).
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-10"), EstadoCuota.PAGADA),
+            cuota = Cuota(HOY.tituloMes(), 18_500, HOY.masDias(2), EstadoCuota.PAGADA),
             historial = listOf(
-                PagoHistorial("Septiembre 2026", 18_500, fecha("2026-09-06"), "App"),
-                PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-06"), "App"),
+                PagoHistorial(HOY.tituloMes(), 18_500, HOY.masDias(-2), "App"),
+                PagoHistorial(HOY.masMeses(-1).tituloMes(), 18_500, HOY.masDias(-33), "App"),
             ),
             rutina = Rutina(
                 nombre = "Inicial",
                 profesor = PROFESORA,
-                actualizada = fecha("2026-07-01"),
+                actualizada = HOY.masDias(-69),
                 dias = listOf(
                     DiaRutina(
                         "D1", "Adaptación",
@@ -357,15 +357,15 @@ object DemoData {
             dni = 36_410_228,
             nro = "01490",
             plan = "Full",
-            alta = fecha("2025-09-15"),
+            alta = HOY.masDias(-358),
             nac = fecha("1992-03-14"),
-            carnetEmitido = fecha("2026-01-10"),
-            carnetVence = fecha("2027-01-09"),
+            carnetEmitido = HOY.masDias(-241),
+            carnetVence = HOY.masDias(123),
             ficha = true,
             actividades = listOf(ActividadSocio("Musculación", "Lun · Mié · Vie")),
             // Vence hoy: es el caso del listado "Vencen hoy" de Reportes (consigna, punto 5).
-            cuota = Cuota("Septiembre 2026", 18_500, fecha("2026-09-08"), EstadoCuota.PENDIENTE),
-            historial = listOf(PagoHistorial("Agosto 2026", 18_500, fecha("2026-08-07"), "Caja")),
+            cuota = Cuota(HOY.tituloMes(), 18_500, HOY, EstadoCuota.PENDIENTE),
+            historial = listOf(PagoHistorial(HOY.masMeses(-1).tituloMes(), 18_500, HOY.masDias(-32), "Caja")),
             rutina = null,
             nut = FichaNutricional(78.0, 1.80, "Fuerza", "Sin antecedentes", emptyList()),
             turno = null,
@@ -382,12 +382,12 @@ object DemoData {
 
     // Más nuevos primero. Los de hoy suman $17.000 y los del lunes 7 $14.000: es lo que
     // muestra el selector de fecha de Reportes al pasar de un día al otro.
-    val visitantesIniciales = listOf(
+    val visitantesIniciales: List<Visitante> get() = listOf(
         Visitante("Pedro Alonso", "33.120.455", "Funcional", "18:10", 6_000, HOY, "Efectivo"),
         Visitante("Tomás Vega", "42.101.877", "Funcional", "18:02", 6_000, HOY, "Efectivo"),
         Visitante("Lucía Ferreyra", "39.552.014", "Yoga", "08:35", 5_000, HOY, "Débito"),
-        Visitante("Carla Núñez", "40.318.902", "Natación", "19:05", 8_000, fecha("2026-09-07"), "Efectivo"),
-        Visitante("Julián Soto", "37.904.115", "Funcional", "18:20", 6_000, fecha("2026-09-07"), "Débito"),
+        Visitante("Carla Núñez", "40.318.902", "Natación", "19:05", 8_000, HOY.masDias(-1), "Efectivo"),
+        Visitante("Julián Soto", "37.904.115", "Funcional", "18:20", 6_000, HOY.masDias(-1), "Débito"),
     )
 
     val ingresosHoyIniciales = listOf(
@@ -404,12 +404,12 @@ object DemoData {
     )
 
     /** Días con turnos libres que ofrece la pantalla "Solicitar turno". */
-    val diasDeTurnos = listOf(fecha("2026-09-09"), fecha("2026-09-10"), fecha("2026-09-11"))
+    val diasDeTurnos: List<Fecha> get() = listOf(HOY.masDias(1), HOY.masDias(2), HOY.masDias(3))
 
     val horasDeTurnos = listOf("16:00", "16:30", "17:00", "17:30", "18:00", "18:30")
 
     /** Días que muestra la agenda del nutricionista. */
-    val diasDeAgenda = listOf(fecha("2026-09-08"), fecha("2026-09-09"), fecha("2026-09-11"))
+    val diasDeAgenda: List<Fecha> get() = listOf(HOY, HOY.masDias(1), HOY.masDias(3))
 
     /** Tabs de la barra inferior por rol. */
     val tabs: Map<Rol, List<Pair<Screen, String>>> = mapOf(

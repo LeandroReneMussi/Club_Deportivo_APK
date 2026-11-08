@@ -1,6 +1,9 @@
 package ar.edu.ifts29.clubdeportivo
 
+import ar.edu.ifts29.clubdeportivo.data.Fecha
+import ar.edu.ifts29.clubdeportivo.data.HORA_ACTUAL
 import ar.edu.ifts29.clubdeportivo.data.HOY
+import ar.edu.ifts29.clubdeportivo.data.Reloj
 import ar.edu.ifts29.clubdeportivo.data.daysTo
 import ar.edu.ifts29.clubdeportivo.data.desdeEpochDay
 import ar.edu.ifts29.clubdeportivo.data.dniFmt
@@ -19,7 +22,10 @@ import ar.edu.ifts29.clubdeportivo.data.tituloMes
 import ar.edu.ifts29.clubdeportivo.data.norm
 import ar.edu.ifts29.clubdeportivo.data.numero
 import ar.edu.ifts29.clubdeportivo.data.unDecimal
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -27,6 +33,23 @@ import org.junit.Test
  * `java.time` ni del locale del dispositivo, así que conviene fijarlas con pruebas.
  */
 class FormatoTest {
+
+    @Before
+    fun fijarReloj() = Reloj.fijar(Fecha(2026, 9, 8))
+
+    @After
+    fun soltarReloj() = Reloj.fijar(null)
+
+    @Test
+    fun `sin fijar, el reloj es la fecha real del dispositivo`() {
+        Reloj.fijar(null)
+        val c = java.util.Calendar.getInstance()
+        val real = Fecha(c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH) + 1, c.get(java.util.Calendar.DAY_OF_MONTH))
+        assertEquals(real, HOY)
+        assertEquals(0, daysTo(HOY))
+        assertEquals(5, HORA_ACTUAL.length)
+        assertFalse(Reloj.fijado)
+    }
 
     @Test
     fun `el hoy del prototipo es martes 8 de septiembre de 2026`() {

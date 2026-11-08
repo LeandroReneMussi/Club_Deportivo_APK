@@ -3,15 +3,41 @@ package ar.edu.ifts29.clubdeportivo.data
 import kotlin.math.abs
 
 /**
- * La maqueta congela el "hoy" del prototipo en el 8 de septiembre de 2026
- * (`const TODAY = new Date(2026, 8, 8, 9, 41)`), y todos los vencimientos, agendas
- * y estados de cuota se calculan contra esa fecha. Mantener el mismo anclaje es lo
- * que hace que los datos de demo cuenten la historia que se diseñó: Lucas en mora,
- * Sofía con el carnet vencido, la cuota de Andrés a punto de vencer.
+ * Reloj de la app. En el teléfono es la fecha y hora reales del dispositivo: los
+ * vencimientos, la gracia y la mora se calculan contra el calendario de verdad. Las
+ * pruebas lo fijan con [fijar] en el martes 8 de septiembre de 2026, el "hoy" del
+ * prototipo, para que los datos de demo cuenten siempre la misma historia.
  */
-val HOY = Fecha(2026, 9, 8)
+object Reloj {
+    @Volatile
+    private var fija: Fecha? = null
 
-const val HORA_ACTUAL = "09:41"
+    fun hoy(): Fecha = fija ?: real()
+
+    /** `null` vuelve al reloj del dispositivo. */
+    fun fijar(f: Fecha?) {
+        fija = f
+    }
+
+    val fijado: Boolean get() = fija != null
+
+    fun hora(): String {
+        if (fija != null) return "09:41"
+        val c = java.util.Calendar.getInstance()
+        return "${p2(c.get(java.util.Calendar.HOUR_OF_DAY))}:${p2(c.get(java.util.Calendar.MINUTE))}"
+    }
+
+    private fun real(): Fecha {
+        val c = java.util.Calendar.getInstance()
+        return Fecha(c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH) + 1, c.get(java.util.Calendar.DAY_OF_MONTH))
+    }
+}
+
+/** La fecha de hoy según [Reloj]. */
+val HOY: Fecha get() = Reloj.hoy()
+
+/** La hora actual `HH:mm` según [Reloj]. */
+val HORA_ACTUAL: String get() = Reloj.hora()
 
 private val DIAS = listOf(
     "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",

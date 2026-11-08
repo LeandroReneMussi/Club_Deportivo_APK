@@ -178,7 +178,7 @@ class CapturasPorActivityTest {
             }
             r.foto("Alta de socio", "HU-02", "Validación: falta el apellido.")
             r.vm {
-                campo { copy(nombre = "Carlos Gardel", dni = "12A45678") }
+                campo { copy(apellido = "Gardel", dni = "12A45678") }
                 confirmarAlta()
             }
             r.foto("Alta de socio", "HU-02", "Validación: DNI con formato incorrecto.")
