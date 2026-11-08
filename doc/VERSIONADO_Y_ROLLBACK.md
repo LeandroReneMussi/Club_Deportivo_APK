@@ -36,7 +36,21 @@ Alternativa manual: `git revert -m 1 <commit de merge>` en una rama, Pull Reques
 - No se borran tags ni releases publicadas.
 - No se hace `push --force` sobre `main` ni sobre las ramas `release/**`.
 
-## 3. Limitaciones conocidas
+## 3. Versiones publicadas y punto de rollback de cada una
+
+| Versión | Qué trae | Base de datos | Si hay que volver |
+|---|---|---|---|
+| v1.3.1 | SQLite en la app Android | v2 | — |
+| v1.4.0 | Vencen hoy, pagos diarios por fecha, cobro en caja completo, pruebas de SQLite | v3 | v1.3.1 |
+| v1.5.0 | Fecha real, apellido separado, gracia/recargo/interés con vigencia, QR de ingreso, carnet con formato de tarjeta | v4 | **v1.4.0** |
+
+### 3.1 Plan de rollback de la v1.5.0
+
+1. **Si falla en un teléfono de prueba:** desinstalar e instalar el APK de la release `v1.4.0` (sección 2.1). Una base v4 no se abre con la v1.4.0 (`SQLiteOpenHelper` no baja de versión), por eso se desinstala: se pierden los datos de prueba de ese teléfono y vuelve la demo de la v1.4.0.
+2. **Si hay que retirar la v1.5.0 del repositorio:** Actions → **Rollback** con `v1.4.0` (sección 2.2). Queda publicada una versión de parche con el contenido de la v1.4.0.
+3. **Qué se pierde al volver:** gracia/recargo/interés configurables, QR de ingreso, apellido separado y la fecha real (la v1.4.0 usa la fecha fija 8/9/2026). Lo demás de la v1.4.0 sigue igual.
+
+## 4. Limitaciones conocidas
 
 - El APK publicado está firmado con la clave de depuración del runner de GitHub Actions. Para distribuirlo fuera del equipo hay que configurar una clave de release propia (secreto del repositorio).
 - La protección de ramas (exigir Pull Request y aprobación en `main`) no está disponible para repositorios privados en el plan gratuito de GitHub; la aprobación de un segundo integrante se cumple por procedimiento.
