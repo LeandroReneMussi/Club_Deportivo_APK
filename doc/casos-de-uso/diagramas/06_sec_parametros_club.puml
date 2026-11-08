@@ -5,7 +5,7 @@ participant ":PantallaPerfil\n«Configuración del club»" as ui
 participant ":ClubViewModel" as vm
 participant ":ClubRepositorio" as repo
 participant ":ClubDbHelper\n(SQLite v4)" as db
-note over repo, db : Al abrir la app, iniciar() → leer() carga UiState.parametros (SELECT * FROM parametro ORDER BY orden; vacía → INICIALES 5 / 0 / 0)
+note over repo, db : Al abrir la app, iniciar() → leer() carga UiState.parametros (SELECT * FROM parametro ORDER BY orden). Semilla demo: hace un año 10 / $300 / 2,5 %; hace dos meses 5 / $500 / 3 %. Ej.: Lucas (29 días vencido) debe $12.848 = $12.000 + $500 + $348
 adm -> ui : abre Perfil → «Configuración del club»
 ui -> vm : prepararParametros() (v1.5)
 vm -> vm : parametros = estado.parametros.vigenteEn(HOY) → campos pGracia / pRecargo / pInteres

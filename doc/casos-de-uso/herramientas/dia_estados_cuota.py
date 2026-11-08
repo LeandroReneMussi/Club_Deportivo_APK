@@ -47,8 +47,8 @@ n1 = L.nota(40, 620, 560,
             "Si no hay pago, la cuota no cambia de mes: la deuda crece día a día por el interés.")
 n2 = L.nota(640, 620, 620,
             "Recargo e interés se deben desde que la cuota vence, también dentro de la gracia. Recargo: importe fijo vigente hoy, una vez. Interés: por cada día desde el vencimiento hasta hoy, "
-            "cuota × (interés mensual vigente ese día / 100) / 30 con la tasa de ESE día (vigenteEn); antes del primer parámetro guardado no se devenga nada (no retroactivo). pagarCuota cobra totalAdeudado en gracia y en mora; una cuota PAGADA no se cobra dos veces. "
-            "El carnet vencido bloquea el acceso en cualquier estado de la cuota.")
+            "cuota × (interés mensual vigente ese día / 100) / 30 con la tasa de ESE día (vigenteEn); antes de la primera fila no se devenga nada (no retroactivo). Demo: Lucas, vencido hace 29 días, debe $12.848 = $12.000 + $500 + $348 (29 días al 3 %); Rocío Paz, en gracia hace 3 días, $12.536. "
+            "pagarCuota cobra totalAdeudado en gracia y en mora; una cuota PAGADA no se cobra dos veces. El carnet vencido bloquea el acceso en cualquier estado de la cuota.")
 
 L.guardar(SALIDA)
 print("ok", SALIDA)

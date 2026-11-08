@@ -75,7 +75,7 @@ CASOS = [
             "Abre la pestaña Socios.",
             "El sistema lista el padrón leído de SQLite con la etiqueta de estado de cada socio (v1.5: «Habilitado · En gracia», «Habilitado · Cuota pendiente», «Habilitado · Cuota al día», «No habilitado · En mora», «No habilitado · Carnet vencido») y el contador de días con su tono verde / naranja / rojo.",
             "Puede escribir en la búsqueda (nombre o DNI, con o sin puntos) y elegir el filtro Todos / Habilitados / En mora (elegirFiltro()).",
-            "Toca un socio (abrirSocio()) y el sistema muestra la ficha: datos, N° de socio, plan, carnet (emitido / vence / estado), cuota vigente con vencimiento, historial de pagos con comprobantes, actividades, ingresos, ficha médica; (v1.5) total adeudado con el detalle cuota + recargo + interés si la cuota venció.",
+            "Toca un socio (abrirSocio()) y el sistema muestra la ficha: datos, N° de socio, plan, carnet (emitido / vence / estado), cuota vigente con vencimiento, historial de pagos con comprobantes, actividades, ingresos, ficha médica; (v1.5) el aviso de habilitación lleva a la derecha la cápsula estadoCorto («Debe $…», «Quedan N días», «Vence en N días», «Al día», «Renovar carnet»), la tarjeta de la cuota muestra el contador en cápsula (contadorCorto) y una línea cuotaSubLabel con la fecha, y el total adeudado con el detalle cuota + recargo + interés si la cuota venció.",
         ],
         alt=["3a. La búsqueda o el filtro no coinciden con nadie → lista vacía."],
         post="Ninguna modificación. Desde la ficha se accede a CU-05, CU-06, CU-07 y CU-08.",
@@ -141,7 +141,7 @@ CASOS = [
             "4a. Cancela la hoja → nada cambia.",
         ],
         post="Cuota pagada con comprobante; el socio queda habilitado si su carnet está vigente; sale de los listados «Vencen hoy» y «En mora». Al reabrir la app, completarCuotasSiguientes() crea la cuota del mes siguiente.",
-        v15="Recargo e interés se deben desde que la cuota vence, también dentro de la gracia, pero no se aplican hacia atrás: con Lucas vencido hace 29 días y un 3 % fijado hoy, el interés es solo el de hoy ($12.000 × 3 % / 30 = $12) y el total $12.512 (cuota + recargo $500 + $12). El historial guarda monto = total cobrado.",
+        v15="Recargo e interés se deben desde que la cuota vence, también dentro de la gracia, pero no se aplican hacia atrás: cada día usa la tasa vigente ese día y antes de la primera fila no se devenga. Con la semilla de la demo (hace un año gracia 10 / $300 / 2,5 %; hace dos meses gracia 5 / $500 / 3 %) Lucas, vencido hace 29 días, debe $12.848 = $12.000 + recargo $500 + interés $348 (29 días al 3 %); Tomás debe $18.520; Rocío Paz, vencida hace 3 días y en gracia, $12.536. El historial guarda monto = total cobrado.",
     ),
     dict(
         id="CU-08", nombre="Emitir / renovar carnet", actor="Administrativo", hu="HU-07", pantalla="PantallaFichaSocio (hoja «Renovar carnet» / «Reemitir carnet»)",
@@ -159,7 +159,7 @@ CASOS = [
         id="CU-09", nombre="Validar ingreso por DNI (control de acceso)", actor="Administrativo", hu="HU-05", pantalla="PantallaAcceso",
         pre="Sesión de Administrativo.",
         flujo=[
-            "Escribe el DNI (con o sin puntos) y toca «Validar» (validarAcceso()), o toca un socio sugerido (ponerDniAcceso()).",
+            "Escribe el DNI (con o sin puntos) y toca «Validar» (validarAcceso()), o toca un DNI de prueba (ponerDniAcceso()): permitido, en mora, carnet vencido y (v1.5) «En gracia» (Rocío Paz, 39.876.540, vencida hace 3 días con 2 de gracia, deuda $12.536, carnet por vencer en 20 días).",
             "El sistema valida el formato del DNI.",
             "Busca el socio por DNI en el padrón.",
             "(v1.5) Construye SocioVista(socio, parametros) con los parámetros del estado (leídos de SQLite al iniciar la app): días vencida, gracia vigente hoy, recargo e interés; evalúa carnet y cuota.",
@@ -223,9 +223,9 @@ CASOS = [
     dict(
         id="CU-13", nombre="Configurar parámetros del club (v1.5)", actor="Administrativo", hu="Regla de negocio de HU-04 y HU-05 (sin HU nueva; ver «A confirmar»)",
         pantalla="PantallaPerfil → sección «Configuración del club»",
-        pre="Sesión de Administrativo. Base SQLite versión 4 con la tabla parametro (Parametros.INICIALES: gracia 5 días, recargo 0, interés 0, vigente desde hoy).",
+        pre="Sesión de Administrativo. Base SQLite versión 4 con la tabla parametro; la semilla de la demo trae dos filas (desde hace un año: gracia 10 días, recargo $300, interés 2,5 %; desde hace dos meses: gracia 5, $500, 3 %). Si la tabla está vacía rige Parametros.INICIALES (5 / 0 / 0).",
         flujo=[
-            "Abre Perfil → «Configuración del club». El sistema carga el formulario con los valores vigentes hoy (prepararParametros() → campos pGracia, pRecargo, pInteres) y muestra el historial por fecha, más nuevo primero (historialParametros).",
+            "Abre Perfil → «Configuración del club» (también desde la acción rápida «Parámetros del club» del Inicio). El sistema carga el formulario con los valores vigentes hoy (prepararParametros() → campos pGracia, pRecargo, pInteres) y muestra el historial por fecha, más nuevo primero (historialParametros).",
             "Edita el período de gracia (días enteros, 0..60), el recargo (importe fijo en pesos, decimal, con coma o punto) y el interés mensual (%, 0..100) y toca «Guardar parámetros» (guardarParametros()).",
             "El sistema valida y arma Parametros(gracia, recargo, interés, vigenteDesde = hoy); lo antepone a la lista del estado quitando cualquier otra fila de hoy (guardar dos veces el mismo día reemplaza la de hoy).",
             "El setter de estado llama a ClubRepositorio.guardar → ClubDbHelper.guardar, que reescribe la tabla parametro (DELETE + INSERT de todas las filas, con orden) dentro de la transacción; toast «Parámetros guardados · rigen desde hoy».",
