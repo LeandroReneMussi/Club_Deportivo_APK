@@ -40,6 +40,7 @@ Cuentas: `Andres / Socio123` (socio) · `Jorge / Admin123` (administrativo) · `
 ## 5. El socio ve su situación (1 min)
 
 - [ ] Salir y entrar como `Andres`: Inicio con "Habilitado · Cuota pendiente" y el **contador "Vence en 2 días"** en verde; Cuotas; pagar desde la app (total, medio de pago, comprobante). Pagar de nuevo: no se cobra dos veces.
+- [ ] **Carnet → botón "QR de ingreso"**: se abre la pantalla con el código grande; escanearlo con otro celular muestra N° de socio, nombre, DNI, plan, vigencia del carnet y estado de la cuota (los datos del carnet digital).
 
 ## 6. SQLite y cierre (1 min)
 

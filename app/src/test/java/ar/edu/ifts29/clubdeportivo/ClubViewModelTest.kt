@@ -166,8 +166,8 @@ class ClubViewModelTest {
         assertTrue(lucas.enGracia)
         assertTrue(lucas.hab)
         assertFalse(lucas.mora)
-        assertEquals("Habilitado · En gracia", lucas.badge)
-        assertEquals("En gracia", lucas.badgeCorto)
+        assertEquals("Habilitado · En período de gracia", lucas.badge)
+        assertEquals("En período de gracia", lucas.badgeCorto)
         assertEquals("Queda 1 día de gracia", lucas.contador)
         assertEquals(TonoCuota.AVISO, lucas.tono)
         assertEquals("Tomás (60 días) sigue en mora", setOf(6), vm.enMora.map { it.id }.toSet())
@@ -208,12 +208,33 @@ class ClubViewModelTest {
     }
 
     @Test
+    fun `el QR de ingreso es una pantalla propia con los datos del carnet`() {
+        val vm = socio()
+        vm.ir(Screen.S_CARNET)
+        vm.ir(Screen.S_QR)
+        assertEquals("se apila sobre el carnet, con flecha para volver", Screen.S_QR, vm.pantalla)
+        assertTrue(vm.puedeVolver)
+        assertEquals("QR de ingreso", vm.titulo)
+
+        val qr = vm.yo.qrCarnet
+        assertTrue(qr.startsWith("CLUB DEPORTIVO · CARNET DE SOCIO"))
+        assertTrue(qr.contains("N° de socio: 01245"))
+        assertTrue(qr.contains("Socio: Andrés Weitzel"))
+        assertTrue(qr.contains("DNI: 38.412.907"))
+        assertTrue(qr.contains("Plan: Full"))
+        assertTrue(qr.contains("Carnet emitido: 01/04/2026"))
+        assertTrue(qr.contains("Carnet vence: 31/03/2027"))
+        assertTrue(qr.contains("Estado: Habilitado · Cuota pendiente"))
+        assertTrue("cabe en un QR legible desde la pantalla", qr.length < 300)
+    }
+
+    @Test
     fun `la demo trae un socio en gracia con el carnet por vencer`() {
         val vm = admin()
         val rocio = vm.socios.first { it.id == 9 }
         assertTrue(rocio.enGracia)
         assertTrue(rocio.hab)
-        assertEquals("Habilitado · En gracia", rocio.badge)
+        assertEquals("Habilitado · En período de gracia", rocio.badge)
         assertEquals("Quedan 2 días", rocio.estadoCorto)
         assertEquals("Por vencer", rocio.carnetEstado)
         assertEquals("3 días al 3 % sobre $12.000 más el recargo", 12_000 + 500 + 36, rocio.totalAdeudado)

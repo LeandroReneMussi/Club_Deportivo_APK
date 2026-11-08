@@ -2,7 +2,7 @@
 title Máquina de estados — Cuota del socio (v1.5)
 [*] --> Pendiente : alta de socio / cuota inicial\n(vence = hoy + 10 días)
 state Pendiente : habilitado · verde\n«Vence en N días» / «Vence hoy»\nd <= 0
-state "En gracia" as Gracia : habilitado con aviso · naranja\n«Quedan N días de gracia»\n0 < d <= gracia
+state "En período de gracia" as Gracia : habilitado con aviso · naranja\n«Quedan N días de gracia»\n0 < d <= gracia
 state "En mora" as Mora : no habilitado · rojo\n«Vencida hace N días · gracia superada»\ndeuda = cuota + recargo + interés\nd > gracia
 state Pagada : proximaVence = vence + 1 mes\nhistorial += PagoHistorial(total, medio, comprobante)
 Pendiente --> Gracia : cambio de fecha [0 < d <= gracia]

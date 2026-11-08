@@ -24,7 +24,7 @@ Cada caso de uso corresponde a una función existente en ClubViewModel o a una r
 
 ![Diagrama de casos de uso](diagramas/01_casos_de_uso.png)
 
-Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido».
+Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido» y CU-26 (QR de ingreso) extiende a CU-16 (carnet digital).
 
 ### 3.1 Resumen de casos de uso
 
@@ -45,7 +45,7 @@ Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular 
 | CU-13 | Configurar parámetros del club (v1.5) | Administrativo | Regla de negocio de HU-04 y HU-05 (sin HU nueva; ver «A confirmar») | PantallaPerfil → sección «Configuración del club» |
 | CU-14 | Pagar cuota desde la app | Socio | HU-04 | PantallaSocioHome / PantallaCuotas → PantallaPagar → PantallaPagoOk |
 | CU-15 | Consultar estado de cuenta, deuda y contador de días | Socio | HU-04 | PantallaSocioHome, PantallaCuotas («Estado de cuenta») |
-| CU-16 | Ver carnet digital | Socio | HU-06 | PantallaCarnet |
+| CU-16 | Ver carnet digital | Socio | HU-06 | PantallaCarnet (S_CARNET) |
 | CU-17 | Consultar rutina asignada | Socio | HU-10 | PantallaRutinaSocio (y tarjeta «Rutina · hoy» del Inicio) |
 | CU-18 | Solicitar turno de nutrición | Socio | HU-11 | PantallaNutriSocio → PantallaTurno («Solicitar turno») |
 | CU-19 | Cancelar turno de nutrición | Socio | HU-11 | PantallaNutriSocio (hoja «Cancelar turno») |
@@ -55,6 +55,7 @@ Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular 
 | CU-23 | Crear y asignar rutina | Entrenadora | HU-09 | PantallaRutinasProfesor → PantallaRutinaEdit («Rutina del socio») |
 | CU-24 | Consultar agenda de turnos | Nutricionista | HU-11 | PantallaAgenda |
 | CU-25 | Registrar consulta nutricional (ficha nutricional) | Nutricionista | HU-12 | PantallaFichas → PantallaFichaNutricional |
+| CU-26 | Mostrar QR de ingreso («extend» de CU-16) | Socio | HU-06 | PantallaCarnet → PantallaQrIngreso (S_QR, «QR de ingreso») |
 
 ## 4. Especificación de los casos de uso
 
@@ -96,7 +97,7 @@ Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular 
 | HU relacionada | HU-02, HU-05, HU-14 |
 | Pantalla | PantallaSocios → PantallaFichaSocio |
 | Precondiciones | Sesión de Administrativo. |
-| Flujo principal | 1. Abre la pestaña Socios.<br>2. El sistema lista el padrón leído de SQLite con la etiqueta de estado de cada socio (v1.5: «Habilitado · En gracia», «Habilitado · Cuota pendiente», «Habilitado · Cuota al día», «No habilitado · En mora», «No habilitado · Carnet vencido») y el contador de días con su tono verde / naranja / rojo.<br>3. Puede escribir en la búsqueda (nombre o DNI, con o sin puntos) y elegir el filtro Todos / Habilitados / En mora (elegirFiltro()).<br>4. Toca un socio (abrirSocio()) y el sistema muestra la ficha: datos, N° de socio, plan, carnet (emitido / vence / estado), cuota vigente con vencimiento, historial de pagos con comprobantes, actividades, ingresos, ficha médica; (v1.5) el aviso de habilitación lleva a la derecha la cápsula estadoCorto («Debe $…», «Quedan N días», «Vence en N días», «Al día», «Renovar carnet»), la tarjeta de la cuota muestra el contador en cápsula (contadorCorto) y una línea cuotaSubLabel con la fecha, y el total adeudado con el detalle cuota + recargo + interés si la cuota venció. |
+| Flujo principal | 1. Abre la pestaña Socios.<br>2. El sistema lista el padrón leído de SQLite con la etiqueta de estado de cada socio (v1.5: «Habilitado · En período de gracia», «Habilitado · Cuota pendiente», «Habilitado · Cuota al día», «No habilitado · En mora», «No habilitado · Carnet vencido») y el contador de días con su tono verde / naranja / rojo.<br>3. Puede escribir en la búsqueda (nombre o DNI, con o sin puntos) y elegir el filtro Todos / Habilitados / En mora (elegirFiltro()).<br>4. Toca un socio (abrirSocio()) y el sistema muestra la ficha: datos, N° de socio, plan, carnet (emitido / vence / estado), cuota vigente con vencimiento, historial de pagos con comprobantes, actividades, ingresos, ficha médica; (v1.5) el aviso de habilitación lleva a la derecha la cápsula estadoCorto («Debe $…», «Quedan N días», «Vence en N días», «Al día», «Renovar carnet»), la tarjeta de la cuota muestra el contador en cápsula (contadorCorto) y una línea cuotaSubLabel con la fecha, y el total adeudado con el detalle cuota + recargo + interés si la cuota venció. |
 | Flujos alternativos y de excepción | 3a. La búsqueda o el filtro no coinciden con nadie → lista vacía. |
 | Postcondiciones | Ninguna modificación. Desde la ficha se accede a CU-05, CU-06, CU-07 y CU-08. |
 
@@ -280,9 +281,9 @@ Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular 
 | Nombre | Ver carnet digital |
 | Actor principal | Socio |
 | HU relacionada | HU-06 |
-| Pantalla | PantallaCarnet |
+| Pantalla | PantallaCarnet (S_CARNET) |
 | Precondiciones | Sesión de Socio. |
-| Flujo principal | 1. Abre la pestaña Carnet.<br>2. El sistema muestra el carnet digital: nombre, N° de socio, DNI, plan, foto, fecha de emisión y de vencimiento y el estado Vigente / Por vencer (menos de 30 días) / Vencido. |
+| Flujo principal | 1. Abre la pestaña Carnet.<br>2. El sistema muestra el carnet digital: nombre, N° de socio, DNI, plan, foto, fecha de emisión y de vencimiento y el estado Vigente / Por vencer (menos de 30 días) / Vencido.<br>3. Puede tocar «QR de ingreso» (vm.ir(Screen.S_QR)) para apilar la pantalla «QR de ingreso» sobre el carnet (CU-26). |
 | Flujos alternativos y de excepción | 2a. Carnet vencido → estado «Vencido»; el socio debe renovarlo en recepción (CU-08). |
 | Postcondiciones | Ninguna modificación. |
 
@@ -412,6 +413,20 @@ Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular 
 | Flujos alternativos y de excepción | 3a. Peso vacío → «Ingresá el peso.»; no numérico → «El peso debe ser un número (ej.: 62,4).»; fuera de rango → «El peso debe estar entre 20 y 300 kg.»<br>3b. Altura no numérica → «La altura debe ser un número en metros (ej.: 1,68).»; fuera de rango → «La altura debe estar entre 0,50 y 2,50 m.» |
 | Postcondiciones | Consulta persistida (consultas_json, nut_peso, nut_altura); el turno de hoy queda liberado; el socio la ve en CU-20. |
 
+### CU-26 — Mostrar QR de ingreso («extend» de CU-16)
+
+| Campo | Detalle |
+|---|---|
+| Identificador | CU-26 |
+| Nombre | Mostrar QR de ingreso («extend» de CU-16) |
+| Actor principal | Socio |
+| HU relacionada | HU-06 |
+| Pantalla | PantallaCarnet → PantallaQrIngreso (S_QR, «QR de ingreso») |
+| Precondiciones | Sesión de Socio; pantalla Carnet abierta (CU-16). |
+| Flujo principal | 1. Toca «QR de ingreso» en el carnet digital (vm.ir(Screen.S_QR)); la pantalla se apila sobre el carnet con flecha para volver.<br>2. El sistema muestra nombre, N° de socio, DNI, plan, la cápsula de estado del socio y la vigencia del carnet.<br>3. Dibuja el código QR (composable CodigoQr, generado con ZXing core, sin cámara) cuyo contenido es SocioVista.qrCarnet: texto plano con «CLUB DEPORTIVO · CARNET DE SOCIO», N° de socio, Socio, DNI, Plan, Carnet emitido, Carnet vence y Estado; cualquier lector de QR lee esos datos.<br>4. Toca la flecha o el botón atrás (volver()) para regresar al carnet. |
+| Flujos alternativos y de excepción | 2a. Carnet vencido o socio en mora → la cápsula y el campo Estado del QR lo indican; el QR no habilita por sí mismo el ingreso (lo decide el control de acceso, CU-09). |
+| Postcondiciones | Ninguna modificación; el QR se genera en el dispositivo a partir de los datos del socio. |
+
 ## 5. Diagrama de clases del dominio (UML 2.0)
 
 ![Diagrama de clases](diagramas/02_clases_dominio.png)
@@ -450,7 +465,7 @@ La sección «Configuración del club» del Perfil carga el formulario con prepa
 
 ![Máquina de estados de la cuota](diagramas/07_estados_cuota.png)
 
-Pendiente → En gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente.
+Pendiente → En período de gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente.
 
 ## 8. Diagrama de actividad: alta de socio (UML 2.0)
 
@@ -467,7 +482,7 @@ Validaciones en orden: nombre, apellido (v1.5), DNI de 7 u 8 dígitos, DNI únic
 | HU-03 | Visitantes: pago diario con fecha, medio y cupo del día | CU-11 |
 | HU-04 | Consultar y pagar cuota | CU-07, CU-14, CU-15, (CU-13 regla v1.5) |
 | HU-05 | Control de acceso por DNI | CU-09, CU-10, (CU-13 regla v1.5) |
-| HU-06 | Carnet digital | CU-16 |
+| HU-06 | Carnet digital y QR de ingreso | CU-16, CU-26 |
 | HU-07 | Emitir / renovar carnet | CU-08 |
 | HU-08 | Registrar asistencia | CU-21, CU-22 |
 | HU-09 | Crear y asignar rutina, con validación | CU-23 |

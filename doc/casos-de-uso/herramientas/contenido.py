@@ -73,7 +73,7 @@ CASOS = [
         pre="Sesión de Administrativo.",
         flujo=[
             "Abre la pestaña Socios.",
-            "El sistema lista el padrón leído de SQLite con la etiqueta de estado de cada socio (v1.5: «Habilitado · En gracia», «Habilitado · Cuota pendiente», «Habilitado · Cuota al día», «No habilitado · En mora», «No habilitado · Carnet vencido») y el contador de días con su tono verde / naranja / rojo.",
+            "El sistema lista el padrón leído de SQLite con la etiqueta de estado de cada socio (v1.5: «Habilitado · En período de gracia», «Habilitado · Cuota pendiente», «Habilitado · Cuota al día», «No habilitado · En mora», «No habilitado · Carnet vencido») y el contador de días con su tono verde / naranja / rojo.",
             "Puede escribir en la búsqueda (nombre o DNI, con o sin puntos) y elegir el filtro Todos / Habilitados / En mora (elegirFiltro()).",
             "Toca un socio (abrirSocio()) y el sistema muestra la ficha: datos, N° de socio, plan, carnet (emitido / vence / estado), cuota vigente con vencimiento, historial de pagos con comprobantes, actividades, ingresos, ficha médica; (v1.5) el aviso de habilitación lleva a la derecha la cápsula estadoCorto («Debe $…», «Quedan N días», «Vence en N días», «Al día», «Renovar carnet»), la tarjeta de la cuota muestra el contador en cápsula (contadorCorto) y una línea cuotaSubLabel con la fecha, y el total adeudado con el detalle cuota + recargo + interés si la cuota venció.",
         ],
@@ -267,11 +267,12 @@ CASOS = [
         v15="Contador de días y deuda del socio: objetivos 4 y 5 del spec.",
     ),
     dict(
-        id="CU-16", nombre="Ver carnet digital", actor="Socio", hu="HU-06", pantalla="PantallaCarnet",
+        id="CU-16", nombre="Ver carnet digital", actor="Socio", hu="HU-06", pantalla="PantallaCarnet (S_CARNET)",
         pre="Sesión de Socio.",
         flujo=[
             "Abre la pestaña Carnet.",
             "El sistema muestra el carnet digital: nombre, N° de socio, DNI, plan, foto, fecha de emisión y de vencimiento y el estado Vigente / Por vencer (menos de 30 días) / Vencido.",
+            "Puede tocar «QR de ingreso» (vm.ir(Screen.S_QR)) para apilar la pantalla «QR de ingreso» sobre el carnet (CU-26).",
         ],
         alt=["2a. Carnet vencido → estado «Vencido»; el socio debe renovarlo en recepción (CU-08)."],
         post="Ninguna modificación.",
@@ -383,6 +384,18 @@ CASOS = [
         ],
         post="Consulta persistida (consultas_json, nut_peso, nut_altura); el turno de hoy queda liberado; el socio la ve en CU-20.",
     ),
+    dict(
+        id="CU-26", nombre="Mostrar QR de ingreso («extend» de CU-16)", actor="Socio", hu="HU-06", pantalla="PantallaCarnet → PantallaQrIngreso (S_QR, «QR de ingreso»)",
+        pre="Sesión de Socio; pantalla Carnet abierta (CU-16).",
+        flujo=[
+            "Toca «QR de ingreso» en el carnet digital (vm.ir(Screen.S_QR)); la pantalla se apila sobre el carnet con flecha para volver.",
+            "El sistema muestra nombre, N° de socio, DNI, plan, la cápsula de estado del socio y la vigencia del carnet.",
+            "Dibuja el código QR (composable CodigoQr, generado con ZXing core, sin cámara) cuyo contenido es SocioVista.qrCarnet: texto plano con «CLUB DEPORTIVO · CARNET DE SOCIO», N° de socio, Socio, DNI, Plan, Carnet emitido, Carnet vence y Estado; cualquier lector de QR lee esos datos.",
+            "Toca la flecha o el botón atrás (volver()) para regresar al carnet.",
+        ],
+        alt=["2a. Carnet vencido o socio en mora → la cápsula y el campo Estado del QR lo indican; el QR no habilita por sí mismo el ingreso (lo decide el control de acceso, CU-09)."],
+        post="Ninguna modificación; el QR se genera en el dispositivo a partir de los datos del socio.",
+    ),
 ]
 
 A_CONFIRMAR = [
@@ -403,7 +416,7 @@ TRAZABILIDAD = [
     ("HU-03", "Visitantes: pago diario con fecha, medio y cupo del día", "CU-11"),
     ("HU-04", "Consultar y pagar cuota", "CU-07, CU-14, CU-15, (CU-13 regla v1.5)"),
     ("HU-05", "Control de acceso por DNI", "CU-09, CU-10, (CU-13 regla v1.5)"),
-    ("HU-06", "Carnet digital", "CU-16"),
+    ("HU-06", "Carnet digital y QR de ingreso", "CU-16, CU-26"),
     ("HU-07", "Emitir / renovar carnet", "CU-08"),
     ("HU-08", "Registrar asistencia", "CU-21, CU-22"),
     ("HU-09", "Crear y asignar rutina, con validación", "CU-23"),

@@ -179,7 +179,7 @@ class SocioVista(val socio: Socio, private val parametros: List<Parametros> = li
     }
 
     val badge = when {
-        hab && enGracia -> "Habilitado · En gracia"
+        hab && enGracia -> "Habilitado · En período de gracia"
         hab && !cuotaPagada -> "Habilitado · Cuota pendiente"
         hab -> "Habilitado · Cuota al día"
         mora -> "No habilitado · En mora"
@@ -187,11 +187,26 @@ class SocioVista(val socio: Socio, private val parametros: List<Parametros> = li
     }
 
     val badgeCorto = when {
-        hab && enGracia -> "En gracia"
+        hab && enGracia -> "En período de gracia"
         hab -> "Habilitado"
         mora -> "En mora"
         else -> "Carnet venc."
     }
+
+    /**
+     * Contenido del QR del carnet digital (v1.5): los datos del carnet en texto plano, para
+     * que cualquier lector los muestre tal cual al escanearlo.
+     */
+    val qrCarnet: String = listOf(
+        "CLUB DEPORTIVO · CARNET DE SOCIO",
+        "N° de socio: ${socio.nro}",
+        "Socio: ${socio.nombre}",
+        "DNI: $dniLabel",
+        "Plan: ${socio.plan}",
+        "Carnet emitido: ${socio.carnetEmitido.fmt()}",
+        "Carnet vence: ${socio.carnetVence.fmt()}",
+        "Estado: $badge",
+    ).joinToString("\n")
 
     val motivo = when {
         hab && enGracia -> graciaRestanteLabel

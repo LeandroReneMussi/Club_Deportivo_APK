@@ -24,6 +24,7 @@ class "SocioVista(socio, parametros)" as SocioVista <<derivada>> {
   /diasVencida, /gracia, /diasDeGracia: Int (v1.5)
   /recargo, /interes: Double · /totalAdeudado: Int (v1.5)
   /badge, /contador: String · /tono: TonoCuota (v1.5)
+  /qrCarnet: String (contenido del QR del carnet)
 }
 class Cuota { mes: String; monto: Int; vence: Fecha; estado: EstadoCuota; proximaVence: Fecha [0..1] }
 class PagoHistorial { mes: String; monto: Int (v1.5: total cobrado); pagada: Fecha; medio: String; comprobante: String }

@@ -39,7 +39,7 @@ def md():
     w("")
     w("## 3. Diagrama de casos de uso (UML 2.0)\n")
     w("![Diagrama de casos de uso](diagramas/01_casos_de_uso.png)\n")
-    w("Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido».\n")
+    w("Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido» y CU-26 (QR de ingreso) extiende a CU-16 (carnet digital).\n")
     w("### 3.1 Resumen de casos de uso\n")
     w("| " + " | ".join(RESUMEN_COLS) + " |\n|" + "---|" * len(RESUMEN_COLS))
     for cu in C.CASOS:
@@ -72,7 +72,7 @@ def md():
         w(f"![{titulo}](diagramas/{archivo})\n")
     w("## 7. Máquina de estados de la cuota (UML 2.0, v1.5)\n")
     w("![Máquina de estados de la cuota](diagramas/07_estados_cuota.png)\n")
-    w("Pendiente → En gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente.\n")
+    w("Pendiente → En período de gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente.\n")
     w("## 8. Diagrama de actividad: alta de socio (UML 2.0)\n")
     w("![Actividad: alta de socio](diagramas/08_actividad_alta_socio.png)\n")
     w("Validaciones en orden: nombre, apellido (v1.5), DNI de 7 u 8 dígitos, DNI único (COUNT en SQLite), correo con formato; luego N° de socio, carnet por 12 meses, cuota inicial a 10 días y ficha nutricional inicial.\n")
@@ -199,7 +199,7 @@ def docx():
     # ---- 3
     doc.add_heading("3. Diagrama de casos de uso (UML 2.0)", 1)
     imagen(doc, "01_casos_de_uso.png", "Figura 1. Diagrama de casos de uso de la App Club Deportivo v1.5.0.")
-    parrafo(doc, "Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido». El No socio / Visitante no opera la app: su pago diario lo registra el Administrativo (CU-11).", after=8)
+    parrafo(doc, "Los casos con fondo naranja son nuevos o cambian con el spec v1.5.0. «Calcular estado y deuda de la cuota» es el caso incluido por CU-07, CU-09, CU-14 y CU-15; CU-10 extiende a CU-09 cuando el resultado es «Permitido» y CU-26 (QR de ingreso) extiende a CU-16 (carnet digital). El No socio / Visitante no opera la app: su pago diario lo registra el Administrativo (CU-11).", after=8)
     doc.add_heading("3.1 Resumen de casos de uso", 2)
     filas = [RESUMEN_COLS] + [[cu["id"], cu["nombre"], actor_corto(cu["actor"]), cu["hu"], cu["pantalla"]] for cu in C.CASOS]
     tabla(doc, filas, [1.5, 5.0, 2.6, 2.3, 5.2], size=8.5)
@@ -245,7 +245,7 @@ def docx():
 
     # ---- 7
     doc.add_heading("7. Máquina de estados de la cuota (UML 2.0, v1.5)", 1)
-    parrafo(doc, "Pendiente → En gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente. Si el administrador cambia la gracia, el estado se recalcula.", after=6)
+    parrafo(doc, "Pendiente → En período de gracia → En mora se derivan de d = días desde el vencimiento y de la gracia configurada; cualquiera de los tres pasa a Pagada con el pago: por la cuota sola si no venció, y por cuota + recargo + interés desde que venció (en gracia y en mora). La cuota pagada abre la del mes siguiente. Si el administrador cambia la gracia, el estado se recalcula.", after=6)
     imagen(doc, "07_estados_cuota.png", "Figura 7. Máquina de estados de la cuota del socio (v1.5).")
 
     # ---- 8

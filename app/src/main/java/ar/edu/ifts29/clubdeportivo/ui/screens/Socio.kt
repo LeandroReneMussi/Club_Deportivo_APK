@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,6 +50,7 @@ import ar.edu.ifts29.clubdeportivo.ui.BotonBorde
 import ar.edu.ifts29.clubdeportivo.ui.BotonPrimario
 import ar.edu.ifts29.clubdeportivo.ui.CampoTexto
 import ar.edu.ifts29.clubdeportivo.ui.Chip
+import ar.edu.ifts29.clubdeportivo.ui.CodigoQr
 import ar.edu.ifts29.clubdeportivo.ui.ColumnaGutter
 import ar.edu.ifts29.clubdeportivo.ui.CuerpoPantalla
 import ar.edu.ifts29.clubdeportivo.ui.Fila
@@ -221,100 +223,104 @@ fun ColumnScope.PantallaCarnet(vm: ClubViewModel) {
             Text("N° ${yo.nro}", style = body(600, 12, Pista.mut))
         }
 
+        // Tarjeta con la proporción de un carnet real (ISO/IEC 7810 ID-1, 85,6 × 54 mm).
+        val tintaSuave = Pista.accInk.copy(alpha = 0.72f)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Pista.gutter, end = Pista.gutter, top = 22.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .padding(start = Pista.gutter, end = Pista.gutter, top = 18.dp)
+                .aspectRatio(1.586f)
+                .clip(RoundedCornerShape(16.dp))
                 .background(Pista.acc)
-                .clipToBounds(),
+                .drawBehind {
+                    // Círculos de fondo, sutiles, como en los carnets de afiliado.
+                    val tinta = Pista.accInk.copy(alpha = 0.07f)
+                    drawCircle(tinta, radius = size.height * 0.95f, center = Offset(size.width * 1.02f, size.height * 0.05f))
+                    drawCircle(tinta, radius = size.height * 0.55f, center = Offset(size.width * 0.92f, size.height * 1.08f))
+                }
+                .padding(horizontal = 18.dp, vertical = 16.dp),
         ) {
-            // Marca decorativa del club, deliberadamente recortada por el borde.
-            // Va dentro de un Box con matchParentSize para que sus 200sp no estiren la
-            // tarjeta: sólo se pinta, no participa del cálculo de tamaño.
-            Box(Modifier.matchParentSize().clipToBounds()) {
-                Text(
-                    "CD",
-                    style = disp(
-                        weight = 800,
-                        size = 200,
-                        color = Pista.accInk.copy(alpha = 0.12f),
-                        lineHeight = 200.sp,
-                        letterSpacing = (-8).sp,
-                    ),
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 30.dp, y = (-40).dp),
-                )
-            }
-            Column(Modifier.padding(22.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Column(Modifier.matchParentSize()) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(Pista.accInk),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("CD", style = disp(800, 12, Pista.acc))
+                    }
                     Text(
                         "Club Deportivo".uppercase(),
-                        style = disp(800, 18, Pista.accInk, letterSpacing = 1.5.sp),
-                        modifier = Modifier.weight(1f),
+                        style = disp(800, 14, Pista.accInk, letterSpacing = 1.2.sp),
+                        modifier = Modifier.padding(start = 8.dp).weight(1f),
                     )
                     Chip(
                         texto = yo.carnetEstado,
                         fondo = if (yo.carnetVencido) Pista.bad else Pista.accInk,
                         tinta = if (yo.carnetVencido) Pista.badInk else Pista.acc,
+                        tamano = 10,
                     )
                 }
 
                 Row(
-                    modifier = Modifier.padding(top = 26.dp),
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    FotoCarnet(yo.foto, 84.dp, 104.dp)
-                    Column {
-                        Text(
-                            "Socio".uppercase(),
-                            style = body(600, 12, Pista.accInk.copy(alpha = 0.7f), letterSpacing = 1.2.sp),
-                        )
+                    Column(Modifier.weight(1f)) {
                         Text(
                             yo.nombre.uppercase(),
-                            style = disp(800, 32, Pista.accInk, lineHeight = 32.sp),
-                            modifier = Modifier.padding(top = 2.dp),
+                            style = disp(800, 20, Pista.accInk, lineHeight = 22.sp),
+                            maxLines = 2,
                         )
                         Text(
-                            "Plan ${yo.plan} · desde ${yo.altaLabel}",
-                            style = body(600, 13, Pista.accInk.copy(alpha = 0.75f)),
-                            modifier = Modifier.padding(top = 8.dp),
+                            "DNI ${yo.dniLabel}",
+                            style = body(700, 13, Pista.accInk),
+                            modifier = Modifier.padding(top = 6.dp),
                         )
+                        Text("Socio N° ${yo.nro}", style = body(600, 12, tintaSuave), modifier = Modifier.padding(top = 1.dp))
+                        Text("Plan ${yo.plan} · desde ${yo.altaLabel}", style = body(600, 12, tintaSuave))
                     }
+                    Spacer(Modifier.width(12.dp))
+                    FotoCarnet(yo.foto, 62.dp, 76.dp)
                 }
 
-                Column(Modifier.padding(top = 24.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                     Text(
-                        "DNI",
-                        style = body(600, 12, Pista.accInk.copy(alpha = 0.7f), letterSpacing = 1.2.sp),
+                        "Vigencia ${yo.carnetEmitidoLabel} – ${yo.carnetVenceLabel}",
+                        style = body(600, 11, tintaSuave),
+                        modifier = Modifier.weight(1f),
                     )
                     Text(
-                        yo.dniLabel,
-                        style = disp(800, 54, Pista.accInk, lineHeight = 54.sp, letterSpacing = 1.sp),
+                        "Cuota " + when {
+                            yo.cuotaPagada -> "al día"
+                            yo.mora -> "en mora"
+                            yo.enGracia -> "en período de gracia"
+                            else -> "pendiente"
+                        },
+                        style = body(700, 11, Pista.accInk),
                     )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp)
-                        .lineaPunteada(Pista.accInk.copy(alpha = 0.25f))
-                        .padding(top = 14.dp),
-                ) {
-                    DatoCarnet("Emitido", yo.carnetEmitidoLabel, Modifier.weight(1f))
-                    DatoCarnet("Vence", yo.carnetVenceLabel, Modifier.weight(1f))
-                    DatoCarnet("Cuota", yo.cuotaCorto, Modifier.weight(1f))
                 }
             }
         }
+
+        // QR de ingreso (v1.5): pantalla propia con el código y los datos del carnet.
+        BotonPrimario(
+            "QR de ingreso",
+            { vm.ir(Screen.S_QR) },
+            Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 16.dp),
+            fondo = Pista.cta,
+            tinta = Pista.ctaInk,
+            alto = 50.dp,
+            tamano = 16,
+        )
 
         Text(
             buildAnnotatedString {
                 append("Mostrá tu ")
                 withStyle(SpanStyle(color = Pista.ink, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)) {
-                    append("DNI")
+                    append("DNI o el QR de ingreso")
                 }
                 append(" en recepción. El personal valida tu carnet y el estado de la cuota en el momento.")
             },
@@ -343,6 +349,62 @@ fun ColumnScope.PantallaCarnet(vm: ClubViewModel) {
             }
         }
     }
+}
+
+/**
+ * HU-06 (v1.5): QR de ingreso. El código lleva los datos del carnet digital en texto plano,
+ * así cualquier lector de recepción los muestra al escanearlo.
+ */
+@Composable
+fun ColumnScope.PantallaQrIngreso(vm: ClubViewModel) {
+    val yo = vm.yo
+    CuerpoPantalla {
+        Tarjeta(Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp), padding = 18.dp) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(yo.nombre.uppercase(), style = disp(800, 22, lineHeight = 24.sp))
+                    Text(
+                        "N° ${yo.nro} · DNI ${yo.dniLabel} · Plan ${yo.plan}",
+                        style = body(500, 13, Pista.mut),
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Capsula(yo.estadoCorto, fondoEstado(yo), tintaEstado(yo))
+            }
+            CodigoQr(yo.qrCarnet, Modifier.fillMaxWidth().padding(top = 18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Carnet ${yo.carnetEstadoLower} · vence ${yo.carnetVenceLabel}",
+                    style = body(600, 13),
+                    modifier = Modifier.weight(1f),
+                )
+                Text(yo.badge, style = body(600, 12, tintaTexto(yo)))
+            }
+        }
+
+        Text(
+            "Mostrá este código en recepción o en el molinete. Al escanearlo se leen el N° de socio, " +
+                "nombre, DNI, plan, vigencia del carnet y estado de la cuota: los mismos datos del carnet digital.",
+            style = body(500, 14, Pista.mut, lineHeight = 20.sp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = Pista.gutter, end = Pista.gutter, top = 18.dp)
+                .clip(Pista.rCard)
+                .background(Pista.sur)
+                .padding(16.dp),
+        )
+    }
+}
+
+/** Color del texto de estado sobre fondo oscuro: verde, naranja o rojo. */
+private fun tintaTexto(s: SocioVista): Color = when {
+    !s.hab -> Pista.bad
+    s.enGracia -> Pista.warn
+    else -> Pista.acc
 }
 
 @Composable

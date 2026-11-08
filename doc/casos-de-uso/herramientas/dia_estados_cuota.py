@@ -11,7 +11,7 @@ L.titulo("Máquina de estados — Cuota del socio (v1.5)",
 
 ini = L.inicial(90, 200)
 pend = L.estado(330, 200, "Pendiente", ["habilitado · tono OK (verde)", "«Vence en N días» / «Vence hoy»", "totalAdeudado = cuota", "d <= 0"], w=230)
-grac = L.estado(700, 200, "En gracia", ["habilitado · tono AVISO (naranja)", "«Quedan N días de gracia» / «Último día de gracia»", "totalAdeudado = cuota + recargo + interés", "0 < d <= gracia"], w=250)
+grac = L.estado(700, 200, "En período de gracia", ["habilitado · tono AVISO (naranja)", "«Quedan N días de gracia» / «Último día de gracia»", "totalAdeudado = cuota + recargo + interés", "0 < d <= gracia"], w=250)
 mora = L.estado(1080, 200, "En mora", ["no habilitado · tono BLOQUEO (rojo)", "«Vencida hace N días · gracia de G días superada»", "totalAdeudado = cuota + recargo + interés", "d > gracia"], w=270)
 pag = L.estado(640, 500, "Pagada", ["«Pagada · próxima dd/mm/aaaa»", "proximaVence = vence + 1 mes", "historial += PagoHistorial(total, medio, comprobante)"], w=300, relleno=(232, 245, 233))
 fin = L.final(1080, 500)
@@ -42,7 +42,7 @@ L.transicion(pag, fin, "baja del socio (ON DELETE CASCADE)", desplaz=(0, -14))
 
 # notas
 n1 = L.nota(40, 620, 560,
-            "Estado derivado (v1.5): Pendiente, En gracia y En mora se calculan en SocioVista a partir de la fecha real del dispositivo y "
+            "Estado derivado (v1.5): Pendiente, En período de gracia y En mora se calculan en SocioVista a partir de la fecha real del dispositivo y "
             "del parámetro vigente; en SQLite la cuota sigue guardada como PENDIENTE hasta que se paga. El valor VENCIDA deja de decidir. "
             "Si no hay pago, la cuota no cambia de mes: la deuda crece día a día por el interés.")
 n2 = L.nota(640, 620, 620,

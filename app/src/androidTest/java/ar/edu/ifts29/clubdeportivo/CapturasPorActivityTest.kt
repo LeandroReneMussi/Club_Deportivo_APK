@@ -121,6 +121,9 @@ class CapturasPorActivityTest {
             r.foto("Inicio", "HU-04", "Estado de habilitación, cuota pendiente, rutina de hoy y turno de nutrición.")
             r.ir(Screen.S_CARNET)
             r.foto("Carnet digital", "HU-06", "Carnet vigente con datos del socio y estado de cuota.")
+            r.ir(Screen.S_QR)
+            r.foto("QR de ingreso", "HU-06 / v1.5", "QR de ingreso: al escanearlo se leen los datos del carnet digital.")
+            r.vm { volver() }
             r.ir(Screen.S_CUOTAS)
             r.foto("Estado de cuenta", "HU-04", "Cuota actual e historial de pagos.")
             r.ir(Screen.S_PAGAR)

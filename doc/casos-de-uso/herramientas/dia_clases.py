@@ -17,6 +17,7 @@ vista = L.clase(560, 90, "SocioVista(socio, parametros)", [
     "/diasVencida, /gracia, /diasDeGracia: Int (v1.5)",
     "/recargo, /interes: Double · /totalAdeudado: Int (v1.5)",
     "/badge, /contador: String · /tono: TonoCuota (v1.5)",
+    "/qrCarnet: String  (contenido del QR del carnet)",
 ], estereotipo="«derivada»", relleno=(236, 239, 255))
 plan = L.clase(1000, 90, "Plan", ["nombre: String {id}", "precio: Int"])
 actividad = L.clase(1250, 90, "Actividad", ["id: String {id}", "nombre: String", "horario: String", "cupo: Int", "ocupados: Int", "precio: Int", "profesor: String"])

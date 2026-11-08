@@ -484,6 +484,7 @@ object DemoData {
 
     /** Títulos del header de las sub-pantallas. */
     val titulos: Map<Screen, String> = mapOf(
+        Screen.S_QR to "QR de ingreso",
         Screen.S_CUOTAS to "Estado de cuenta",
         Screen.S_PAGAR to "Pagar cuota",
         Screen.S_TURNO to "Solicitar turno",

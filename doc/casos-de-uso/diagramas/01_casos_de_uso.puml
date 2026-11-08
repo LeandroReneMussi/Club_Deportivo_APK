@@ -40,6 +40,7 @@ rectangle "App Club Deportivo" {
   usecase "CU-23 Crear y asignar rutina" as CU23
   usecase "CU-24 Consultar agenda de turnos" as CU24
   usecase "CU-25 Registrar consulta nutricional" as CU25
+  usecase "CU-26 Mostrar QR de ingreso" as CU26
   usecase "Calcular estado y deuda de la cuota:\ngracia, recargo e interés (v1.5)" as CALC <<v15>>
 }
 U --> CU01
@@ -67,6 +68,7 @@ P --> CU23
 N --> CU24
 N --> CU25
 CU10 .> CU09 : <<extend>>
+CU26 .> CU16 : <<extend>>
 CU07 .> CALC : <<include>>
 CU09 .> CALC : <<include>>
 CU14 .> CALC : <<include>>

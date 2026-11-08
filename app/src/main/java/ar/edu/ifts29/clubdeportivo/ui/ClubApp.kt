@@ -16,6 +16,7 @@ import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaAgenda
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaAlta
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaAsistencia
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaCarnet
+import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaQrIngreso
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaCuotas
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaEmpleadoHome
 import ar.edu.ifts29.clubdeportivo.ui.screens.PantallaFichaNutricional
@@ -71,6 +72,7 @@ fun ClubApp(vm: ClubViewModel = viewModel()) {
 
                 Screen.S_HOME -> PantallaSocioHome(vm)
                 Screen.S_CARNET -> PantallaCarnet(vm)
+                Screen.S_QR -> PantallaQrIngreso(vm)
                 Screen.S_CUOTAS -> PantallaCuotas(vm)
                 Screen.S_PAGAR -> PantallaPagar(vm)
                 Screen.S_PAGO_OK -> PantallaPagoOk(vm)

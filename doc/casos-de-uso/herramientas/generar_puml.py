@@ -48,6 +48,7 @@ rectangle "App Club Deportivo" {
   usecase "CU-23 Crear y asignar rutina" as CU23
   usecase "CU-24 Consultar agenda de turnos" as CU24
   usecase "CU-25 Registrar consulta nutricional" as CU25
+  usecase "CU-26 Mostrar QR de ingreso" as CU26
   usecase "Calcular estado y deuda de la cuota:\\ngracia, recargo e interés (v1.5)" as CALC <<v15>>
 }
 U --> CU01
@@ -75,6 +76,7 @@ P --> CU23
 N --> CU24
 N --> CU25
 CU10 .> CU09 : <<extend>>
+CU26 .> CU16 : <<extend>>
 CU07 .> CALC : <<include>>
 CU09 .> CALC : <<include>>
 CU14 .> CALC : <<include>>
@@ -112,6 +114,7 @@ class "SocioVista(socio, parametros)" as SocioVista <<derivada>> {
   /diasVencida, /gracia, /diasDeGracia: Int (v1.5)
   /recargo, /interes: Double · /totalAdeudado: Int (v1.5)
   /badge, /contador: String · /tono: TonoCuota (v1.5)
+  /qrCarnet: String (contenido del QR del carnet)
 }
 class Cuota { mes: String; monto: Int; vence: Fecha; estado: EstadoCuota; proximaVence: Fecha [0..1] }
 class PagoHistorial { mes: String; monto: Int (v1.5: total cobrado); pagada: Fecha; medio: String; comprobante: String }
@@ -306,7 +309,7 @@ PUML["07_estados_cuota.puml"] = """@startuml 07_estados_cuota
 title Máquina de estados — Cuota del socio (v1.5)
 [*] --> Pendiente : alta de socio / cuota inicial\\n(vence = hoy + 10 días)
 state Pendiente : habilitado · verde\\n«Vence en N días» / «Vence hoy»\\nd <= 0
-state "En gracia" as Gracia : habilitado con aviso · naranja\\n«Quedan N días de gracia»\\n0 < d <= gracia
+state "En período de gracia" as Gracia : habilitado con aviso · naranja\\n«Quedan N días de gracia»\\n0 < d <= gracia
 state "En mora" as Mora : no habilitado · rojo\\n«Vencida hace N días · gracia superada»\\ndeuda = cuota + recargo + interés\\nd > gracia
 state Pagada : proximaVence = vence + 1 mes\\nhistorial += PagoHistorial(total, medio, comprobante)
 Pendiente --> Gracia : cambio de fecha [0 < d <= gracia]

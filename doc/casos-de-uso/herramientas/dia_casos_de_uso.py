@@ -5,11 +5,11 @@ from uml import Lienzo
 
 SALIDA = os.path.join(os.path.dirname(__file__), "..", "diagramas", "01_casos_de_uso.png")
 
-L = Lienzo(1500, 1130)
+L = Lienzo(1500, 1200)
 L.titulo("Diagrama de casos de uso — App Club Deportivo v1.5.0", "UML 2.0 · Grupo 3 · 2026-11-08")
 
 # Sistema
-BX, BY, BW, BH = 300, 175, 900, 830
+BX, BY, BW, BH = 300, 175, 900, 900
 L.rect(BX, BY, BW, BH, (252, 252, 252), uml.NEGRO, 1.5)
 L.texto(BX + 14, BY + 8, "App Club Deportivo", 13, bold=True, anchor="la")
 
@@ -83,6 +83,10 @@ pies = {"P": prof["izq"], "N": nutr["izq"], "S": socio["izq"]}
 for k, (e, quien) in ec.items():
     L.asociacion(pies[quien], e)
 
+# CU-26 extiende CU-16 (columna B)
+cu26 = L.caso(XB, fila(8.2), "CU-26 Mostrar QR de ingreso")
+L.dependencia(cu26, ec["CU-16"][0], "«extend»")
+
 # includes hacia el caso de cálculo
 for e in (ea["CU-07"], ea["CU-09"], ec["CU-14"][0], ec["CU-15"][0]):
     L.dependencia(e, inc, "«include»")
@@ -96,12 +100,12 @@ n2 = L.nota(960, 50, 300,
             "Generalización de actores: Socio, Administrativo, Entrenadora y Nutricionista especializan a «Usuario del club». Todos inician y cierran sesión (HU-01); el rol sale de la cuenta.")
 L.ancla_nota(n2, (770, 80))
 
-n3 = L.nota(30, 1020, 420,
+n3 = L.nota(30, 1090, 420,
             "Fondo naranja = caso nuevo o modificado por el spec v1.5.0 (gracia configurable, recargo e interés sobre la deuda, contador de días, parámetros con vigencia en SQLite).")
-L.rect(480, 1030, 26, 18, uml.C_V15)
-L.texto(514, 1039, "(v1.5)", 11, anchor="lm")
-L.rect(480, 1058, 26, 18, uml.C_CASO)
-L.texto(514, 1067, "v1.4.0 (código actual)", 11, anchor="lm")
+L.rect(480, 1100, 26, 18, uml.C_V15)
+L.texto(514, 1109, "(v1.5)", 11, anchor="lm")
+L.rect(480, 1128, 26, 18, uml.C_CASO)
+L.texto(514, 1137, "v1.4.0 (código actual)", 11, anchor="lm")
 
 L.guardar(SALIDA)
 print("ok", SALIDA)
