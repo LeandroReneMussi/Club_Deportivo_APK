@@ -41,8 +41,8 @@ class ClubDbHelperTest {
         conSemilla().close()
         val h = ClubDbHelper(context, nombre)
         val datos = h.leer()
-        assertEquals(8, datos.socios.size)
-        assertEquals(5, datos.visitantes.size)
+        assertEquals(9, datos.socios.size)
+        assertEquals(7, datos.visitantes.size)
         val carla = datos.visitantes.first { it.nombre == "Carla Núñez" }
         assertEquals(fecha("2026-09-07"), carla.fecha)
         assertEquals("Efectivo", carla.medio)
@@ -118,8 +118,9 @@ class ClubDbHelperTest {
     fun losParametrosDelClubSePersistenConSuVigencia() {
         val h = conSemilla()
         val semilla = h.leer()
-        assertEquals(1, semilla.parametros.size)
+        assertEquals("la demo trae la tasa de 2025 y la de 2026", 2, semilla.parametros.size)
         assertEquals(5, semilla.parametros.first().graciaDias)
+        assertEquals(10, semilla.parametros.last().graciaDias)
         h.guardar(
             semilla.copy(
                 parametros = listOf(

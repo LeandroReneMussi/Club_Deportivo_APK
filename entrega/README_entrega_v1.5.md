@@ -36,5 +36,6 @@ Alvarez · Aquino Lesme · Mussi · Weitzel — Desarrollo de Aplicaciones Móvi
 - El administrador fija **días de gracia, recargo fijo e interés mensual** con **vigencia por fecha**; el historial queda en SQLite.
 - Una cuota vencida sigue habilitada durante la gracia (aviso naranja y contador de días) y pasado el plazo bloquea el acceso; la deuda suma cuota + recargo + interés calculado por tramos.
 - Nombre y apellido separados en el alta, con validación de obligatorios y formato de correo.
+- Datos de demo que cubren los casos: socios al día, pendiente, que vence hoy, **en gracia** (Rocío Paz, con carnet por vencer), en mora (Lucas, Tomás), carnet vencido (Sofía), sin apto físico (Valentina); historial de parámetros con la tasa de 2025 y la de 2026; pagos diarios de no socios de tres días distintos.
 
 Versionado: SemVer con releases automáticos en GitHub (`release.yml`), rollback con `rollback.yml`. Política en `doc/VERSIONADO_Y_ROLLBACK.md`.

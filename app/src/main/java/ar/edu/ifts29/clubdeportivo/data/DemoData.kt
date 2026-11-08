@@ -131,6 +131,7 @@ object DemoData {
             foto = R.drawable.avatar_andres,
             nombre = "Andrés Weitzel",
             dni = 38_412_907,
+            email = "andres.weitzel@club.com",
             nro = "01245",
             plan = "Full",
             alta = HOY.masDias(-910),
@@ -170,6 +171,7 @@ object DemoData {
             id = 2,
             nombre = "Lucas Benítez",
             dni = 40_120_334,
+            email = "lucas.benitez@club.com",
             nro = "01302",
             plan = "Básico",
             alta = HOY.masDias(-596),
@@ -194,6 +196,7 @@ object DemoData {
             id = 3,
             nombre = "Sofía Acosta",
             dni = 35_887_210,
+            email = "sofia.acosta@club.com",
             nro = "00877",
             plan = "Full",
             alta = HOY.masDias(-1833),
@@ -238,6 +241,7 @@ object DemoData {
             id = 4,
             nombre = "Julián Paredes",
             dni = 42_501_118,
+            email = "julian.paredes@club.com",
             nro = "01410",
             plan = "Full",
             alta = HOY.masDias(-307),
@@ -281,6 +285,7 @@ object DemoData {
             id = 5,
             nombre = "Valentina Ruiz",
             dni = 39_004_567,
+            email = "valentina.ruiz@club.com",
             nro = "01188",
             plan = "Básico",
             alta = HOY.masDias(-1182),
@@ -300,6 +305,7 @@ object DemoData {
             id = 6,
             nombre = "Tomás Giménez",
             dni = 41_777_320,
+            email = "tomas.gimenez@club.com",
             nro = "01355",
             plan = "Full",
             alta = HOY.masDias(-494),
@@ -319,6 +325,7 @@ object DemoData {
             id = 7,
             nombre = "Camila Duarte",
             dni = 43_210_987,
+            email = "camila.duarte@club.com",
             nro = "01466",
             plan = "Full",
             alta = HOY.masDias(-210),
@@ -355,6 +362,7 @@ object DemoData {
             id = 8,
             nombre = "Martín Ledesma",
             dni = 36_410_228,
+            email = "martin.ledesma@club.com",
             nro = "01490",
             plan = "Full",
             alta = HOY.masDias(-358),
@@ -368,6 +376,27 @@ object DemoData {
             historial = listOf(PagoHistorial(HOY.masMeses(-1).tituloMes(), 18_500, HOY.masDias(-32), "Caja")),
             rutina = null,
             nut = FichaNutricional(78.0, 1.80, "Fuerza", "Sin antecedentes", emptyList()),
+            turno = null,
+            ingresos = emptyList(),
+        ),
+        Socio(
+            id = 9,
+            nombre = "Rocío Paz",
+            dni = 39_876_540,
+            email = "rocio.paz@club.com",
+            nro = "01478",
+            plan = "Básico",
+            alta = HOY.masMeses(-14),
+            nac = fecha("1996-10-02"),
+            carnetEmitido = HOY.masDias(-345),
+            carnetVence = HOY.masDias(20),
+            ficha = true,
+            actividades = listOf(ActividadSocio("Yoga", "Mar · Jue 08:30")),
+            // Venció hace 3 días: dentro de la gracia de 5 (quedan 2). El carnet vence en 20 días.
+            cuota = Cuota(HOY.masDias(-3).tituloMes(), 12_000, HOY.masDias(-3), EstadoCuota.PENDIENTE),
+            historial = listOf(PagoHistorial(HOY.masDias(-3).masMeses(-1).tituloMes(), 12_000, HOY.masDias(-33), "App")),
+            rutina = null,
+            nut = FichaNutricional(61.0, 1.65, "Movilidad", "Sin antecedentes", emptyList()),
             turno = null,
             ingresos = emptyList(),
         ),
@@ -388,6 +417,18 @@ object DemoData {
         Visitante("Lucía Ferreyra", "39.552.014", "Yoga", "08:35", 5_000, HOY, "Débito"),
         Visitante("Carla Núñez", "40.318.902", "Natación", "19:05", 8_000, HOY.masDias(-1), "Efectivo"),
         Visitante("Julián Soto", "37.904.115", "Funcional", "18:20", 6_000, HOY.masDias(-1), "Débito"),
+        Visitante("Marcos Díaz", "35.221.908", "Musculación", "18:30", 6_000, HOY.masDias(-3), "Efectivo"),
+        Visitante("Ana Belén Ruiz", "41.009.317", "Yoga", "08:40", 5_000, HOY.masDias(-3), "Débito"),
+    )
+
+    /**
+     * Parámetros del club con historial (v1.5): hace un año regía una gracia de 10 días con
+     * recargo $300 e interés 2,5 % mensual; hace dos meses pasó a 5 días, $500 y 3 %. Así la
+     * demo muestra el cambio de tasa por fecha y la deuda de los morosos ya calculada.
+     */
+    val parametrosIniciales: List<Parametros> get() = listOf(
+        Parametros(5, 500.0, 3.0, HOY.masMeses(-2)),
+        Parametros(10, 300.0, 2.5, HOY.masAnios(-1)),
     )
 
     val ingresosHoyIniciales = listOf(
@@ -399,6 +440,7 @@ object DemoData {
     val dnisDemo = listOf(
         38_412_907L to "Al día",
         40_120_334L to "En mora",
+        39_876_540L to "En gracia",
         35_887_210L to "Carnet vencido",
         11_111_111L to "No existe",
     )

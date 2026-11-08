@@ -24,18 +24,17 @@ Cuentas: `Andres / Socio123` (socio) · `Jorge / Admin123` (administrativo) · `
 
 ## 3. Pago de cuota y regla de gracia · consignas 2 y 6 (2,5 min)
 
-- [ ] Avatar → **Perfil → Configuración del club**: mostrar gracia 5 días, recargo 0, interés 0. Explicar: lo fija el administrador y rige desde hoy; el historial queda por fecha.
-- [ ] Cambiar a **gracia 30, recargo 500, interés 3** → Guardar. Mostrar el historial con la fila "Vigente".
-- [ ] Socios → **Lucas Benítez**: etiqueta naranja "Habilitado · En gracia · queda 1 día", deuda **$12.512 = cuota $12.000 + recargo $500 + interés $12**. Decir: el interés corre por día **desde la fecha en que se fijó** (hoy devenga un día al 3 % mensual: $12.000 × 3 % / 30); no se aplica hacia atrás, y cada cambio de tasa queda en el historial con su fecha.
-- [ ] Acceso → DNI `40120334`: **Permitido** con aviso de gracia y deuda.
-- [ ] Volver a Perfil, poner **gracia 5** → Guardar. Acceso → `40120334`: **Denegado**, "gracia de 5 días superada", deuda con recargo e interés.
-- [ ] Ficha de Lucas → **Registrar pago en caja**: cobra el total ($12.512), la cuota queda pagada, se abre la del mes siguiente y queda habilitado. Tocar de nuevo "Registrar pago": aviso de cuota ya pagada (no se cobra dos veces).
+- [ ] Socios → **Rocío Paz**: la demo ya trae una socia **en gracia** (vencida hace 3 días, gracia de 5): franja naranja "Habilitado · En gracia · Quedan 2 días", deuda $12.536 (cuota + recargo $500 + 3 días de interés) y carnet "Por vencer". Acceso → DNI `39876540`: **Permitido** con el aviso de gracia.
+- [ ] Socios → **Lucas Benítez**: en mora (vencida hace 29 días), franja roja "Debe $12.848": cuota $12.000 + recargo $500 + interés $348 (29 días al 3 % mensual). Acceso → `40120334`: **Denegado**, "gracia de 5 días superada".
+- [ ] Inicio → acción rápida **Parámetros del club** (o avatar → Perfil): se ve la tasa vigente (gracia 5, recargo $500, interés 3 %) y el **historial por fecha**: la fila de 2025 (gracia 10, $300, 2,5 %) y la de 2026. Explicar: lo fija el administrador, rige desde la fecha en que se guarda y no se aplica hacia atrás; el interés se calcula día por día con la tasa de cada período.
+- [ ] Cambiar **gracia a 30** → Guardar. Socios → Lucas pasa a naranja "En gracia · Queda 1 día"; Acceso → `40120334`: **Permitido** con aviso. Volver a gracia 5 → Guardar → Denegado otra vez.
+- [ ] Ficha de Lucas → **Registrar pago en caja**: cobra el total ($12.848), la cuota queda pagada, se abre la del mes siguiente y queda habilitado. Tocar de nuevo "Registrar pago": aviso de cuota ya pagada (no se cobra dos veces).
 
 ## 4. Consultar y listar · consignas 4 y 5 (1,5 min)
 
 - [ ] Inicio del administrativo: KPIs (Vencen hoy, Esta semana, En mora, Pagos diarios).
 - [ ] **Reportes → Vencen hoy**: Martín Ledesma (consigna 5: socios cuya cuota vence en la fecha).
-- [ ] Reportes → Esta semana, En mora (total con recargo e interés y parámetros vigentes), **Visitantes** con el selector de fecha (‹ al día anterior).
+- [ ] Reportes → Esta semana, En mora (total $31.368 con recargo e interés y parámetros vigentes), **Visitantes** con el selector de fecha (‹ al día anterior: 2 pagos; ‹‹ tres días atrás: otros 2; en el medio un día vacío).
 - [ ] Control de acceso con los cuatro casos: al día, en mora, carnet vencido, DNI inexistente.
 
 ## 5. El socio ve su situación (1 min)

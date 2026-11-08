@@ -60,7 +60,7 @@ class CrudSociosTest {
         assertEquals("Lucas Benítez Paz", s.nombre)
         assertEquals("lucas@club.com", s.socio.email)
         assertEquals("Familiar", s.plan)
-        assertEquals("no crea un socio nuevo", 8, vm.socios.size)
+        assertEquals("no crea un socio nuevo", 9, vm.socios.size)
         assertEquals(Screen.E_SOCIO, vm.pantalla)
         assertNull(vm.estado.editandoId)
     }
@@ -87,11 +87,11 @@ class CrudSociosTest {
         vm.abrirSocio(4)
         vm.pedirBajaSocio()
         assertNotNull("pide confirmación", vm.estado.sheet)
-        assertEquals("todavía no se borró", 8, vm.socios.size)
+        assertEquals("todavía no se borró", 9, vm.socios.size)
 
         vm.estado.sheet!!.onConfirm()
 
-        assertEquals(7, vm.socios.size)
+        assertEquals(8, vm.socios.size)
         assertTrue(vm.socios.none { it.id == 4 })
         assertTrue(vm.estado.acts.none { 4 in it.inscriptos })
         assertTrue(vm.estado.asistencia.values.none { 4 in it })

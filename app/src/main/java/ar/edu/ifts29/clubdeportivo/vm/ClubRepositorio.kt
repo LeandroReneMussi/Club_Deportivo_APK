@@ -23,7 +23,7 @@ data class DatosClub(
     val asistencia: Map<String, List<Int>> = mapOf("musc" to listOf(4, 7), "func" to emptyList()),
     val profePresente: Boolean = false,
     /** Historial de parámetros del club, más nuevo primero (v1.5). Nunca vacío. */
-    val parametros: List<Parametros> = listOf(Parametros.INICIALES),
+    val parametros: List<Parametros> = DemoData.parametrosIniciales,
 )
 
 /**

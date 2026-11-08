@@ -249,6 +249,11 @@ class CapturasPorActivityTest {
             r.vm { diaReporteAnterior() }
             r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de un día anterior, recuperados por fecha.")
             // v1.5: parámetros del club, gracia y deuda.
+            r.vm { abrirSocio(9) }
+            r.foto("Ficha del socio", "HU-04 / v1.5", "Rocío, vencida hace 3 días: en gracia (quedan 2 días), deuda con recargo e interés, carnet por vencer.")
+            r.ir(Screen.E_ACCESO)
+            r.vm { ponerDniAcceso(39876540) }
+            r.foto("Control de acceso", "HU-05 / v1.5", "Socia en gracia: acceso permitido con el aviso de los días que quedan y la deuda.")
             r.ir(Screen.PERFIL)
             r.foto("Perfil · Configuración del club", "v1.5", "El administrador fija gracia, recargo e interés; cada cambio queda en el historial con su fecha.")
             r.vm {

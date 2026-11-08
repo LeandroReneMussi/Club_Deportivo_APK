@@ -143,7 +143,7 @@ class ClubViewModelTest {
             vm.socios.first { it.id == 1 }.cuotaVenceLabel,
         )
         assertEquals(
-            "En mora · cuota Agosto 2026 vencida hace 29 días · debe $12.000",
+            "En mora · cuota Agosto 2026 vencida hace 29 días · debe $12.848",
             vm.socios.first { it.id == 2 }.motivo,
         )
     }
@@ -184,34 +184,49 @@ class ClubViewModelTest {
         vm.campo { copy(pGracia = "5", pRecargo = "500", pInteres = "3") }
         vm.guardarParametros()
 
-        // El interés rige desde el día en que se fijó: de los 29 días vencidos, solo hoy devenga.
+        // La demo trae un 3 % vigente desde hace dos meses: los 29 días vencidos devengan.
         val lucas = vm.socios.first { it.id == 2 } // $12.000, vencida hace 29 días
         assertEquals(500.0, lucas.recargo, 0.001)
-        assertEquals("12.000 × 3% / 30 × 1 día", 12.0, lucas.interes, 0.01)
-        assertEquals(12_512, lucas.totalAdeudado)
-        assertEquals("Cuota $12.000 + recargo $500 + interés $12", lucas.deudaDetalle)
+        assertEquals("12.000 × 3% / 30 × 29 días", 348.0, lucas.interes, 0.01)
+        assertEquals(12_848, lucas.totalAdeudado)
+        assertEquals("Cuota $12.000 + recargo $500 + interés $348", lucas.deudaDetalle)
         assertEquals(TonoCuota.BLOQUEO, lucas.tono)
         assertEquals("Vencida hace 29 días · gracia de 5 días superada", lucas.contador)
 
-        val tomas = vm.socios.first { it.id == 6 } // $17.000, vencida hace 60 días → $17 de interés por hoy
-        assertEquals(17_517, tomas.totalAdeudado)
+        val tomas = vm.socios.first { it.id == 6 } // $17.000, vencida hace 60 días → $1.020 de interés
+        assertEquals(18_520, tomas.totalAdeudado)
         vm.elegirReportTab(ReportTab.MORA)
-        assertEquals(money(12_512 + 17_517), vm.totalReporte)
+        assertEquals(money(12_848 + 18_520), vm.totalReporte)
 
         vm.abrirSocio(2)
         vm.pedirRegistrarPago()
         vm.estado.sheet!!.onConfirm()
         val pagado = vm.socios.first { it.id == 2 }
         assertTrue(pagado.cuotaPagada)
-        assertEquals("se cobra el total con recargo e interés", 12_512, pagado.historial.first().monto)
+        assertEquals("se cobra el total con recargo e interés", 12_848, pagado.historial.first().monto)
         assertTrue(pagado.hab)
+    }
+
+    @Test
+    fun `la demo trae un socio en gracia con el carnet por vencer`() {
+        val vm = admin()
+        val rocio = vm.socios.first { it.id == 9 }
+        assertTrue(rocio.enGracia)
+        assertTrue(rocio.hab)
+        assertEquals("Habilitado · En gracia", rocio.badge)
+        assertEquals("Quedan 2 días", rocio.estadoCorto)
+        assertEquals("Por vencer", rocio.carnetEstado)
+        assertEquals("3 días al 3 % sobre $12.000 más el recargo", 12_000 + 500 + 36, rocio.totalAdeudado)
+        vm.ponerDniAcceso(39_876_540L)
+        assertEquals("Permitido", vm.estado.acceso?.titulo)
+        assertTrue(vm.estado.acceso!!.detalle.contains("gracia"))
     }
 
     @Test
     fun `las capsulas de estado y de cuota resumen la situacion en pocas palabras`() {
         val vm = admin()
-        val lucas = vm.socios.first { it.id == 2 } // mora, sin recargo ni interés cargados
-        assertEquals("Debe $12.000", lucas.estadoCorto)
+        val lucas = vm.socios.first { it.id == 2 } // mora, con la tasa de demo vigente
+        assertEquals("Debe $12.848", lucas.estadoCorto)
         assertEquals("Vencida hace 29 días", lucas.contadorCorto)
         assertEquals("Venció el 10/08/2026 · gracia de 5 días superada", lucas.cuotaSubLabel)
 
@@ -242,9 +257,10 @@ class ClubViewModelTest {
         vm.prepararParametros()
         vm.campo { copy(pGracia = "5", pRecargo = "500,5", pInteres = "2,9") }
         vm.guardarParametros()
-        val lucas = vm.socios.first { it.id == 2 } // interés de hoy: 12.000 × 2,9 % / 30 = 11,6
-        assertEquals((12_000 + 500.5 + 11.6).roundToInt(), lucas.totalAdeudado)
-        assertEquals("Cuota $12.000 + recargo $501 + interés $11", lucas.deudaDetalle)
+        // 28 días al 3 % de la demo ($336) y hoy al 2,9 % ($11,6).
+        val lucas = vm.socios.first { it.id == 2 }
+        assertEquals((12_000 + 500.5 + 336 + 11.6).roundToInt(), lucas.totalAdeudado)
+        assertEquals("Cuota $12.000 + recargo $501 + interés $347", lucas.deudaDetalle)
     }
 
     @Test
@@ -260,8 +276,8 @@ class ClubViewModelTest {
         vm.campo { copy(pRecargo = "2000000") }
         vm.guardarParametros()
         assertNotNull("tope del recargo", vm.estado.paramError)
-        assertEquals("nada se guardó", 1, vm.historialParametros.size)
-        assertEquals(0.0, vm.parametros.recargo, 0.0)
+        assertEquals("nada se guardó: siguen las dos filas de la demo", 2, vm.historialParametros.size)
+        assertEquals(500.0, vm.parametros.recargo, 0.0)
     }
 
     @Test
@@ -270,28 +286,32 @@ class ClubViewModelTest {
         vm.prepararParametros()
         vm.campo { copy(pInteres = "2") }
         vm.guardarParametros()
-        assertEquals("guardar de nuevo el mismo día reemplaza", 1, vm.historialParametros.size)
+        assertEquals("la demo trae dos filas (2025 y 2026) y se suma la de hoy", 3, vm.historialParametros.size)
+        vm.campo { copy(pInteres = "2") }
+        vm.guardarParametros()
+        assertEquals("guardar de nuevo el mismo día reemplaza", 3, vm.historialParametros.size)
         assertNull(vm.estado.paramError)
 
         Reloj.fijar(Fecha(2026, 9, 9))
         vm.campo { copy(pInteres = "4") }
         vm.guardarParametros()
-        assertEquals(2, vm.historialParametros.size)
+        assertEquals(4, vm.historialParametros.size)
         assertEquals(4.0, vm.parametros.interesMensual, 0.0)
         assertEquals(2.0, vm.estado.parametros.vigenteEn(Fecha(2026, 9, 8)).interesMensual, 0.0)
+        assertEquals("la tasa de 2025 de la demo", 2.5, vm.estado.parametros.vigenteEn(Fecha(2026, 1, 15)).interesMensual, 0.0)
         val antes = vm.estado.parametros.vigenteEn(Fecha(2025, 1, 1))
         assertEquals("antes del primer parámetro no se devenga interés", 0.0, antes.interesMensual, 0.0)
         assertEquals("ni recargo", 0.0, antes.recargo, 0.0)
-        assertEquals("pero la gracia sigue siendo la más antigua", 5, antes.graciaDias)
+        assertEquals("pero la gracia sigue siendo la más antigua", 10, antes.graciaDias)
 
-        // Lucas: 30 días vencida; solo devengan el 8/9 al 2 % y el 9/9 al 4 %, sobre $12.000.
+        // Lucas: 30 días vencida; 28 días al 3 % de la demo, el 8/9 al 2 % y el 9/9 al 4 %, sobre $12.000.
         val lucas = vm.socios.first { it.id == 2 }
-        assertEquals(12_000 * 0.02 / 30 + 12_000 * 0.04 / 30, lucas.interes, 0.01)
+        assertEquals(28 * 12_000 * 0.03 / 30 + 12_000 * 0.02 / 30 + 12_000 * 0.04 / 30, lucas.interes, 0.01)
 
         vm.campo { copy(pGracia = "x") }
         vm.guardarParametros()
         assertNotNull("valida el formulario", vm.estado.paramError)
-        assertEquals("con error no guarda nada", 2, vm.historialParametros.size)
+        assertEquals("con error no guarda nada", 4, vm.historialParametros.size)
     }
 
     // ------------------------------------------------------------------ HU-05
@@ -483,7 +503,7 @@ class ClubViewModelTest {
 
         val nuevo = vm.seleccionado
         assertEquals("nombre y apellido juntos", "Marcos Ferreyra", nuevo.nombre)
-        assertEquals("01508", nuevo.nro)
+        assertEquals("01509", nuevo.nro)
         assertEquals("Familiar", nuevo.plan)
         assertEquals(money(29_000), nuevo.cuotaMonto)
         assertEquals("18/09/2026", nuevo.socio.cuota.vence.fmt())
@@ -580,7 +600,8 @@ class ClubViewModelTest {
 
         vm.elegirReportTab(ReportTab.MORA)
         assertEquals(setOf(2, 6), vm.enMora.map { it.id }.toSet())
-        assertEquals(money(12_000 + 17_000), vm.totalReporte)
+        // Con la tasa de demo vigente (recargo $500, 3 % mensual): Lucas $12.848 y Tomás $18.520.
+        assertEquals(money(12_848 + 18_520), vm.totalReporte)
     }
 
     @Test
@@ -640,7 +661,7 @@ class ClubViewModelTest {
         vm.elegirFiltro(FiltroSocios.MORA)
         assertEquals(2, vm.sociosFiltrados.size)
         vm.elegirFiltro(FiltroSocios.HAB)
-        assertEquals(5, vm.sociosFiltrados.size)
+        assertEquals("incluye a Rocío, que está en gracia", 6, vm.sociosFiltrados.size)
     }
 
     // ------------------------------------------------------------------ HU-09

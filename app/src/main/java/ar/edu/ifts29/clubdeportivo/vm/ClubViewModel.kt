@@ -90,7 +90,7 @@ data class UiState(
     /** Socio que se está editando; `null` cuando el formulario es un alta. */
     val editandoId: Int? = null,
     /** Historial de parámetros del club, más nuevo primero (v1.5). */
-    val parametros: List<Parametros> = listOf(Parametros.INICIALES),
+    val parametros: List<Parametros> = DemoData.parametrosIniciales,
     val paramError: String? = null,
 )
 
