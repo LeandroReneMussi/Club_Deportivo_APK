@@ -1,0 +1,27 @@
+@startuml sec_cu16_carnet_digital
+title CU-16: Ver carnet digital
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaCarnet\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+soc -> ui : toca la pestaña Carnet
+ui -> vm : ir(S_CARNET)  (pestaña raíz: reemplaza la pila)
+ui -> vm : yo
+vm -> sv : SocioVista(socio 1, estado.parametros)
+sv --> vm : carnetEstado · dniLabel · nro · plan · carnetEmitidoLabel · carnetVenceLabel · cuota
+vm --> ui : tarjeta «Club Deportivo»: nombre, DNI, Socio N°, Plan · desde, foto, Vigencia emitido – vence
+alt carnet vencido
+  ui --> soc : chip «Vencido» (rojo); debe renovarlo en recepción (CU-08)
+else vence en menos de 30 días
+  ui --> soc : chip «Por vencer»
+else vigente
+  ui --> soc : chip «Vigente»
+end
+ui -> ui : pie de la tarjeta: «Cuota al día» / «en mora» / «en período de gracia» / «pendiente» · «Últimos ingresos»
+opt toca «QR de ingreso»
+  soc -> ui : toca «QR de ingreso»
+  ui -> vm : ir(S_QR)  → CU-26
+end
+@enduml

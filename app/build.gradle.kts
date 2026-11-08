@@ -12,8 +12,8 @@ android {
         applicationId = "ar.edu.ifts29.clubdeportivo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4.0"
+        versionCode = 6
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -57,6 +57,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.ui.tooling.preview)
+    // Generación del QR del carnet digital (v1.5); solo codifica, no usa la cámara.
+    implementation("com.google.zxing:core:3.5.3")
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)

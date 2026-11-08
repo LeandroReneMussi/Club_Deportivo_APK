@@ -1,0 +1,21 @@
+@startuml 07_estados_cuota
+title Máquina de estados — Cuota del socio (v1.5)
+[*] --> Pendiente : alta de socio / cuota inicial\n(vence = hoy + 10 días)
+state Pendiente : habilitado · verde\n«Vence en N días» / «Vence hoy»\nd <= 0
+state "En período de gracia" as Gracia : habilitado con aviso · naranja\n«Quedan N días de gracia»\n0 < d <= gracia
+state "En mora" as Mora : no habilitado · rojo\n«Vencida hace N días · gracia superada»\ndeuda = cuota + recargo + interés\nd > gracia
+state Pagada : proximaVence = vence + 1 mes\nhistorial += PagoHistorial(total, medio, comprobante)
+Pendiente --> Gracia : cambio de fecha [0 < d <= gracia]
+Pendiente --> Mora : cambio de fecha [d > gracia] (p. ej. gracia = 0)
+Gracia --> Mora : cambio de fecha [d > gracia]
+Mora --> Gracia : el administrador guarda una gracia mayor [d <= gracia nueva]
+Pendiente --> Pagada : pagar(medio) [estado != PAGADA] / total = cuota (sin vencer)
+Gracia --> Pagada : pagar(medio) / total = cuota + recargo + interés
+Mora --> Pagada : pagar(medio) [caja o app] / total = cuota + recargo + interés
+Pagada --> Pendiente : apertura de la cuota del mes siguiente\n(completarCuotasSiguientes) / nueva Cuota PENDIENTE
+Pagada --> [*] : baja del socio (ON DELETE CASCADE)
+note bottom
+  d = días desde Cuota.vence (negativo si falta); gracia = Parametros.graciaDias vigente hoy.
+  Estado derivado en SocioVista; en SQLite la cuota sigue PENDIENTE hasta pagarse. VENCIDA deja de decidir.
+end note
+@enduml

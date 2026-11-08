@@ -1,0 +1,24 @@
+@startuml sec_cu19_cancelar_turno
+title CU-19: Cancelar turno de nutrición
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaNutriSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+soc -> ui : toca «Cancelar turno»
+ui -> vm : pedirCancelarTurno()
+vm --> ui : hoja «Cancelar turno»: «Vas a liberar tu turno con la nutricionista…» · Turno {fecha · hora} · CTA «Sí, cancelar»
+alt confirma «Sí, cancelar»
+  ui -> vm : sheet.onConfirm()
+  vm -> vm : actualizarSocio(1): turno = null · cerrarSheet()
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio (turno_fecha, turno_hora = NULL)
+  db --> repo : ok
+  vm --> ui : toast «Turno cancelado» · aparece «Solicitar turno»
+else cierra la hoja
+  ui -> vm : cerrarSheet()
+  vm --> ui : el turno se mantiene
+end
+@enduml

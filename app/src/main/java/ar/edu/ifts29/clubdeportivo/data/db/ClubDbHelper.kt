@@ -18,6 +18,7 @@ import ar.edu.ifts29.clubdeportivo.data.HOY
 import ar.edu.ifts29.clubdeportivo.data.Ingreso
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
+import ar.edu.ifts29.clubdeportivo.data.Parametros
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Rutina
 import ar.edu.ifts29.clubdeportivo.data.Socio
@@ -211,9 +212,15 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             )
             """.trimIndent(),
         )
+        db.execSQL(CREATE_PARAMETRO)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 4) {
+            // Parámetros del club (gracia, recargo, interés) con vigencia por fecha (v1.5).
+            // Sin filas, el repositorio usa los valores iniciales hasta el primer guardado.
+            db.execSQL(CREATE_PARAMETRO)
+        }
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE cuota ADD COLUMN proxima_vence TEXT")
             db.execSQL("ALTER TABLE pago ADD COLUMN comprobante TEXT NOT NULL DEFAULT ''")
@@ -363,7 +370,7 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             listOf(
                 "pago", "cuota", "carnet", "actividad_inscripto", "actividad",
                 "visitante", "ingreso_hoy", "asistencia", "asistencia_clase",
-                "usuario", "socio", "plan", "sesion",
+                "usuario", "socio", "plan", "sesion", "parametro",
             ).forEach { db.delete(it, null, null) }
 
             DemoData.planes.forEach { p ->
@@ -429,6 +436,16 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
                     put("nombre", ing.nombre)
                     put("estado", ing.estado)
                     put("ok", if (ing.ok) 1 else 0)
+                    put("orden", i)
+                })
+            }
+
+            datos.parametros.forEachIndexed { i, p ->
+                db.insert("parametro", null, ContentValues().apply {
+                    put("gracia_dias", p.graciaDias)
+                    put("recargo", p.recargo)
+                    put("interes_mensual", p.interesMensual)
+                    put("vigente_desde", p.vigenteDesde.fmtIso())
                     put("orden", i)
                 })
             }
@@ -571,6 +588,18 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             }
         }
 
+        val parametros = mutableListOf<Parametros>()
+        db.rawQuery("SELECT * FROM parametro ORDER BY orden", null).use { c ->
+            while (c.moveToNext()) {
+                parametros += Parametros(
+                    graciaDias = c.getInt(c.getColumnIndexOrThrow("gracia_dias")),
+                    recargo = c.getDouble(c.getColumnIndexOrThrow("recargo")),
+                    interesMensual = c.getDouble(c.getColumnIndexOrThrow("interes_mensual")),
+                    vigenteDesde = fecha(c.getString(c.getColumnIndexOrThrow("vigente_desde"))),
+                )
+            }
+        }
+
         return DatosClub(
             rol = rol,
             socios = socios,
@@ -579,6 +608,7 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
             ingresosHoy = ingresosHoy,
             asistencia = asistencia,
             profePresente = profePresente,
+            parametros = parametros.ifEmpty { listOf(Parametros.INICIALES) },
         )
     }
 
@@ -712,7 +742,18 @@ class ClubDbHelper(context: Context, nombre: String = NOMBRE) : SQLiteOpenHelper
 
     private companion object {
         const val NOMBRE = "club_deportivo.db"
-        const val VERSION = 3
+        const val VERSION = 4
+
+        val CREATE_PARAMETRO = """
+            CREATE TABLE IF NOT EXISTS parametro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                gracia_dias INTEGER NOT NULL,
+                recargo REAL NOT NULL,
+                interes_mensual REAL NOT NULL,
+                vigente_desde TEXT NOT NULL,
+                orden INTEGER NOT NULL
+            )
+        """.trimIndent()
     }
 }
 

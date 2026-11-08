@@ -1,5 +1,7 @@
 package ar.edu.ifts29.clubdeportivo
 
+import ar.edu.ifts29.clubdeportivo.data.Fecha
+import ar.edu.ifts29.clubdeportivo.data.Reloj
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.vm.ClubRepositorio
@@ -27,11 +29,15 @@ class NavegacionActivitiesTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        Reloj.fijar(Fecha(2026, 9, 8))
         ClubRepositorio.reiniciar()
     }
 
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        Dispatchers.resetMain()
+        Reloj.fijar(null)
+    }
 
     private fun ingresar(usuario: String, clave: String) = ClubViewModel().apply {
         campo { copy(email = usuario, pass = clave) }
@@ -81,7 +87,7 @@ class NavegacionActivitiesTest {
         ingresar("Jorge", "Admin123")
         val admin = ClubViewModel()
         admin.irAAlta()
-        admin.campo { copy(nombre = "Carlos Gardel", dni = "12.345.678", mail = "carlos@gardel.com.ar") }
+        admin.campo { copy(nombre = "Carlos", apellido = "Gardel", dni = "12.345.678", mail = "carlos@gardel.com.ar") }
         admin.confirmarAlta()
         admin.cerrarSesion()
 

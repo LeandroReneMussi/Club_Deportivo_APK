@@ -1,0 +1,33 @@
+@startuml sec_cu09_validar_acceso
+title CU-09: Validar ingreso por DNI (control de acceso)
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaAcceso\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+adm -> ui : escribe el DNI y toca «Validar» (o toca un DNI de prueba: ponerDniAcceso)
+ui -> vm : validarAcceso()
+vm -> vm : Validaciones.dni(campos.dniAcceso)
+alt DNI inválido (vacío, con letras o distinto de 7–8 dígitos)
+  vm --> ui : acceso = null · toast con el mensaje de validación
+else DNI válido
+  vm -> sv : socios.firstOrNull { dni }  →  SocioVista(socio, estado.parametros)
+  alt no hay socio con ese DNI
+    vm --> ui : «No encontrado»: «No hay ningún socio con DNI xx.xxx.xxx. Podés registrarlo como visitante o dar de alta un socio.» · botón «Registrar socio»
+  else hab y en gracia (0 < d <= gracia)
+    vm --> ui : «Permitido» (naranja): «Cuota {mes} vencida · quedan N días de gracia. Debe $total en recepción.»
+  else hab y cuota pagada
+    vm --> ui : «Permitido»: «Carnet vigente y cuota al día.»
+  else hab y cuota pendiente sin vencer
+    vm --> ui : «Permitido»: «Carnet vigente · cuota {mes} pendiente, vence en N días.»
+  else mora (d > gracia)
+    vm --> ui : «Denegado» (rojo): «Cuota {mes} en mora: vencida hace N días · gracia de G días superada. Debe $total en recepción.»
+  else carnet vencido, sin mora
+    vm --> ui : «Denegado»: «Carnet vencido el dd/mm/aaaa. Debe renovarse.»
+  end
+end
+opt hay socio: botones de la tarjeta de resultado
+  adm -> ui : «Ver ficha» (abrirSocio) · «Registrar ingreso» solo si es Permitido (CU-10)
+end
+@enduml

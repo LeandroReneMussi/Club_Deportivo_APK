@@ -3,17 +3,18 @@
 1_LoginActivity_03.png|LoginActivity|Inicio de sesión|HU-01|Validación: credenciales incorrectas, el acceso se rechaza.
 2_SocioActivity_01.png|SocioActivity|Inicio|HU-04|Estado de habilitación, cuota pendiente, rutina de hoy y turno de nutrición.
 2_SocioActivity_02.png|SocioActivity|Carnet digital|HU-06|Carnet vigente con datos del socio y estado de cuota.
-2_SocioActivity_03.png|SocioActivity|Estado de cuenta|HU-04|Cuota actual e historial de pagos.
-2_SocioActivity_04.png|SocioActivity|Método de pago|HU-04|Selección del medio de pago (pago simulado).
-2_SocioActivity_05.png|SocioActivity|Pago registrado|HU-04|Comprobante del pago; el socio queda al día.
-2_SocioActivity_06.png|SocioActivity|Mi rutina|HU-10|Rutina asignada por la entrenadora, por día.
-2_SocioActivity_07.png|SocioActivity|Nutrición|HU-13|Peso, altura, IMC, objetivo y consultas anteriores.
-2_SocioActivity_08.png|SocioActivity|Cancelar turno|HU-11|Confirmación antes de cancelar el turno reservado.
-2_SocioActivity_09.png|SocioActivity|Reservar turno|HU-11|Validación: confirmar sin elegir horario.
-2_SocioActivity_10.png|SocioActivity|Reservar turno|HU-11|Horario elegido entre los disponibles.
-2_SocioActivity_11.png|SocioActivity|Nutrición|HU-11|Turno confirmado.
-2_SocioActivity_12.png|SocioActivity|Perfil|HU-01|Datos del socio y accesos rápidos.
-2_SocioActivity_13.png|SocioActivity|Cerrar sesión|HU-01|Confirmación de cierre de sesión: vuelve a LoginActivity.
+2_SocioActivity_03.png|SocioActivity|QR de ingreso|HU-06 / v1.5|QR de ingreso: al escanearlo se leen los datos del carnet digital.
+2_SocioActivity_04.png|SocioActivity|Estado de cuenta|HU-04|Cuota actual e historial de pagos.
+2_SocioActivity_05.png|SocioActivity|Método de pago|HU-04|Selección del medio de pago (pago simulado).
+2_SocioActivity_06.png|SocioActivity|Pago registrado|HU-04|Comprobante del pago; el socio queda al día.
+2_SocioActivity_07.png|SocioActivity|Mi rutina|HU-10|Rutina asignada por la entrenadora, por día.
+2_SocioActivity_08.png|SocioActivity|Nutrición|HU-13|Peso, altura, IMC, objetivo y consultas anteriores.
+2_SocioActivity_09.png|SocioActivity|Cancelar turno|HU-11|Confirmación antes de cancelar el turno reservado.
+2_SocioActivity_10.png|SocioActivity|Reservar turno|HU-11|Validación: confirmar sin elegir horario.
+2_SocioActivity_11.png|SocioActivity|Reservar turno|HU-11|Horario elegido entre los disponibles.
+2_SocioActivity_12.png|SocioActivity|Nutrición|HU-11|Turno confirmado.
+2_SocioActivity_13.png|SocioActivity|Perfil|HU-01|Datos del socio y accesos rápidos.
+2_SocioActivity_14.png|SocioActivity|Cerrar sesión|HU-01|Confirmación de cierre de sesión: vuelve a LoginActivity.
 3_AdminActivity_01.png|AdminActivity|Inicio|HU-14|Indicadores del día y acciones rápidas.
 3_AdminActivity_02.png|AdminActivity|Socios|CRUD socios: Leer|Padrón de socios con búsqueda y filtros.
 3_AdminActivity_03.png|AdminActivity|Socios|CRUD socios: Leer|Filtro: socios en mora.
@@ -34,11 +35,24 @@
 3_AdminActivity_18.png|AdminActivity|Control de acceso|HU-05|Socio en mora: acceso denegado con el motivo.
 3_AdminActivity_19.png|AdminActivity|Control de acceso|HU-05|Carnet vencido: acceso denegado.
 3_AdminActivity_20.png|AdminActivity|Control de acceso|HU-05|DNI inexistente: no encontrado.
-3_AdminActivity_21.png|AdminActivity|Visitantes|HU-03|Cupos del día e ingresos de visitantes.
+3_AdminActivity_21.png|AdminActivity|Visitantes|HU-03|Cupos del día y pagos diarios de hoy, con el total recaudado.
 3_AdminActivity_22.png|AdminActivity|Ingreso de visitante|HU-03|Natación sin cupo: el ingreso no puede realizarse.
-3_AdminActivity_23.png|AdminActivity|Ingreso de visitante|HU-03|Actividad con cupo: listo para confirmar el cobro.
-3_AdminActivity_24.png|AdminActivity|Reportes|HU-14|Cuotas que vencen en los próximos 7 días.
-3_AdminActivity_25.png|AdminActivity|Reportes|HU-14|Socios en mora con acceso bloqueado.
+3_AdminActivity_23.png|AdminActivity|Ingreso de visitante|HU-03|Validación: ese DNI ya tiene un pago diario registrado hoy.
+3_AdminActivity_24.png|AdminActivity|Ingreso de visitante|HU-03|Actividad con cupo, medio de pago y total: listo para registrar el pago diario.
+3_AdminActivity_25.png|AdminActivity|Visitantes|HU-03|Pago diario registrado: entra en la lista de hoy y suma al total.
+3_AdminActivity_26.png|AdminActivity|Reportes|HU-14|Socios cuya cuota vence hoy, consultados en SQLite.
+3_AdminActivity_27.png|AdminActivity|Reportes|HU-14|Cuotas que vencen en los próximos 7 días.
+3_AdminActivity_28.png|AdminActivity|Reportes|HU-14|Socios en mora con acceso bloqueado.
+3_AdminActivity_29.png|AdminActivity|Reportes|HU-14 / HU-03|Pagos diarios de no socios de hoy, con el total del día.
+3_AdminActivity_30.png|AdminActivity|Reportes|HU-14 / HU-03|Pagos diarios de un día anterior, recuperados por fecha.
+3_AdminActivity_31.png|AdminActivity|Ficha del socio|HU-04 / v1.5|Rocío, vencida hace 3 días: en gracia (quedan 2 días), deuda con recargo e interés, carnet por vencer.
+3_AdminActivity_32.png|AdminActivity|Control de acceso|HU-05 / v1.5|Socia en gracia: acceso permitido con el aviso de los días que quedan y la deuda.
+3_AdminActivity_33.png|AdminActivity|Perfil · Configuración del club|v1.5|El administrador fija gracia, recargo e interés; cada cambio queda en el historial con su fecha.
+3_AdminActivity_34.png|AdminActivity|Perfil · Configuración del club|v1.5|Parámetros guardados: rigen desde hoy para todos los socios.
+3_AdminActivity_35.png|AdminActivity|Ficha del socio|HU-04 / v1.5|Lucas, vencido hace 29 días con 30 de gracia: habilitado en gracia; la deuda suma recargo e interés.
+3_AdminActivity_36.png|AdminActivity|Control de acceso|HU-05 / v1.5|En gracia: acceso permitido con aviso del plazo y de la deuda.
+3_AdminActivity_37.png|AdminActivity|Control de acceso|HU-05 / v1.5|Gracia de 5 días superada: acceso denegado; la deuda incluye recargo e interés.
+3_AdminActivity_38.png|AdminActivity|Reportes|HU-14 / v1.5|En mora: total adeudado con recargo e interés, y parámetros vigentes.
 4_EntrenadoraActivity_01.png|EntrenadoraActivity|Inicio|HU-08|Presencia del día, clases y rutinas pendientes.
 4_EntrenadoraActivity_02.png|EntrenadoraActivity|Inicio|HU-08|Presencia registrada.
 4_EntrenadoraActivity_03.png|EntrenadoraActivity|Asistencia|HU-08|Presentes y ausentes de la clase; socios no habilitados señalados.

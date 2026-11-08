@@ -1,0 +1,30 @@
+@startuml sec_cu01_iniciar_sesion
+title CU-01: Iniciar sesión
+autonumber
+skinparam sequenceMessageAlign center
+actor "Usuario del club" as usr
+participant ":PantallaLogin\nLoginActivity\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+participant ":Activity del rol\n(RolActivity)" as act
+usr -> ui : escribe usuario y contraseña (o toca una cuenta de prueba) y toca «Iniciar sesión»
+ui -> vm : login()
+vm -> repo : autenticar(email, pass)
+repo -> db : autenticar(alias, clave): SELECT rol FROM usuario WHERE alias = ? AND clave = ?  (alias normalizado con norm())
+db --> repo : Rol? (null si no coincide)
+repo --> vm : rolCuenta
+vm -> vm : dadoDeBaja = rolCuenta == SOCIO && no existe el socio ID_SOCIO_APP (1) en estado.socios
+alt rolCuenta == null  o  dadoDeBaja
+  vm -> vm : loginError = true
+  vm --> ui : mensajeLogin: «Completá usuario y contraseña.» (campos vacíos) / «Usuario o contraseña incorrectos.»
+else credenciales válidas
+  vm -> vm : rol = rolCuenta · stack = [primera pestaña del rol] · limpia email y pass
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: sesion (rol)
+  db --> repo : ok
+  vm --> ui : estado.rol != null
+  ui -> act : LaunchedEffect(rol): abrirActivityDelRol(rol)  (Socio / Admin / Entrenadora / Nutricionista)
+  act --> usr : pantalla raíz del rol: Inicio (Socio, Administrativo, Entrenadora) o Agenda (Nutricionista)
+end
+@enduml

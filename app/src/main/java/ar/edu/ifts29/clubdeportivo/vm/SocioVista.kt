@@ -3,6 +3,8 @@ package ar.edu.ifts29.clubdeportivo.vm
 import ar.edu.ifts29.clubdeportivo.data.Consulta
 import ar.edu.ifts29.clubdeportivo.data.DemoData
 import ar.edu.ifts29.clubdeportivo.data.EstadoCuota
+import ar.edu.ifts29.clubdeportivo.data.HOY
+import ar.edu.ifts29.clubdeportivo.data.Parametros
 import ar.edu.ifts29.clubdeportivo.data.Socio
 import ar.edu.ifts29.clubdeportivo.data.daysTo
 import ar.edu.ifts29.clubdeportivo.data.dniFmt
@@ -10,10 +12,16 @@ import ar.edu.ifts29.clubdeportivo.data.edadA
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.fmtCorto
 import ar.edu.ifts29.clubdeportivo.data.fmtMesAnio
+import ar.edu.ifts29.clubdeportivo.data.masDias
 import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
 import ar.edu.ifts29.clubdeportivo.data.numero
 import ar.edu.ifts29.clubdeportivo.data.unDecimal
+import ar.edu.ifts29.clubdeportivo.data.vigenteEn
+import kotlin.math.roundToInt
+
+/** Color con que se muestra la situación de la cuota: verde, naranja o rojo. */
+enum class TonoCuota { OK, AVISO, BLOQUEO }
 
 /**
  * Equivalente de `socioView()` del prototipo: toma un [Socio] y deriva todas las
@@ -21,9 +29,12 @@ import ar.edu.ifts29.clubdeportivo.data.unDecimal
  * repetir estas reglas.
  *
  * La regla central del sistema vive acá: un socio está **habilitado** sólo si no
- * está en mora y su carnet no venció (HU-05, HU-09).
+ * está en mora y su carnet no venció (HU-05, HU-09). Desde la v1.5 la mora se calcula
+ * con las fechas y los [parametros] del club: la cuota vencida tiene un período de
+ * gracia, y recién pasado ese plazo bloquea el acceso. Fuera de término se deben
+ * además el recargo y el interés vigentes.
  */
-class SocioVista(val socio: Socio) {
+class SocioVista(val socio: Socio, private val parametros: List<Parametros> = listOf(Parametros.INICIALES)) {
 
     val id get() = socio.id
     val nombre get() = socio.nombre
@@ -39,61 +50,192 @@ class SocioVista(val socio: Socio) {
     val historial get() = socio.historial
     val ingresos get() = socio.ingresos
 
-    val mora = socio.cuota.estado == EstadoCuota.VENCIDA
+    // ------------------------------------------------------------ cuota: pendiente, gracia, mora
+
+    private val diasParaVencer = daysTo(socio.cuota.vence)
+
+    /** Días transcurridos desde el vencimiento; 0 si todavía no venció. */
+    val diasVencida = (-diasParaVencer).coerceAtLeast(0)
+
+    private val vigenteHoy = parametros.vigenteEn(HOY)
+
+    /** Días de gracia que rigen hoy. */
+    val gracia = vigenteHoy.graciaDias
+
+    val cuotaPagada = socio.cuota.estado == EstadoCuota.PAGADA
+
+    /** No pagada y con el vencimiento ya pasado. */
+    val cuotaVencida = !cuotaPagada && diasVencida > 0
+
+    /** Vencida, pero dentro del período de gracia: sigue habilitado, con aviso. */
+    val enGracia = cuotaVencida && diasVencida <= gracia
+
+    /** Vencida y con la gracia superada: bloquea el acceso. */
+    val mora = cuotaVencida && diasVencida > gracia
+
+    /** Días de gracia que quedan (0 en el último día). */
+    val diasDeGracia = (gracia - diasVencida).coerceAtLeast(0)
+
+    /** Sin pagar, venza o no: es lo que habilita el botón de pago. */
+    val cuotaPendiente = !cuotaPagada
+
     val carnetVencido = daysTo(socio.carnetVence) < 0
 
     /** Habilitado para ingresar y para recibir rutina. */
     val hab = !mora && !carnetVencido
 
-    private val diasParaVencer = daysTo(socio.cuota.vence)
+    // ------------------------------------------------------------ deuda (v1.5)
+
+    /** Recargo fijo del parámetro vigente hoy; se debe una sola vez, apenas la cuota vence. */
+    val recargo: Double = if (cuotaVencida) vigenteHoy.recargo else 0.0
+
+    /**
+     * Interés simple acumulado día a día desde el vencimiento, con la tasa mensual que regía
+     * cada día (prorrateada a 30 días). Así un cambio de tasa no toca los días anteriores.
+     */
+    val interes: Double = if (!cuotaVencida) {
+        0.0
+    } else {
+        (1..diasVencida).sumOf { d ->
+            socio.cuota.monto * parametros.vigenteEn(socio.cuota.vence.masDias(d)).interesMensual / 100.0 / 30.0
+        }
+    }
+
+    /** Lo que hay que cobrar hoy: cuota más recargo e interés si venció. */
+    val totalAdeudado: Int = (socio.cuota.monto + recargo + interes).roundToInt()
+
+    val totalLabel = money(totalAdeudado)
+
+    /**
+     * "Cuota $12.000 + recargo $500 + interés $12", o `null` si no hay nada que sumar. El interés
+     * se muestra como la diferencia, así los tres sumandos siempre dan [totalAdeudado].
+     */
+    val deudaDetalle: String? = if (cuotaVencida && (recargo > 0 || interes > 0)) {
+        val recargoEntero = recargo.roundToInt()
+        "Cuota ${money(socio.cuota.monto)} + recargo ${money(recargoEntero)} + interés ${money(totalAdeudado - socio.cuota.monto - recargoEntero)}"
+    } else {
+        null
+    }
+
+    // ------------------------------------------------------------ etiquetas
 
     val nombreCorto = socio.nombre.substringBefore(' ')
     val dniLabel = dniFmt(socio.dni)
     val altaLabel = socio.alta.fmtMesAnio()
     val edadLabel = "${edadA(socio.nac)} años"
 
-    /**
-     * La habilitación (HU-05) solo mira mora y carnet: una cuota pendiente que todavía no
-     * venció no bloquea el ingreso. La etiqueta igual lo dice: "al día" es solo la cuota pagada
-     * (el vencimiento va en la tarjeta de la cuota, [cuotaVenceLabel]).
-     */
+    private val graciaRestanteLabel = when (diasDeGracia) {
+        0 -> "Último día de gracia"
+        1 -> "Queda 1 día de gracia"
+        else -> "Quedan $diasDeGracia días de gracia"
+    }
+
+    private val graciaCorta = when (diasDeGracia) {
+        0 -> "Último día de gracia"
+        1 -> "Queda 1 día"
+        else -> "Quedan $diasDeGracia días"
+    }
+
+    /** Cápsula del aviso de habilitación: qué hacer o cuánto falta, en dos o tres palabras. */
+    val estadoCorto = when {
+        mora -> "Debe $totalLabel"
+        enGracia -> graciaCorta
+        carnetVencido -> "Renovar carnet"
+        cuotaPagada -> "Al día"
+        diasParaVencer == 0 -> "Vence hoy"
+        else -> "Vence en $diasParaVencer días"
+    }
+
+    /** Cápsula de la tarjeta de la cuota. */
+    val contadorCorto = when {
+        cuotaPagada -> "Pagada"
+        mora -> "Vencida hace $diasVencida días"
+        enGracia -> graciaRestanteLabel
+        diasParaVencer == 0 -> "Vence hoy"
+        else -> "Vence en $diasParaVencer días"
+    }
+
+    /** Línea secundaria de la tarjeta de la cuota: la fecha y la gracia que aplica. */
+    val cuotaSubLabel = when {
+        cuotaPagada -> "Próxima cuota ${(socio.cuota.proximaVence ?: socio.cuota.vence.masMeses(1)).fmt()}"
+        mora -> "Venció el ${socio.cuota.vence.fmt()} · gracia de $gracia días superada"
+        enGracia -> "Venció el ${socio.cuota.vence.fmt()} · gracia de $gracia días"
+        else -> "Vencimiento ${socio.cuota.vence.fmt()}"
+    }
+
+    /** El contador que ven el administrador y el socio, con su color en [tono]. */
+    val contador = when {
+        cuotaPagada -> "Pagada"
+        enGracia -> graciaRestanteLabel
+        mora -> "Vencida hace $diasVencida días · gracia de $gracia días superada"
+        diasParaVencer == 0 -> "Vence hoy"
+        else -> "Vence en $diasParaVencer días"
+    }
+
+    val tono = when {
+        mora -> TonoCuota.BLOQUEO
+        enGracia -> TonoCuota.AVISO
+        else -> TonoCuota.OK
+    }
+
     val badge = when {
-        hab && socio.cuota.estado == EstadoCuota.PENDIENTE -> "Habilitado · Cuota pendiente"
+        hab && enGracia -> "Habilitado · En período de gracia"
+        hab && !cuotaPagada -> "Habilitado · Cuota pendiente"
         hab -> "Habilitado · Cuota al día"
         mora -> "No habilitado · En mora"
         else -> "No habilitado · Carnet vencido"
     }
 
     val badgeCorto = when {
+        hab && enGracia -> "En período de gracia"
         hab -> "Habilitado"
         mora -> "En mora"
         else -> "Carnet venc."
     }
 
+    /**
+     * Contenido del QR del carnet digital (v1.5): los datos del carnet en texto plano, para
+     * que cualquier lector los muestre tal cual al escanearlo.
+     */
+    val qrCarnet: String = listOf(
+        "CLUB DEPORTIVO · CARNET DE SOCIO",
+        "N° de socio: ${socio.nro}",
+        "Socio: ${socio.nombre}",
+        "DNI: $dniLabel",
+        "Plan: ${socio.plan}",
+        "Carnet emitido: ${socio.carnetEmitido.fmt()}",
+        "Carnet vence: ${socio.carnetVence.fmt()}",
+        "Estado: $badge",
+    ).joinToString("\n")
+
     val motivo = when {
+        hab && enGracia -> graciaRestanteLabel
         hab -> "Puede ingresar"
-        mora -> "Cuota ${socio.cuota.mes} vencida hace ${-diasParaVencer} días"
+        mora -> "En mora · cuota ${socio.cuota.mes} vencida hace $diasVencida días · debe $totalLabel"
         else -> "Carnet vencido el ${socio.carnetVence.fmt()}"
     }
 
     val cuotaMonto = money(socio.cuota.monto)
-    val cuotaPendiente = socio.cuota.estado == EstadoCuota.PENDIENTE
-    val cuotaPagada = socio.cuota.estado == EstadoCuota.PAGADA
 
     val cuotaEstadoLabel = when {
         cuotaPagada -> "Pagada"
-        mora -> "Vencida"
+        cuotaVencida -> "Vencida"
         else -> "Pendiente"
     }
 
-    val cuotaCorto = if (mora) "Mora" else "Al día"
+    val cuotaCorto = when {
+        mora -> "Mora"
+        enGracia -> "Gracia"
+        else -> "Al día"
+    }
 
     val cuotaVenceLabel = when {
         cuotaPagada -> {
             val proxima = socio.cuota.proximaVence ?: socio.cuota.vence.masMeses(1)
             "Pagada · próxima ${proxima.fmt()}"
         }
-        diasParaVencer < 0 -> "Venció hace ${-diasParaVencer} días"
+        mora -> "Venció hace $diasVencida días · gracia de $gracia días superada"
+        enGracia -> "Venció hace $diasVencida días · ${graciaRestanteLabel.replaceFirstChar { it.lowercase() }}"
         diasParaVencer == 0 -> "Vence hoy"
         else -> "Vence en $diasParaVencer días · ${socio.cuota.vence.fmt()}"
     }

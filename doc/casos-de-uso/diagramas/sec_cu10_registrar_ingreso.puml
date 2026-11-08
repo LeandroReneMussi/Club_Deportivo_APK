@@ -1,0 +1,19 @@
+@startuml sec_cu10_registrar_ingreso
+title CU-10: Registrar ingreso del socio
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaAcceso\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+note right of ui : Precondición: validarAcceso() dejó acceso «Permitido» con registrado = false.
+adm -> ui : toca «Registrar ingreso»
+ui -> vm : registrarIngreso()
+vm -> vm : id = acceso.socioId · ingresosHoy = [IngresoHoy(HORA_ACTUAL, nombre, «Permitido», ok)] + ingresosHoy · acceso.registrado = true
+vm -> vm : actualizarSocio(id): ingresos = [Ingreso(«dd/mm · hh:mm», «Permitido»)] + ingresos
+vm -> repo : guardar(estado)  (setter de estado)
+repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: ingreso_hoy, socio (ingresos_json)
+db --> repo : ok
+vm --> ui : toast «Ingreso registrado · {nombre}» · desaparece el botón (registrado = true)
+@enduml

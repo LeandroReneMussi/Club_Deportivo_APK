@@ -5,6 +5,7 @@ import ar.edu.ifts29.clubdeportivo.data.Actividad
 import ar.edu.ifts29.clubdeportivo.data.DemoData
 import ar.edu.ifts29.clubdeportivo.data.Fecha
 import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
+import ar.edu.ifts29.clubdeportivo.data.Parametros
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Socio
 import ar.edu.ifts29.clubdeportivo.data.Visitante
@@ -21,6 +22,8 @@ data class DatosClub(
     val ingresosHoy: List<IngresoHoy> = DemoData.ingresosHoyIniciales,
     val asistencia: Map<String, List<Int>> = mapOf("musc" to listOf(4, 7), "func" to emptyList()),
     val profePresente: Boolean = false,
+    /** Historial de parámetros del club, más nuevo primero (v1.5). Nunca vacío. */
+    val parametros: List<Parametros> = DemoData.parametrosIniciales,
 )
 
 /**
@@ -62,6 +65,7 @@ object ClubRepositorio {
             ingresosHoy = estado.ingresosHoy,
             asistencia = estado.asistencia,
             profePresente = estado.profePresente,
+            parametros = estado.parametros,
         )
         val cambio = nuevo != datos
         datos = nuevo

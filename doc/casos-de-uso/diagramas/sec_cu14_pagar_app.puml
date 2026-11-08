@@ -1,0 +1,28 @@
+@startuml sec_cu14_pagar_app
+title CU-14: Pagar cuota desde la app
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaPagar\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+soc -> ui : toca «Pagar» (Inicio) o «Pagar cuota» (Estado de cuenta); el botón solo existe si la cuota está pendiente
+ui -> vm : ir(S_PAGAR)
+vm -> sv : yo.totalLabel · yo.deudaDetalle
+sv --> vm : total (cuota, más recargo e interés si venció)
+vm --> ui : «Total a pagar» con el detalle · medios: Tarjeta, Billetera, Efectivo en el club
+soc -> ui : elige el medio y toca «Confirmar pago de {total}»
+ui -> vm : elegirMedio(m) · confirmarPago()
+vm -> vm : pagarCuota(ID_SOCIO_APP, medio.etiqueta)
+alt la cuota ya estaba PAGADA
+  vm --> ui : toast «La cuota de {mes} ya está pagada.» · no registra otro pago ni navega
+else cuota pendiente
+  vm -> vm : cuota PAGADA · proximaVence = vence + 1 mes · PagoHistorial(mes, total, HOY, medio, «CD-2609-####») · comprobante
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: cuota, pago
+  db --> repo : ok
+  vm --> ui : stack: S_PAGAR se reemplaza por S_PAGO_OK · «Pago registrado» + comprobante #CD-2609-#### · «Volver al inicio»
+end
+@enduml

@@ -1,0 +1,26 @@
+@startuml sec_cu26_qr_ingreso
+title CU-26: Mostrar QR de ingreso
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaCarnet\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":PantallaQrIngreso\nS_QR\n(Compose)" as qr
+soc -> ui : toca «QR de ingreso» en el carnet digital
+ui -> vm : ir(Screen.S_QR)  (no es pestaña: se apila sobre el carnet)
+vm --> qr : pantalla «QR de ingreso» con flecha para volver
+qr -> vm : yo
+vm -> sv : SocioVista(socio 1, estado.parametros)
+sv -> sv : qrCarnet = «CLUB DEPORTIVO · CARNET DE SOCIO» + N° de socio, Socio, DNI, Plan, Carnet emitido, Carnet vence, Estado (badge)
+sv --> vm : qrCarnet · estadoCorto · badge · carnetEstadoLower
+vm --> qr : nombre en mayúsculas, N° · DNI · Plan, cápsula estadoCorto, CodigoQr(qrCarnet), «Carnet vigente · vence dd/mm/aaaa» y badge
+alt carnet vencido o socio en mora
+  qr --> soc : la cápsula y el campo «Estado:» del QR lo indican; el QR no habilita por sí mismo (lo decide CU-09)
+else habilitado
+  qr --> soc : «Estado: Habilitado · …» dentro del QR
+end
+soc -> qr : toca la flecha o el botón atrás
+qr -> vm : volver()
+vm --> ui : stack sin S_QR: vuelve al carnet
+@enduml

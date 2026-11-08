@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import ar.edu.ifts29.clubdeportivo.data.DemoData
 import ar.edu.ifts29.clubdeportivo.data.DiaRutina
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
+import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Screen
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.money
@@ -45,7 +48,9 @@ import ar.edu.ifts29.clubdeportivo.data.numero
 import ar.edu.ifts29.clubdeportivo.ui.Avatar
 import ar.edu.ifts29.clubdeportivo.ui.BotonBorde
 import ar.edu.ifts29.clubdeportivo.ui.BotonPrimario
+import ar.edu.ifts29.clubdeportivo.ui.CampoTexto
 import ar.edu.ifts29.clubdeportivo.ui.Chip
+import ar.edu.ifts29.clubdeportivo.ui.CodigoQr
 import ar.edu.ifts29.clubdeportivo.ui.ColumnaGutter
 import ar.edu.ifts29.clubdeportivo.ui.CuerpoPantalla
 import ar.edu.ifts29.clubdeportivo.ui.Fila
@@ -59,6 +64,9 @@ import ar.edu.ifts29.clubdeportivo.ui.theme.body
 import ar.edu.ifts29.clubdeportivo.ui.theme.disp
 import ar.edu.ifts29.clubdeportivo.ui.theme.label
 import ar.edu.ifts29.clubdeportivo.vm.ClubViewModel
+import ar.edu.ifts29.clubdeportivo.vm.SocioVista
+import ar.edu.ifts29.clubdeportivo.vm.TonoCuota
+import kotlin.math.roundToInt
 
 /** Resumen de un día de rutina: `5 ejercicios · 40 min`. */
 fun resumenDia(d: DiaRutina): String = "${d.ejercicios.size} ejercicios · ${d.ejercicios.size * 8} min"
@@ -82,27 +90,32 @@ fun ColumnScope.PantallaSocioHome(vm: ClubViewModel) {
             modifier = Modifier
                 .padding(start = Pista.gutter, top = 16.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(if (yo.hab) Pista.ok else Pista.bad)
+                .background(fondoEstado(yo))
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            val tinta = if (yo.hab) Pista.okInk else Pista.badInk
+            val tinta = tintaEstado(yo)
             Box(Modifier.size(8.dp).clip(CircleShape).background(tinta))
             Text(yo.badge.uppercase(), style = disp(700, 13, tinta, letterSpacing = 0.8.sp))
         }
 
-        // Cuota del mes (HU-04)
+        // Cuota del mes (HU-04), con el contador de días y la deuda (v1.5)
         Tarjeta(Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp)) {
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Cuota ${yo.cuota.mes}".uppercase(), style = label(), modifier = Modifier.weight(1f))
-                Text(yo.cuotaVenceLabel.uppercase(), style = label())
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(yo)
+            }
+            Text(yo.cuotaSubLabel, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
+            yo.deudaDetalle?.let {
+                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 2.dp))
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
-                Text(yo.cuotaMonto, style = disp(800, 48, lineHeight = 48.sp), modifier = Modifier.weight(1f))
+                Text(yo.totalLabel, style = disp(800, 48, lineHeight = 48.sp), modifier = Modifier.weight(1f))
                 if (yo.cuotaPendiente) {
                     Box(
                         modifier = Modifier
@@ -210,100 +223,104 @@ fun ColumnScope.PantallaCarnet(vm: ClubViewModel) {
             Text("N° ${yo.nro}", style = body(600, 12, Pista.mut))
         }
 
+        // Tarjeta con la proporción de un carnet real (ISO/IEC 7810 ID-1, 85,6 × 54 mm).
+        val tintaSuave = Pista.accInk.copy(alpha = 0.72f)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Pista.gutter, end = Pista.gutter, top = 22.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .padding(start = Pista.gutter, end = Pista.gutter, top = 18.dp)
+                .aspectRatio(1.586f)
+                .clip(RoundedCornerShape(16.dp))
                 .background(Pista.acc)
-                .clipToBounds(),
+                .drawBehind {
+                    // Círculos de fondo, sutiles, como en los carnets de afiliado.
+                    val tinta = Pista.accInk.copy(alpha = 0.07f)
+                    drawCircle(tinta, radius = size.height * 0.95f, center = Offset(size.width * 1.02f, size.height * 0.05f))
+                    drawCircle(tinta, radius = size.height * 0.55f, center = Offset(size.width * 0.92f, size.height * 1.08f))
+                }
+                .padding(horizontal = 18.dp, vertical = 16.dp),
         ) {
-            // Marca decorativa del club, deliberadamente recortada por el borde.
-            // Va dentro de un Box con matchParentSize para que sus 200sp no estiren la
-            // tarjeta: sólo se pinta, no participa del cálculo de tamaño.
-            Box(Modifier.matchParentSize().clipToBounds()) {
-                Text(
-                    "CD",
-                    style = disp(
-                        weight = 800,
-                        size = 200,
-                        color = Pista.accInk.copy(alpha = 0.12f),
-                        lineHeight = 200.sp,
-                        letterSpacing = (-8).sp,
-                    ),
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 30.dp, y = (-40).dp),
-                )
-            }
-            Column(Modifier.padding(22.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Column(Modifier.matchParentSize()) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(Pista.accInk),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("CD", style = disp(800, 12, Pista.acc))
+                    }
                     Text(
                         "Club Deportivo".uppercase(),
-                        style = disp(800, 18, Pista.accInk, letterSpacing = 1.5.sp),
-                        modifier = Modifier.weight(1f),
+                        style = disp(800, 14, Pista.accInk, letterSpacing = 1.2.sp),
+                        modifier = Modifier.padding(start = 8.dp).weight(1f),
                     )
                     Chip(
                         texto = yo.carnetEstado,
                         fondo = if (yo.carnetVencido) Pista.bad else Pista.accInk,
                         tinta = if (yo.carnetVencido) Pista.badInk else Pista.acc,
+                        tamano = 10,
                     )
                 }
 
                 Row(
-                    modifier = Modifier.padding(top = 26.dp),
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    FotoCarnet(yo.foto, 84.dp, 104.dp)
-                    Column {
-                        Text(
-                            "Socio".uppercase(),
-                            style = body(600, 12, Pista.accInk.copy(alpha = 0.7f), letterSpacing = 1.2.sp),
-                        )
+                    Column(Modifier.weight(1f)) {
                         Text(
                             yo.nombre.uppercase(),
-                            style = disp(800, 32, Pista.accInk, lineHeight = 32.sp),
-                            modifier = Modifier.padding(top = 2.dp),
+                            style = disp(800, 20, Pista.accInk, lineHeight = 22.sp),
+                            maxLines = 2,
                         )
                         Text(
-                            "Plan ${yo.plan} · desde ${yo.altaLabel}",
-                            style = body(600, 13, Pista.accInk.copy(alpha = 0.75f)),
-                            modifier = Modifier.padding(top = 8.dp),
+                            "DNI ${yo.dniLabel}",
+                            style = body(700, 13, Pista.accInk),
+                            modifier = Modifier.padding(top = 6.dp),
                         )
+                        Text("Socio N° ${yo.nro}", style = body(600, 12, tintaSuave), modifier = Modifier.padding(top = 1.dp))
+                        Text("Plan ${yo.plan} · desde ${yo.altaLabel}", style = body(600, 12, tintaSuave))
                     }
+                    Spacer(Modifier.width(12.dp))
+                    FotoCarnet(yo.foto, 62.dp, 76.dp)
                 }
 
-                Column(Modifier.padding(top = 24.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                     Text(
-                        "DNI",
-                        style = body(600, 12, Pista.accInk.copy(alpha = 0.7f), letterSpacing = 1.2.sp),
+                        "Vigencia ${yo.carnetEmitidoLabel} – ${yo.carnetVenceLabel}",
+                        style = body(600, 11, tintaSuave),
+                        modifier = Modifier.weight(1f),
                     )
                     Text(
-                        yo.dniLabel,
-                        style = disp(800, 54, Pista.accInk, lineHeight = 54.sp, letterSpacing = 1.sp),
+                        "Cuota " + when {
+                            yo.cuotaPagada -> "al día"
+                            yo.mora -> "en mora"
+                            yo.enGracia -> "en período de gracia"
+                            else -> "pendiente"
+                        },
+                        style = body(700, 11, Pista.accInk),
                     )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp)
-                        .lineaPunteada(Pista.accInk.copy(alpha = 0.25f))
-                        .padding(top = 14.dp),
-                ) {
-                    DatoCarnet("Emitido", yo.carnetEmitidoLabel, Modifier.weight(1f))
-                    DatoCarnet("Vence", yo.carnetVenceLabel, Modifier.weight(1f))
-                    DatoCarnet("Cuota", yo.cuotaCorto, Modifier.weight(1f))
                 }
             }
         }
+
+        // QR de ingreso (v1.5): pantalla propia con el código y los datos del carnet.
+        BotonPrimario(
+            "QR de ingreso",
+            { vm.ir(Screen.S_QR) },
+            Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 16.dp),
+            fondo = Pista.cta,
+            tinta = Pista.ctaInk,
+            alto = 50.dp,
+            tamano = 16,
+        )
 
         Text(
             buildAnnotatedString {
                 append("Mostrá tu ")
                 withStyle(SpanStyle(color = Pista.ink, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)) {
-                    append("DNI")
+                    append("DNI o el QR de ingreso")
                 }
                 append(" en recepción. El personal valida tu carnet y el estado de la cuota en el momento.")
             },
@@ -332,6 +349,62 @@ fun ColumnScope.PantallaCarnet(vm: ClubViewModel) {
             }
         }
     }
+}
+
+/**
+ * HU-06 (v1.5): QR de ingreso. El código lleva los datos del carnet digital en texto plano,
+ * así cualquier lector de recepción los muestra al escanearlo.
+ */
+@Composable
+fun ColumnScope.PantallaQrIngreso(vm: ClubViewModel) {
+    val yo = vm.yo
+    CuerpoPantalla {
+        Tarjeta(Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp), padding = 18.dp) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(yo.nombre.uppercase(), style = disp(800, 22, lineHeight = 24.sp))
+                    Text(
+                        "N° ${yo.nro} · DNI ${yo.dniLabel} · Plan ${yo.plan}",
+                        style = body(500, 13, Pista.mut),
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Capsula(yo.estadoCorto, fondoEstado(yo), tintaEstado(yo))
+            }
+            CodigoQr(yo.qrCarnet, Modifier.fillMaxWidth().padding(top = 18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Carnet ${yo.carnetEstadoLower} · vence ${yo.carnetVenceLabel}",
+                    style = body(600, 13),
+                    modifier = Modifier.weight(1f),
+                )
+                Text(yo.badge, style = body(600, 12, tintaTexto(yo)))
+            }
+        }
+
+        Text(
+            "Mostrá este código en recepción o en el molinete. Al escanearlo se leen el N° de socio, " +
+                "nombre, DNI, plan, vigencia del carnet y estado de la cuota: los mismos datos del carnet digital.",
+            style = body(500, 14, Pista.mut, lineHeight = 20.sp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = Pista.gutter, end = Pista.gutter, top = 18.dp)
+                .clip(Pista.rCard)
+                .background(Pista.sur)
+                .padding(16.dp),
+        )
+    }
+}
+
+/** Color del texto de estado sobre fondo oscuro: verde, naranja o rojo. */
+private fun tintaTexto(s: SocioVista): Color = when {
+    !s.hab -> Pista.bad
+    s.enGracia -> Pista.warn
+    else -> Pista.acc
 }
 
 @Composable
@@ -369,19 +442,22 @@ fun ColumnScope.PantallaCuotas(vm: ClubViewModel) {
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
-                Text(yo.cuotaMonto, style = disp(800, 44, lineHeight = 44.sp), modifier = Modifier.weight(1f))
+                Text(yo.totalLabel, style = disp(800, 44, lineHeight = 44.sp), modifier = Modifier.weight(1f))
                 Chip(
                     texto = yo.cuotaEstadoLabel,
-                    fondo = if (yo.hab) Pista.ok else Pista.bad,
-                    tinta = if (yo.hab) Pista.okInk else Pista.badInk,
+                    fondo = fondoEstado(yo),
+                    tinta = tintaEstado(yo),
                     tamano = 12,
                 )
             }
-            Text(
-                yo.cuotaVenceLabel,
-                style = body(500, 13, Pista.mut),
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(yo.cuotaSubLabel, style = body(500, 13, Pista.mut), modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(yo)
+            }
+            yo.deudaDetalle?.let {
+                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 4.dp))
+            }
             if (yo.cuotaPendiente) {
                 BotonPrimario(
                     "Pagar cuota",
@@ -420,19 +496,19 @@ fun ColumnScope.PantallaCuotas(vm: ClubViewModel) {
 fun ColumnScope.PantallaPagar(vm: ClubViewModel) {
     val yo = vm.yo
     CuerpoPantalla(
-        pie = { BotonPrimario("Confirmar pago de ${yo.cuotaMonto}", vm::confirmarPago) },
+        pie = { BotonPrimario("Confirmar pago de ${yo.totalLabel}", vm::confirmarPago) },
     ) {
         Tarjeta(Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Total a pagar".uppercase(), style = label())
                     Text(
-                        "Cuota ${yo.cuota.mes}",
+                        yo.deudaDetalle ?: "Cuota ${yo.cuota.mes}",
                         style = body(500, 14),
                         modifier = Modifier.padding(top = 4.dp),
                     )
                 }
-                Text(yo.cuotaMonto, style = disp(800, 40, lineHeight = 40.sp))
+                Text(yo.totalLabel, style = disp(800, 40, lineHeight = 40.sp))
             }
         }
 
@@ -503,7 +579,7 @@ fun ColumnScope.PantallaPagoOk(vm: ClubViewModel) {
             modifier = Modifier.padding(top = 28.dp),
         )
         Text(
-            "Cuota ${yo.cuota.mes} · ${yo.cuotaMonto}\nTu acceso al club está habilitado.",
+            "Cuota ${yo.cuota.mes} · ${money(yo.historial.firstOrNull()?.monto ?: yo.cuota.monto)}\nTu acceso al club está habilitado.",
             style = body(500, 15, Pista.mut, lineHeight = 22.sp),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 12.dp),
@@ -873,6 +949,9 @@ fun ColumnScope.PantallaPerfil(vm: ClubViewModel) {
             u.datos.forEach { (k, v) -> FilaDato(k, v) }
         }
 
+        // Solo el administrativo fija los parámetros del club (v1.5).
+        if (vm.estado.rol == Rol.ADMIN) ConfiguracionClub(vm)
+
         Seccion("Permisos de este rol")
         FilaDeChips(u.permisos)
 
@@ -882,6 +961,117 @@ fun ColumnScope.PantallaPerfil(vm: ClubViewModel) {
             Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 32.dp),
         )
     }
+}
+
+/** Parámetros del club (v1.5): gracia, recargo e interés, con el historial de vigencias. */
+@Composable
+private fun ConfiguracionClub(vm: ClubViewModel) {
+    val f = vm.estado.campos
+    // Solo precarga si el formulario está vacío: rotar la pantalla no pisa lo que se estaba tipeando.
+    LaunchedEffect(Unit) { if (f.pGracia.isBlank()) vm.prepararParametros() }
+    val p = vm.parametros
+    Seccion("Configuración del club")
+    ColumnaGutter {
+        Tarjeta(padding = 16.dp) {
+            Text("Cuota vencida: gracia, recargo e interés", style = body(600, 15))
+            Text(
+                "Rigen para todos los socios desde el día en que se guardan. Hoy: " +
+                    "gracia ${p.graciaDias} días · recargo ${money(p.recargo.roundToInt())} · " +
+                    "interés ${numero(p.interesMensual)} % mensual.",
+                style = body(500, 12, Pista.mut, lineHeight = 17.sp),
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            CampoParametro("Días de gracia después del vencimiento", f.pGracia) { v -> vm.campo { copy(pGracia = v) } }
+            CampoParametro("Recargo fijo por pago fuera de término ($)", f.pRecargo, decimal = true) { v -> vm.campo { copy(pRecargo = v) } }
+            CampoParametro("Interés mensual sobre la cuota (%)", f.pInteres, decimal = true) { v -> vm.campo { copy(pInteres = v) } }
+            vm.estado.paramError?.let { err ->
+                Text(
+                    err,
+                    style = body(600, 13, Pista.badInk, lineHeight = 19.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .clip(Pista.rs)
+                        .background(Pista.bad)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                )
+            }
+            BotonPrimario("Guardar parámetros", vm::guardarParametros, Modifier.padding(top = 12.dp), alto = 48.dp, tamano = 15)
+        }
+    }
+
+    Seccion("Historial de parámetros")
+    ColumnaGutter {
+        vm.historialParametros.forEach { h ->
+            Fila(forma = Pista.rCard) {
+                Column(Modifier.weight(1f)) {
+                    Text("Desde ${h.vigenteDesde.fmt()}", style = body(600, 14))
+                    Text(
+                        "Gracia ${h.graciaDias} días · recargo ${money(h.recargo.roundToInt())} · interés ${numero(h.interesMensual)} % mensual",
+                        style = body(500, 12, Pista.mut),
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                if (h == p) Chip("Vigente", Pista.acc, Pista.accInk)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CampoParametro(etiqueta: String, valor: String, decimal: Boolean = false, onChange: (String) -> Unit) {
+    Text(
+        etiqueta.uppercase(),
+        style = disp(700, 11, Pista.mut, letterSpacing = 1.sp),
+        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+    )
+    CampoTexto(valor, onChange, etiqueta, tecladoNumerico = !decimal, tecladoDecimal = decimal)
+}
+
+/** Cápsula compacta de texto, para el margen derecho de una fila sin pisar el título. */
+@Composable
+internal fun Capsula(texto: String, fondo: Color, tinta: Color, modifier: Modifier = Modifier) {
+    Text(
+        texto,
+        style = body(700, 11, tinta),
+        maxLines = 1,
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(fondo)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    )
+}
+
+/** Cápsula de la cuota: rojo en mora, naranja en gracia, verde pendiente, gris pagada. */
+@Composable
+internal fun CapsulaCuota(s: SocioVista) {
+    val (fondo, tinta) = when {
+        s.mora -> Pista.bad to Pista.badInk
+        s.enGracia -> Pista.warn to Pista.warnInk
+        s.cuotaPagada -> Pista.sur2 to Pista.mut
+        else -> Pista.ok to Pista.okInk
+    }
+    Capsula(s.contadorCorto, fondo, tinta)
+}
+
+/** Fondo según la situación del socio: rojo si no puede ingresar, naranja en gracia, verde si está bien. */
+internal fun fondoEstado(s: SocioVista): Color = when {
+    !s.hab -> Pista.bad
+    s.enGracia -> Pista.warn
+    else -> Pista.ok
+}
+
+internal fun tintaEstado(s: SocioVista): Color = when {
+    !s.hab -> Pista.badInk
+    s.enGracia -> Pista.warnInk
+    else -> Pista.okInk
+}
+
+/** Color del contador de la cuota. */
+internal fun colorTono(t: TonoCuota): Color = when (t) {
+    TonoCuota.OK -> Pista.ok
+    TonoCuota.AVISO -> Pista.warn
+    TonoCuota.BLOQUEO -> Pista.bad
 }
 
 /** Chips que se acomodan en varias líneas, como el `flex-wrap` de la maqueta. */

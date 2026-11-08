@@ -1,0 +1,44 @@
+@startuml sec_cu11_pago_diario
+title CU-11: Registrar pago diario de no socio
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaVisitanteNuevo\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Registrar visitante» (Inicio) o «+ Ingreso» (Visitantes)
+ui -> vm : irAVisitanteNuevo()
+vm --> ui : nombre y DNI vacíos · medio Efectivo · sin actividad
+adm -> ui : escribe nombre y DNI, elige actividad y medio (Efectivo / Débito)
+ui -> vm : elegirActividadVisitante(actividad)  /  elegirMedioVisitante(m)
+alt actividad sin cupo (libres <= 0)
+  vm --> ui : visError «{actividad} no tiene cupo disponible hoy (x/y). El ingreso no puede realizarse.»
+else con cupo
+  vm --> ui : visAct = actividad · visError = null · «N libres»
+end
+adm -> ui : toca «Registrar pago diario»
+ui -> vm : confirmarVisitante()
+vm -> vm : Validaciones.nombre(vNombre, « del visitante») ?: Validaciones.dni(vDni)
+alt nombre o DNI inválidos
+  vm --> ui : visError «Ingresá nombre y apellido del visitante.» / «El DNI debe tener 7 u 8 dígitos.» …
+else sin actividad elegida
+  vm --> ui : visError «Seleccioná una actividad.»
+else actividad sin cupo
+  vm --> ui : visError «Sin cupo en {actividad}. El ingreso no puede realizarse.»
+else datos válidos y con cupo
+  vm -> repo : contarVisitante(dniFmt(dni), HOY)
+  repo -> db : SELECT COUNT(*) FROM visitante WHERE dni = ? AND fecha = ?
+  db --> repo : n
+  repo --> vm : n
+  alt n > 0 (ya pagó hoy)
+    vm --> ui : visError «Ya hay un pago diario registrado hoy con el DNI xx.xxx.xxx.»
+  else n = 0
+    vm -> vm : visitantes = [Visitante(nombre, DNI con puntos, actividad, HORA_ACTUAL, precio, HOY, medio)] + visitantes · stack = [E_VISITANTES]
+    vm -> repo : guardar(estado)  (setter de estado)
+    repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: visitante
+    db --> repo : ok
+    vm --> ui : vuelve a Visitantes · toast «Pago diario registrado · $precio»
+  end
+end
+@enduml

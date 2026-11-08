@@ -1,0 +1,31 @@
+@startuml sec_cu03_consultar_socios
+title CU-03: Consultar socios (búsqueda, filtros y ficha)
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaSocios\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":PantallaFichaSocio\n(Compose)" as fi
+adm -> ui : abre la pestaña Socios
+ui -> vm : sociosFiltrados
+vm -> sv : SocioVista(socio, estado.parametros) por cada socio
+sv --> vm : badge · estadoCorto · contador · tono
+vm --> ui : lista con N° de socio, DNI y estado de cada uno
+opt busca por nombre o DNI (con o sin puntos)
+  adm -> ui : escribe en «Buscar por DNI o nombre»
+  ui -> vm : campo { copy(busq = v) }
+end
+opt elige filtro
+  adm -> ui : toca Todos / Habilitados / En mora
+  ui -> vm : elegirFiltro(TODOS | HAB | MORA)
+end
+alt ningún socio coincide
+  vm --> ui : texto «Ningún socio coincide con la búsqueda.»
+else hay coincidencias
+  adm -> ui : toca un socio
+  ui -> vm : abrirSocio(id)
+  vm -> vm : selId = id · ir(E_SOCIO)
+  vm --> fi : seleccionado: ficha con aviso de habilitación (estadoCorto), cuota (contadorCorto, cuotaSubLabel, deudaDetalle), carnet, pagos, actividades e ingresos
+end
+@enduml

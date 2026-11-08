@@ -9,7 +9,7 @@ enum class Screen {
     LOGIN,
 
     // Socio
-    S_HOME, S_CARNET, S_CUOTAS, S_PAGAR, S_PAGO_OK, S_RUTINA, S_NUTRI, S_TURNO,
+    S_HOME, S_CARNET, S_QR, S_CUOTAS, S_PAGAR, S_PAGO_OK, S_RUTINA, S_NUTRI, S_TURNO,
 
     // Empleado / Administrativo
     E_HOME, E_SOCIOS, E_SOCIO, E_ALTA, E_EDITAR, E_ACCESO, E_VISITANTES, E_VISITANTE_NUEVO, E_REPORTES,
@@ -173,6 +173,7 @@ data class Campos(
     val pass: String = "",
     val busq: String = "",
     val nombre: String = "",
+    val apellido: String = "",
     val dni: String = "",
     val mail: String = "",
     val obs: String = "",
@@ -185,6 +186,10 @@ data class Campos(
     val nPeso: String = "",
     val nAltura: String = "",
     val nObs: String = "",
+    /** Configuración del club (v1.5): gracia en días, recargo en pesos e interés mensual en %. */
+    val pGracia: String = "",
+    val pRecargo: String = "",
+    val pInteres: String = "",
 )
 
 enum class FiltroSocios(val label: String) { TODOS("Todos"), HAB("Habilitados"), MORA("En mora") }
@@ -200,3 +205,31 @@ enum class MedioPago(val nombre: String, val sub: String, val etiqueta: String) 
 
 /** Medio con que el mostrador cobra el pase diario de un visitante. */
 enum class MedioVisitante(val etiqueta: String) { EFECTIVO("Efectivo"), DEBITO("Débito") }
+
+/**
+ * Parámetros del club que fija el administrador (v1.5): días de gracia después del
+ * vencimiento, recargo fijo en pesos por pagar fuera de término e interés mensual (%)
+ * prorrateado por día. Cada guardado rige desde [vigenteDesde]; el historial se conserva.
+ */
+data class Parametros(
+    val graciaDias: Int,
+    val recargo: Double,
+    val interesMensual: Double,
+    val vigenteDesde: Fecha,
+) {
+    companion object {
+        /** Semilla: 5 días de gracia, sin recargo ni interés, vigente desde el día de la instalación. */
+        val INICIALES: Parametros get() = Parametros(5, 0.0, 0.0, HOY)
+    }
+}
+
+/**
+ * El parámetro que regía en [fecha]: el más nuevo con vigencia hasta esa fecha. Antes del
+ * primero guardado no había recargo ni interés fijados, así que no se devengan (la tasa rige
+ * "desde la fecha en que se seteó"); la gracia sí se toma de la fila más antigua.
+ */
+fun List<Parametros>.vigenteEn(fecha: Fecha): Parametros {
+    val ordenados = sortedByDescending { it.vigenteDesde }
+    return ordenados.firstOrNull { it.vigenteDesde <= fecha }
+        ?: ordenados.last().copy(recargo = 0.0, interesMensual = 0.0)
+}

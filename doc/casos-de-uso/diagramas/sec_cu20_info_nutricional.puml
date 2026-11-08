@@ -1,0 +1,20 @@
+@startuml sec_cu20_info_nutricional
+title CU-20: Consultar información nutricional propia
+autonumber
+skinparam sequenceMessageAlign center
+actor "Socio" as soc
+participant ":PantallaNutriSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+soc -> ui : toca la pestaña Nutrición
+ui -> vm : ir(S_NUTRI)  ·  yo
+vm -> sv : SocioVista(socio 1, estado.parametros)
+sv -> sv : imc = peso / altura² (o «—» si no hay altura) · pesoLabel · alturaLabel · turnoLabel · consultas
+sv --> vm : pesoLabel · alturaLabel · imc · turnoSub · consultas
+vm --> ui : «Próximo turno» (o «Sin turno asignado» + «Solicitar turno») · Mi ficha: Peso, Altura, IMC · Objetivo · Antecedentes
+alt hay consultas
+  vm --> ui : Historial de consultas: fecha, peso en kg y observaciones
+else sin consultas
+  vm --> ui : «Sin consultas registradas.»
+end
+@enduml

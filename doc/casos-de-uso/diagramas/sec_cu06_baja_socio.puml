@@ -1,0 +1,25 @@
+@startuml sec_cu06_baja_socio
+title CU-06: Dar de baja socio
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaFichaSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Dar de baja» en la ficha
+ui -> vm : pedirBajaSocio()
+vm -> vm : sheet = «Dar de baja» con Socio, DNI y N° de socio · «Esta acción no se puede deshacer.»
+vm --> ui : HojaConfirmacion · CTA «Confirmar baja»
+alt confirma «Confirmar baja»
+  ui -> vm : sheet.onConfirm()
+  vm -> vm : socios sin el id · acts: inscriptos − id · asistencia − id · stack = [E_SOCIOS] · selId = null · sheet = null
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio (y por ON DELETE CASCADE: carnet, cuota, pago), actividad_inscripto, asistencia
+  db --> repo : ok
+  vm --> ui : vuelve a Socios · toast «{nombre} dado de baja»
+else cancela (cerrarSheet)
+  ui -> vm : cerrarSheet()
+  vm --> ui : el socio sigue en el padrón
+end
+@enduml

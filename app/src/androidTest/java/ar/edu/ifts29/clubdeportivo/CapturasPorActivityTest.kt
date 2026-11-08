@@ -121,6 +121,9 @@ class CapturasPorActivityTest {
             r.foto("Inicio", "HU-04", "Estado de habilitación, cuota pendiente, rutina de hoy y turno de nutrición.")
             r.ir(Screen.S_CARNET)
             r.foto("Carnet digital", "HU-06", "Carnet vigente con datos del socio y estado de cuota.")
+            r.ir(Screen.S_QR)
+            r.foto("QR de ingreso", "HU-06 / v1.5", "QR de ingreso: al escanearlo se leen los datos del carnet digital.")
+            r.vm { volver() }
             r.ir(Screen.S_CUOTAS)
             r.foto("Estado de cuenta", "HU-04", "Cuota actual e historial de pagos.")
             r.ir(Screen.S_PAGAR)
@@ -178,7 +181,7 @@ class CapturasPorActivityTest {
             }
             r.foto("Alta de socio", "HU-02", "Validación: falta el apellido.")
             r.vm {
-                campo { copy(nombre = "Carlos Gardel", dni = "12A45678") }
+                campo { copy(apellido = "Gardel", dni = "12A45678") }
                 confirmarAlta()
             }
             r.foto("Alta de socio", "HU-02", "Validación: DNI con formato incorrecto.")
@@ -248,6 +251,36 @@ class CapturasPorActivityTest {
             r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de no socios de hoy, con el total del día.")
             r.vm { diaReporteAnterior() }
             r.foto("Reportes", "HU-14 / HU-03", "Pagos diarios de un día anterior, recuperados por fecha.")
+            // v1.5: parámetros del club, gracia y deuda.
+            r.vm { abrirSocio(9) }
+            r.foto("Ficha del socio", "HU-04 / v1.5", "Rocío, vencida hace 3 días: en gracia (quedan 2 días), deuda con recargo e interés, carnet por vencer.")
+            r.ir(Screen.E_ACCESO)
+            r.vm { ponerDniAcceso(39876540) }
+            r.foto("Control de acceso", "HU-05 / v1.5", "Socia en gracia: acceso permitido con el aviso de los días que quedan y la deuda.")
+            r.ir(Screen.PERFIL)
+            r.foto("Perfil · Configuración del club", "v1.5", "El administrador fija gracia, recargo e interés; cada cambio queda en el historial con su fecha.")
+            r.vm {
+                prepararParametros()
+                campo { copy(pGracia = "30", pRecargo = "500", pInteres = "3") }
+                guardarParametros()
+            }
+            r.foto("Perfil · Configuración del club", "v1.5", "Parámetros guardados: rigen desde hoy para todos los socios.", espera = 500)
+            r.sinToast()
+            r.vm { abrirSocio(2) }
+            r.foto("Ficha del socio", "HU-04 / v1.5", "Lucas, vencido hace 29 días con 30 de gracia: habilitado en gracia; la deuda suma recargo e interés.")
+            r.ir(Screen.E_ACCESO)
+            r.vm { ponerDniAcceso(40120334) }
+            r.foto("Control de acceso", "HU-05 / v1.5", "En gracia: acceso permitido con aviso del plazo y de la deuda.")
+            r.vm {
+                campo { copy(pGracia = "5") }
+                guardarParametros()
+                ponerDniAcceso(40120334)
+            }
+            r.foto("Control de acceso", "HU-05 / v1.5", "Gracia de 5 días superada: acceso denegado; la deuda incluye recargo e interés.", espera = 500)
+            r.sinToast()
+            r.ir(Screen.E_REPORTES)
+            r.vm { elegirReportTab(ReportTab.MORA) }
+            r.foto("Reportes", "HU-14 / v1.5", "En mora: total adeudado con recargo e interés, y parámetros vigentes.")
         }
     }
 

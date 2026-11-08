@@ -42,6 +42,8 @@ import ar.edu.ifts29.clubdeportivo.data.dniFmt
 import ar.edu.ifts29.clubdeportivo.data.fmt
 import ar.edu.ifts29.clubdeportivo.data.fmtCorto
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.numero
+import kotlin.math.roundToInt
 import ar.edu.ifts29.clubdeportivo.ui.BarraCupo
 import ar.edu.ifts29.clubdeportivo.ui.BotonBorde
 import ar.edu.ifts29.clubdeportivo.ui.BotonPrimario
@@ -148,6 +150,9 @@ fun ColumnScope.PantallaEmpleadoHome(vm: ClubViewModel) {
             ) { vm.ir(Screen.E_ACCESO) }
             AccionRapida("Registrar socio", "Alta con carnet, cuota inicial y ficha médica") { vm.irAAlta() }
             AccionRapida("Registrar visitante", "Ingreso ocasional con actividad y pago") { vm.irAVisitanteNuevo() }
+            if (vm.estado.rol == Rol.ADMIN) {
+                AccionRapida("Parámetros del club", "Gracia, recargo e interés de la cuota vencida") { vm.ir(Screen.PERFIL) }
+            }
         }
 
         // Supervisión: sólo el administrativo la ve.
@@ -317,8 +322,8 @@ private fun FilaSocio(s: SocioVista, onClick: () -> Unit) {
         }
         Chip(
             texto = s.badgeCorto,
-            fondo = if (s.hab) Pista.ok else Pista.bad,
-            tinta = if (s.hab) Pista.okInk else Pista.badInk,
+            fondo = fondoEstado(s),
+            tinta = tintaEstado(s),
         )
     }
 }
@@ -351,17 +356,19 @@ fun ColumnScope.PantallaFichaSocio(vm: ClubViewModel) {
                 .fillMaxWidth()
                 .padding(start = Pista.gutter, end = Pista.gutter, top = 16.dp)
                 .clip(Pista.rCard)
-                .background(if (s.hab) Pista.ok else Pista.bad)
+                .background(fondoEstado(s))
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val tinta = if (s.hab) Pista.okInk else Pista.badInk
+            val tinta = tintaEstado(s)
             Text(
                 s.badge.uppercase(),
-                style = disp(700, 16, tinta, letterSpacing = 0.8.sp),
+                style = disp(700, 15, tinta, letterSpacing = 0.8.sp, lineHeight = 19.sp),
                 modifier = Modifier.weight(1f),
+                maxLines = 2,
             )
-            Text(s.motivo, style = body(600, 12, tinta.copy(alpha = 0.85f)))
+            Spacer(Modifier.width(12.dp))
+            Capsula(s.estadoCorto, Color.Black.copy(alpha = 0.18f), tinta)
         }
 
         Tarjeta(
@@ -374,19 +381,24 @@ fun ColumnScope.PantallaFichaSocio(vm: ClubViewModel) {
                     style = disp(700, 13, Pista.mut, letterSpacing = 1.5.sp),
                     modifier = Modifier.weight(1f),
                 )
-                Text(s.cuotaVenceLabel, style = body(600, 12, Pista.mut))
+                Spacer(Modifier.width(12.dp))
+                CapsulaCuota(s)
+            }
+            Text(s.cuotaSubLabel, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 6.dp))
+            s.deudaDetalle?.let {
+                Text(it, style = body(500, 12, Pista.mut), modifier = Modifier.padding(top = 2.dp))
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(s.cuotaMonto, style = disp(800, 34, lineHeight = 34.sp), modifier = Modifier.weight(1f))
+                Text(s.totalLabel, style = disp(800, 34, lineHeight = 34.sp), modifier = Modifier.weight(1f))
                 Text(
                     s.cuotaEstadoLabel.uppercase(),
                     style = disp(700, 14, letterSpacing = 0.8.sp),
                 )
             }
-            if (s.cuotaPendiente || s.mora) {
+            if (s.cuotaPendiente) {
                 BotonPrimario(
                     "Registrar pago en caja",
                     vm::pedirRegistrarPago,
@@ -485,7 +497,8 @@ fun ColumnScope.PantallaAlta(vm: ClubViewModel) {
                 .padding(start = Pista.gutter, end = Pista.gutter, top = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            CampoTexto(f.nombre, { v -> vm.campo { copy(nombre = v) } }, "Nombre y apellido")
+            CampoTexto(f.nombre, { v -> vm.campo { copy(nombre = v) } }, "Nombre")
+            CampoTexto(f.apellido, { v -> vm.campo { copy(apellido = v) } }, "Apellido")
             CampoTexto(f.dni, { v -> vm.campo { copy(dni = v) } }, "DNI (sin puntos)", tecladoNumerico = true)
             CampoTexto(f.mail, { v -> vm.campo { copy(mail = v) } }, "Correo electrónico", tecladoEmail = true)
 
@@ -1068,6 +1081,17 @@ fun ColumnScope.PantallaReportes(vm: ClubViewModel) {
             Text("Total ${vm.totalReporte}", style = disp(700, 14))
         }
 
+        if (vm.estado.reportTab == ReportTab.MORA) {
+            val p = vm.parametros
+            Text(
+                "Rige: gracia ${p.graciaDias} días · recargo ${money(p.recargo.roundToInt())} · " +
+                    "interés ${numero(p.interesMensual)} % mensual · desde ${p.vigenteDesde.fmt()}. " +
+                    "El total suma cuota, recargo e interés.",
+                style = body(500, 12, Pista.mut, lineHeight = 17.sp),
+                modifier = Modifier.padding(start = Pista.gutter, end = Pista.gutter, top = 6.dp),
+            )
+        }
+
         if (vm.estado.reportTab == ReportTab.VISITANTES) {
             val pagos = vm.pagosDiarios
             ColumnaGutter {
@@ -1092,10 +1116,13 @@ fun ColumnScope.PantallaReportes(vm: ClubViewModel) {
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(s.cuotaMonto, style = disp(800, 16))
+                        Text(
+                            if (vm.estado.reportTab == ReportTab.MORA) s.totalLabel else s.cuotaMonto,
+                            style = disp(800, 16),
+                        )
                         Text(
                             s.badgeCorto.uppercase(),
-                            style = body(600, 11, if (s.hab) Pista.acc else Pista.bad, letterSpacing = 0.8.sp),
+                            style = body(600, 11, if (!s.hab) Pista.bad else if (s.enGracia) Pista.warn else Pista.acc, letterSpacing = 0.8.sp),
                         )
                     }
                 }

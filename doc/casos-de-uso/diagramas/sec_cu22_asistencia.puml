@@ -1,0 +1,28 @@
+@startuml sec_cu22_asistencia
+title CU-22: Registrar asistencia de clase
+autonumber
+skinparam sequenceMessageAlign center
+actor "Entrenadora" as ent
+participant ":PantallaProfesorHome\nPantallaAsistencia\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+ent -> ui : toca una clase en «Mis clases de hoy»
+ui -> vm : abrirAsistencia(claseId)
+vm -> vm : claseId = id · ir(P_ASISTENCIA)
+vm --> ui : filasAsistencia: inscriptos de la clase con su marca de presente
+opt cambia de clase
+  ent -> ui : toca la otra clase
+  ui -> vm : elegirClase(id)
+end
+ent -> ui : toca a cada socio para alternar presente / ausente
+ui -> vm : alternarAsistencia(socioId)
+vm -> vm : asistencia[clase] = lista con el socio agregado o quitado
+vm -> repo : guardar(estado)  (setter de estado)
+repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: asistencia_clase, asistencia
+db --> repo : ok
+ent -> ui : toca «Guardar asistencia»
+ui -> vm : guardarAsistencia()
+vm -> vm : presentes = filasAsistencia.count { presente }
+vm --> ui : toast «Asistencia guardada · {clase} · n/m presentes» · ir(P_HOME)
+@enduml

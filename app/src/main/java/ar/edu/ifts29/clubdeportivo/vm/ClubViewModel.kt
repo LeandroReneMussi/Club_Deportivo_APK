@@ -24,6 +24,7 @@ import ar.edu.ifts29.clubdeportivo.data.IngresoHoy
 import ar.edu.ifts29.clubdeportivo.data.MedioPago
 import ar.edu.ifts29.clubdeportivo.data.MedioVisitante
 import ar.edu.ifts29.clubdeportivo.data.PagoHistorial
+import ar.edu.ifts29.clubdeportivo.data.Parametros
 import ar.edu.ifts29.clubdeportivo.data.ReportTab
 import ar.edu.ifts29.clubdeportivo.data.Rol
 import ar.edu.ifts29.clubdeportivo.data.Rutina
@@ -45,6 +46,9 @@ import ar.edu.ifts29.clubdeportivo.data.masAnios
 import ar.edu.ifts29.clubdeportivo.data.masDias
 import ar.edu.ifts29.clubdeportivo.data.masMeses
 import ar.edu.ifts29.clubdeportivo.data.money
+import ar.edu.ifts29.clubdeportivo.data.numero
+import ar.edu.ifts29.clubdeportivo.data.tituloMes
+import ar.edu.ifts29.clubdeportivo.data.vigenteEn
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -85,6 +89,9 @@ data class UiState(
     val comprobante: String? = null,
     /** Socio que se está editando; `null` cuando el formulario es un alta. */
     val editandoId: Int? = null,
+    /** Historial de parámetros del club, más nuevo primero (v1.5). */
+    val parametros: List<Parametros> = DemoData.parametrosIniciales,
+    val paramError: String? = null,
 )
 
 /** Socio vinculado a la cuenta de la app del socio (Andrés, en los datos de demo). */
@@ -145,6 +152,7 @@ class ClubViewModel : ViewModel() {
             ingresosHoy = d.ingresosHoy,
             asistencia = d.asistencia,
             profePresente = d.profePresente,
+            parametros = d.parametros,
         )
     }
 
@@ -216,6 +224,7 @@ class ClubViewModel : ViewModel() {
             loginError = false,
             altaError = null,
             visError = null,
+            paramError = null,
         )
     }
 
@@ -259,7 +268,57 @@ class ClubViewModel : ViewModel() {
 
     // ---------------------------------------------------------------- vistas derivadas
 
-    val socios: List<SocioVista> get() = estado.socios.map { SocioVista(it) }
+    val socios: List<SocioVista> get() = estado.socios.map { SocioVista(it, estado.parametros) }
+
+    // ---------------------------------------------------------------- parámetros del club (v1.5)
+
+    /** Lo que rige hoy: gracia, recargo e interés. */
+    val parametros: Parametros get() = estado.parametros.vigenteEn(HOY)
+
+    /** Todos los parámetros guardados, del más nuevo al más viejo, con su fecha de vigencia. */
+    val historialParametros: List<Parametros> get() = estado.parametros.sortedByDescending { it.vigenteDesde }
+
+    /** Carga el formulario de Perfil con los valores vigentes. */
+    fun prepararParametros() {
+        val p = parametros
+        estado = estado.copy(
+            paramError = null,
+            campos = estado.campos.copy(
+                pGracia = p.graciaDias.toString(),
+                pRecargo = numero(p.recargo),
+                pInteres = numero(p.interesMensual),
+            ),
+        )
+    }
+
+    /**
+     * Guarda los parámetros con vigencia desde hoy. Guardar dos veces el mismo día reemplaza
+     * la fila de hoy; el resto del historial se conserva para calcular el interés por tramos.
+     */
+    fun guardarParametros() {
+        val c = estado.campos
+        val gracia = c.pGracia.trim().toIntOrNull()
+        val recargo = c.pRecargo.trim().replace(',', '.').toDoubleOrNull()
+        val interes = c.pInteres.trim().replace(',', '.').toDoubleOrNull()
+        val error = when {
+            gracia == null || gracia !in 0..60 -> "La gracia debe ser un número entero de 0 a 60 días."
+            recargo == null || !recargo.isFinite() || recargo !in 0.0..1_000_000.0 ->
+                "El recargo debe ser un importe de 0 a 1.000.000."
+            interes == null || !interes.isFinite() || interes !in 0.0..100.0 ->
+                "El interés mensual debe ser un porcentaje de 0 a 100."
+            else -> null
+        }
+        if (error != null) {
+            estado = estado.copy(paramError = error)
+            return
+        }
+        val nuevo = Parametros(gracia!!, recargo!!, interes!!, HOY)
+        estado = estado.copy(
+            parametros = listOf(nuevo) + estado.parametros.filterNot { it.vigenteDesde == HOY },
+            paramError = null,
+        )
+        toast("Parámetros guardados · rigen desde hoy")
+    }
 
     /** El socio logueado. En el prototipo es siempre el primero de la lista. */
     val yo: SocioVista get() = socios.firstOrNull { it.id == ID_SOCIO_APP } ?: socios.first()
@@ -347,7 +406,12 @@ class ClubViewModel : ViewModel() {
 
     val totalReporte: String
         get() = money(
-            if (estado.reportTab == ReportTab.VISITANTES) totalPagosDiarios else filasReporte.sumOf { it.cuota.monto },
+            when (estado.reportTab) {
+                ReportTab.VISITANTES -> totalPagosDiarios
+                // En mora se reporta lo que deben de verdad: cuota más recargo e interés (v1.5).
+                ReportTab.MORA -> filasReporte.sumOf { it.totalAdeudado }
+                else -> filasReporte.sumOf { it.cuota.monto }
+            },
         )
 
     val puedeAvanzarDia: Boolean get() = estado.fechaReporte < HOY
@@ -463,11 +527,13 @@ class ClubViewModel : ViewModel() {
     private fun pagarCuota(id: Int, medio: String): String? {
         val s = estado.socios.firstOrNull { it.id == id } ?: return null
         if (s.cuota.estado == EstadoCuota.PAGADA) return null
+        // Fuera de término se cobra la cuota más el recargo y el interés vigentes (v1.5).
+        val total = SocioVista(s, estado.parametros).totalAdeudado
         val comprobante = "CD-2609-" + (1000..9999).random()
         actualizarSocio(id) { x ->
             x.copy(
                 cuota = x.cuota.copy(estado = EstadoCuota.PAGADA, proximaVence = x.cuota.vence.masMeses(1)),
-                historial = listOf(PagoHistorial(x.cuota.mes, x.cuota.monto, HOY, medio, comprobante)) + x.historial,
+                historial = listOf(PagoHistorial(x.cuota.mes, total, HOY, medio, comprobante)) + x.historial,
             )
         }
         return comprobante
@@ -557,9 +623,9 @@ class ClubViewModel : ViewModel() {
                 filas = listOf(
                     "Socio" to s.nombre,
                     "Cuota" to s.cuota.mes,
-                    "Importe" to s.cuotaMonto,
+                    "Importe" to s.totalLabel,
                 ),
-                cta = "Cobrar ${s.cuotaMonto}",
+                cta = "Cobrar ${s.totalLabel}",
                 onConfirm = {
                     pagarCuota(s.id, "Caja")
                     cerrarSheet()
@@ -613,7 +679,7 @@ class ClubViewModel : ViewModel() {
             editandoId = null,
             apto = true,
             planIdx = 1,
-            campos = estado.campos.copy(nombre = "", dni = "", mail = "", obs = ""),
+            campos = estado.campos.copy(nombre = "", apellido = "", dni = "", mail = "", obs = ""),
         )
         ir(Screen.E_ALTA)
     }
@@ -627,7 +693,9 @@ class ClubViewModel : ViewModel() {
             apto = s.ficha,
             planIdx = DemoData.planes.indexOfFirst { it.nombre == s.plan }.coerceAtLeast(0),
             campos = estado.campos.copy(
-                nombre = s.nombre,
+                // Nombre y apellido viven juntos en el socio: el primer espacio los separa.
+                nombre = s.nombre.substringBefore(' '),
+                apellido = s.nombre.substringAfter(' ', ""),
                 dni = s.dni.toString(),
                 mail = s.email,
                 obs = s.nut.antecedentes,
@@ -636,10 +704,14 @@ class ClubViewModel : ViewModel() {
         ir(Screen.E_EDITAR)
     }
 
+    /** El socio se guarda con nombre y apellido juntos, como lo muestran todas las pantallas. */
+    private fun nombreCompleto(c: Campos): String = "${c.nombre.trim()} ${c.apellido.trim()}".trim()
+
     /** Valida el formulario de alta / edición; devuelve el primer error o `null`. */
     private fun errorFormularioSocio(): String? {
         val c = estado.campos
-        Validaciones.nombre(c.nombre)?.let { return it }
+        Validaciones.nombrePropio(c.nombre, "nombre")?.let { return it }
+        Validaciones.nombrePropio(c.apellido, "apellido")?.let { return it }
         Validaciones.dni(c.dni)?.let { return it }
         Validaciones.email(c.mail)?.let { return it }
         val dni = c.dni.filter { it.isDigit() }.toLongOrNull()
@@ -659,7 +731,7 @@ class ClubViewModel : ViewModel() {
             guardarEdicion()
             return
         }
-        val nombre = estado.campos.nombre.trim()
+        val nombre = nombreCompleto(estado.campos)
         val dni = estado.campos.dni.filter { it.isDigit() }
         val plan = planSeleccionado
         val nuevo = Socio(
@@ -675,7 +747,7 @@ class ClubViewModel : ViewModel() {
             carnetVence = HOY.masAnios(1).masDias(-1),
             ficha = estado.apto,
             actividades = emptyList(),
-            cuota = Cuota("Septiembre 2026", plan.precio, venceCuotaInicial, EstadoCuota.PENDIENTE),
+            cuota = Cuota(HOY.tituloMes(), plan.precio, venceCuotaInicial, EstadoCuota.PENDIENTE),
             historial = emptyList(),
             rutina = null,
             nut = FichaNutricional(
@@ -711,7 +783,7 @@ class ClubViewModel : ViewModel() {
         val c = estado.campos
         actualizarSocio(id) { s ->
             s.copy(
-                nombre = c.nombre.trim(),
+                nombre = nombreCompleto(c),
                 dni = c.dni.filter { it.isDigit() }.toLong(),
                 email = c.mail.trim(),
                 plan = planSeleccionado.nombre,
@@ -768,14 +840,18 @@ class ClubViewModel : ViewModel() {
             s.hab -> Acceso(
                 socioId = s.id,
                 titulo = "Permitido",
-                detalle = "Carnet vigente y cuota al día.",
+                detalle = when {
+                    s.enGracia -> "Cuota ${s.cuota.mes} vencida · ${s.contador.lowercase()}. Debe ${s.totalLabel} en recepción."
+                    s.cuotaPagada -> "Carnet vigente y cuota al día."
+                    else -> "Carnet vigente · cuota ${s.cuota.mes} pendiente, ${s.contador.lowercase()}."
+                },
                 tono = Acceso.Tono.PERMITIDO,
             )
             else -> Acceso(
                 socioId = s.id,
                 titulo = "Denegado",
                 detalle = if (s.mora) {
-                    "Cuota ${s.cuota.mes} en mora. Debe regularizar el pago en recepción."
+                    "Cuota ${s.cuota.mes} en mora: ${s.contador.lowercase()}. Debe ${s.totalLabel} en recepción."
                 } else {
                     "Carnet vencido el ${s.socio.carnetVence.fmt()}. Debe renovarse."
                 },

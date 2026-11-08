@@ -1,6 +1,7 @@
 package ar.edu.ifts29.clubdeportivo
 
 import ar.edu.ifts29.clubdeportivo.data.Validaciones
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -14,6 +15,15 @@ class ValidacionesTest {
         assertNotNull(Validaciones.nombre(""))
         assertNotNull("falta el apellido", Validaciones.nombre("Carlos"))
         assertNotNull("números", Validaciones.nombre("Carlos G4rdel"))
+    }
+
+    @Test
+    fun `nombre y apellido por separado`() {
+        assertNull(Validaciones.nombrePropio("Carlos", "nombre"))
+        assertNull(Validaciones.nombrePropio("Benítez Paz", "apellido"))
+        assertEquals("Ingresá el apellido.", Validaciones.nombrePropio("  ", "apellido"))
+        assertEquals("El nombre solo puede contener letras y espacios.", Validaciones.nombrePropio("C4rlos", "nombre"))
+        assertNotNull("una sola letra", Validaciones.nombrePropio("C", "nombre"))
     }
 
     @Test

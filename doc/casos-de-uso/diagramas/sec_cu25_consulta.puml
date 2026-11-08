@@ -1,0 +1,26 @@
+@startuml sec_cu25_consulta
+title CU-25: Registrar consulta nutricional
+autonumber
+skinparam sequenceMessageAlign center
+actor "Nutricionista" as nut
+participant ":PantallaFichas\nPantallaFichaNutricional\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+nut -> ui : elige un socio en Fichas (o desde la Agenda)
+ui -> vm : abrirFicha(id)
+vm -> vm : selId = id · limpia nPeso, nAltura y nObs · ir(N_FICHA)
+vm --> ui : ficha: peso, altura, IMC, objetivo, antecedentes e historial
+nut -> ui : completa peso, altura y observaciones y toca «Guardar en historial»
+ui -> vm : guardarConsulta()
+vm -> vm : Validaciones.peso(nPeso) ?: Validaciones.altura(nAltura)
+alt peso o altura inválidos
+  vm --> ui : toast «Ingresá el peso.» / «El peso debe ser un número (ej.: 62,4).» / «El peso debe estar entre 20 y 300 kg.» / «La altura debe estar entre 0,50 y 2,50 m.» …
+else datos válidos
+  vm -> vm : nut.peso = peso · altura (si se cargó) · consultas = [Consulta(HOY, peso, obs o «Control de rutina.»)] + consultas · turno = null si era de hoy
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: socio (nut_peso, nut_altura, consultas_json, turno)
+  db --> repo : ok
+  vm --> ui : formulario limpio · toast «Consulta guardada en el historial»
+end
+@enduml

@@ -1,0 +1,28 @@
+@startuml sec_cu02_cerrar_sesion
+title CU-02: Cerrar sesión
+autonumber
+skinparam sequenceMessageAlign center
+actor "Usuario del club" as usr
+participant ":PantallaPerfil\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+participant ":LoginActivity" as act
+usr -> ui : toca «Cerrar sesión» en Perfil
+ui -> vm : pedirCerrarSesion()
+vm -> vm : logoutSheet = true
+vm --> ui : HojaCerrarSesion (nombre del usuario)
+alt confirma «Cerrar sesión»
+  ui -> vm : cerrarSesion()
+  vm -> vm : rol = null · stack = [LOGIN] · logoutSheet = false · selId = null
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: sesion (rol = NULL)
+  db --> repo : ok
+  vm --> ui : estado.rol == null
+  ui -> act : RolActivity: volverAlLogin()
+  act --> usr : PantallaLogin sin sesión
+else cancela
+  ui -> vm : cancelarCerrarSesion()
+  vm --> ui : logoutSheet = false · sigue en Perfil
+end
+@enduml

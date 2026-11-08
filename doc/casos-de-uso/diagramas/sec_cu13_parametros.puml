@@ -1,0 +1,32 @@
+@startuml sec_cu13_parametros
+title CU-13: Configurar parámetros del club
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaPerfil\n«Configuración del club»\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+note right of repo : Al abrir la app, ClubRepositorio.iniciar() → ClubDbHelper.leer() carga UiState.parametros. La semilla trae dos filas (desde hace un año: gracia 10 / $300 / 2,5 %; desde hace dos meses: 5 / $500 / 3 %).
+adm -> ui : abre Perfil (avatar) o toca la acción rápida «Parámetros del club» del Inicio
+ui -> vm : prepararParametros()
+vm -> vm : p = parametros (vigenteEn(HOY)) · campos.pGracia / pRecargo / pInteres = p · paramError = null
+vm --> ui : formulario con los valores vigentes + historialParametros (más nuevo primero)
+adm -> ui : edita gracia, recargo e interés y toca «Guardar parámetros»
+ui -> vm : guardarParametros()
+vm -> vm : gracia = pGracia.toIntOrNull() · recargo, interes = toDoubleOrNull() (coma o punto)
+alt gracia no entera o fuera de 0..60
+  vm --> ui : paramError «La gracia debe ser un número entero de 0 a 60 días.»
+else recargo no numérico, no finito o fuera de 0..1.000.000
+  vm --> ui : paramError «El recargo debe ser un importe de 0 a 1.000.000.»
+else interés no numérico o fuera de 0..100
+  vm --> ui : paramError «El interés mensual debe ser un porcentaje de 0 a 100.»
+else valores válidos
+  vm -> vm : parametros = [Parametros(gracia, recargo, interes, vigenteDesde = HOY)] + los anteriores sin la fila de hoy
+  vm -> repo : guardar(estado)  (setter de estado)
+  repo -> db : guardar(datos): en la transacción DELETE FROM parametro + INSERT por cada fila (gracia_dias, recargo, interes_mensual, vigente_desde, orden)
+  db --> repo : ok
+  vm --> ui : historial con la fila nueva (chip «Vigente») · toast «Parámetros guardados · rigen desde hoy»
+  note right of repo : Las SocioVista se recalculan con la lista nueva: vigenteEn(fecha) toma el más nuevo con vigenteDesde <= fecha; antes del primero, gracia de la fila más antigua con recargo 0 e interés 0 (no retroactivo).
+end
+@enduml

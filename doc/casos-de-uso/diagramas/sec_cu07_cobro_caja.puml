@@ -1,0 +1,33 @@
+@startuml sec_cu07_cobro_caja
+title CU-07: Registrar pago de cuota en caja
+autonumber
+skinparam sequenceMessageAlign center
+actor "Administrativo" as adm
+participant ":PantallaFichaSocio\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":SocioVista" as sv
+participant ":ClubRepositorio" as repo
+participant ":ClubDbHelper\n(SQLite)" as db
+adm -> ui : toca «Registrar pago en caja»
+ui -> vm : pedirRegistrarPago()
+vm -> sv : seleccionado.cuotaPagada
+alt cuota ya pagada
+  vm --> ui : toast «La cuota de {mes} ya está pagada.» · no abre la hoja
+else cuota pendiente, en gracia o en mora
+  sv -> sv : totalAdeudado = cuota + recargo vigente hoy (una vez, si venció) + interés día a día con la tasa de cada día / 30
+  sv --> vm : totalLabel
+  vm --> ui : hoja «Registrar pago»: Socio · Cuota {mes} · Importe {total} · CTA «Cobrar {total}»
+  alt cancela
+    ui -> vm : cerrarSheet()
+  else confirma «Cobrar»
+    ui -> vm : sheet.onConfirm() → pagarCuota(id, «Caja»)
+    vm -> sv : SocioVista(socio, estado.parametros).totalAdeudado
+    sv --> vm : total
+    vm -> vm : cuota.estado = PAGADA · proximaVence = vence + 1 mes · PagoHistorial(mes, total, HOY, «Caja», «CD-2609-####») al frente del historial
+    vm -> repo : guardar(estado)  (setter de estado)
+    repo -> db : guardar(datos): transacción, DELETE + INSERT de las tablas · cambia: cuota, pago
+    db --> repo : ok
+    vm --> ui : cerrarSheet() · toast «Pago registrado · socio habilitado»
+  end
+end
+@enduml

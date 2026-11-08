@@ -1,0 +1,22 @@
+@startuml sec_cu24_agenda
+title CU-24: Consultar agenda de turnos
+autonumber
+skinparam sequenceMessageAlign center
+actor "Nutricionista" as nut
+participant ":PantallaAgenda\n(Compose)" as ui
+participant ":ClubViewModel" as vm
+participant ":PantallaFichaNutricional\n(Compose)" as fi
+nut -> ui : abre la pestaña Agenda (pantalla raíz del rol)
+ui -> vm : agenda
+vm -> vm : por cada día de diasDeAgenda: socios con turno ese día, ordenados por hora; los días sin turnos se omiten
+alt no hay turnos
+  vm --> ui : «No tenés turnos agendados.»
+else hay turnos
+  vm --> ui : grupos «Hoy · {día}» y fechas siguientes: «N turnos», hora y nombre del socio
+  opt toca un turno
+    nut -> ui : toca el turno
+    ui -> vm : abrirFicha(id)  → CU-25
+    vm --> fi : N_FICHA con los campos de consulta vacíos
+  end
+end
+@enduml
