@@ -223,8 +223,13 @@ data class Parametros(
     }
 }
 
-/** El parámetro que regía en [fecha]: el más nuevo con vigencia hasta esa fecha; antes del primero, el más antiguo. */
+/**
+ * El parámetro que regía en [fecha]: el más nuevo con vigencia hasta esa fecha. Antes del
+ * primero guardado no había recargo ni interés fijados, así que no se devengan (la tasa rige
+ * "desde la fecha en que se seteó"); la gracia sí se toma de la fila más antigua.
+ */
 fun List<Parametros>.vigenteEn(fecha: Fecha): Parametros {
     val ordenados = sortedByDescending { it.vigenteDesde }
-    return ordenados.firstOrNull { it.vigenteDesde <= fecha } ?: ordenados.last()
+    return ordenados.firstOrNull { it.vigenteDesde <= fecha }
+        ?: ordenados.last().copy(recargo = 0.0, interesMensual = 0.0)
 }

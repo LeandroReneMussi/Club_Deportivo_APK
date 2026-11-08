@@ -302,8 +302,10 @@ class ClubViewModel : ViewModel() {
         val interes = c.pInteres.trim().replace(',', '.').toDoubleOrNull()
         val error = when {
             gracia == null || gracia !in 0..60 -> "La gracia debe ser un número entero de 0 a 60 días."
-            recargo == null || recargo < 0.0 -> "El recargo debe ser un importe de 0 o más."
-            interes == null || interes !in 0.0..100.0 -> "El interés mensual debe ser un porcentaje de 0 a 100."
+            recargo == null || !recargo.isFinite() || recargo !in 0.0..1_000_000.0 ->
+                "El recargo debe ser un importe de 0 a 1.000.000."
+            interes == null || !interes.isFinite() || interes !in 0.0..100.0 ->
+                "El interés mensual debe ser un porcentaje de 0 a 100."
             else -> null
         }
         if (error != null) {

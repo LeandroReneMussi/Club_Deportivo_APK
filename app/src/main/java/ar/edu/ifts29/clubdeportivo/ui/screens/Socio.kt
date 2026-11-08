@@ -905,8 +905,9 @@ fun ColumnScope.PantallaPerfil(vm: ClubViewModel) {
 /** Parámetros del club (v1.5): gracia, recargo e interés, con el historial de vigencias. */
 @Composable
 private fun ConfiguracionClub(vm: ClubViewModel) {
-    LaunchedEffect(Unit) { vm.prepararParametros() }
     val f = vm.estado.campos
+    // Solo precarga si el formulario está vacío: rotar la pantalla no pisa lo que se estaba tipeando.
+    LaunchedEffect(Unit) { if (f.pGracia.isBlank()) vm.prepararParametros() }
     val p = vm.parametros
     Seccion("Configuración del club")
     ColumnaGutter {
@@ -920,8 +921,8 @@ private fun ConfiguracionClub(vm: ClubViewModel) {
                 modifier = Modifier.padding(top = 4.dp),
             )
             CampoParametro("Días de gracia después del vencimiento", f.pGracia) { v -> vm.campo { copy(pGracia = v) } }
-            CampoParametro("Recargo fijo por pago fuera de término ($)", f.pRecargo) { v -> vm.campo { copy(pRecargo = v) } }
-            CampoParametro("Interés mensual sobre la cuota (%)", f.pInteres) { v -> vm.campo { copy(pInteres = v) } }
+            CampoParametro("Recargo fijo por pago fuera de término ($)", f.pRecargo, decimal = true) { v -> vm.campo { copy(pRecargo = v) } }
+            CampoParametro("Interés mensual sobre la cuota (%)", f.pInteres, decimal = true) { v -> vm.campo { copy(pInteres = v) } }
             vm.estado.paramError?.let { err ->
                 Text(
                     err,
@@ -957,13 +958,13 @@ private fun ConfiguracionClub(vm: ClubViewModel) {
 }
 
 @Composable
-private fun CampoParametro(etiqueta: String, valor: String, onChange: (String) -> Unit) {
+private fun CampoParametro(etiqueta: String, valor: String, decimal: Boolean = false, onChange: (String) -> Unit) {
     Text(
         etiqueta.uppercase(),
         style = disp(700, 11, Pista.mut, letterSpacing = 1.sp),
         modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
     )
-    CampoTexto(valor, onChange, etiqueta, tecladoNumerico = true)
+    CampoTexto(valor, onChange, etiqueta, tecladoNumerico = !decimal, tecladoDecimal = decimal)
 }
 
 /** Fondo según la situación del socio: rojo si no puede ingresar, naranja en gracia, verde si está bien. */

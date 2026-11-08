@@ -31,6 +31,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.math.roundToInt
 
 /**
  * Cubre las reglas de negocio de las 14 historias de usuario contra el ViewModel real.
@@ -183,25 +184,55 @@ class ClubViewModelTest {
         vm.campo { copy(pGracia = "5", pRecargo = "500", pInteres = "3") }
         vm.guardarParametros()
 
+        // El interés rige desde el día en que se fijó: de los 29 días vencidos, solo hoy devenga.
         val lucas = vm.socios.first { it.id == 2 } // $12.000, vencida hace 29 días
         assertEquals(500.0, lucas.recargo, 0.001)
-        assertEquals("12.000 × 3% / 30 × 29 días", 348.0, lucas.interes, 0.5)
-        assertEquals(12_848, lucas.totalAdeudado)
+        assertEquals("12.000 × 3% / 30 × 1 día", 12.0, lucas.interes, 0.01)
+        assertEquals(12_512, lucas.totalAdeudado)
+        assertEquals("Cuota $12.000 + recargo $500 + interés $12", lucas.deudaDetalle)
         assertEquals(TonoCuota.BLOQUEO, lucas.tono)
         assertEquals("Vencida hace 29 días · gracia de 5 días superada", lucas.contador)
 
-        val tomas = vm.socios.first { it.id == 6 } // $17.000, vencida hace 60 días → $1.020 de interés
-        assertEquals(18_520, tomas.totalAdeudado)
+        val tomas = vm.socios.first { it.id == 6 } // $17.000, vencida hace 60 días → $17 de interés por hoy
+        assertEquals(17_517, tomas.totalAdeudado)
         vm.elegirReportTab(ReportTab.MORA)
-        assertEquals(money(12_848 + 18_520), vm.totalReporte)
+        assertEquals(money(12_512 + 17_517), vm.totalReporte)
 
         vm.abrirSocio(2)
         vm.pedirRegistrarPago()
         vm.estado.sheet!!.onConfirm()
         val pagado = vm.socios.first { it.id == 2 }
         assertTrue(pagado.cuotaPagada)
-        assertEquals("se cobra el total con recargo e interés", 12_848, pagado.historial.first().monto)
+        assertEquals("se cobra el total con recargo e interés", 12_512, pagado.historial.first().monto)
         assertTrue(pagado.hab)
+    }
+
+    @Test
+    fun `el detalle de la deuda siempre suma el total aunque haya centavos`() {
+        val vm = admin()
+        vm.prepararParametros()
+        vm.campo { copy(pGracia = "5", pRecargo = "500,5", pInteres = "2,9") }
+        vm.guardarParametros()
+        val lucas = vm.socios.first { it.id == 2 } // interés de hoy: 12.000 × 2,9 % / 30 = 11,6
+        assertEquals((12_000 + 500.5 + 11.6).roundToInt(), lucas.totalAdeudado)
+        assertEquals("Cuota $12.000 + recargo $501 + interés $11", lucas.deudaDetalle)
+    }
+
+    @Test
+    fun `los parametros rechazan valores que no son numeros finitos`() {
+        val vm = admin()
+        vm.prepararParametros()
+        vm.campo { copy(pRecargo = "NaN") }
+        vm.guardarParametros()
+        assertNotNull(vm.estado.paramError)
+        vm.campo { copy(pRecargo = "Infinity") }
+        vm.guardarParametros()
+        assertNotNull(vm.estado.paramError)
+        vm.campo { copy(pRecargo = "2000000") }
+        vm.guardarParametros()
+        assertNotNull("tope del recargo", vm.estado.paramError)
+        assertEquals("nada se guardó", 1, vm.historialParametros.size)
+        assertEquals(0.0, vm.parametros.recargo, 0.0)
     }
 
     @Test
@@ -219,11 +250,14 @@ class ClubViewModelTest {
         assertEquals(2, vm.historialParametros.size)
         assertEquals(4.0, vm.parametros.interesMensual, 0.0)
         assertEquals(2.0, vm.estado.parametros.vigenteEn(Fecha(2026, 9, 8)).interesMensual, 0.0)
-        assertEquals("antes del primero rige el más antiguo", 2.0, vm.estado.parametros.vigenteEn(Fecha(2025, 1, 1)).interesMensual, 0.0)
+        val antes = vm.estado.parametros.vigenteEn(Fecha(2025, 1, 1))
+        assertEquals("antes del primer parámetro no se devenga interés", 0.0, antes.interesMensual, 0.0)
+        assertEquals("ni recargo", 0.0, antes.recargo, 0.0)
+        assertEquals("pero la gracia sigue siendo la más antigua", 5, antes.graciaDias)
 
-        // Lucas: 30 días vencida; 29 días al 2 % y 1 día al 4 %, sobre $12.000.
+        // Lucas: 30 días vencida; solo devengan el 8/9 al 2 % y el 9/9 al 4 %, sobre $12.000.
         val lucas = vm.socios.first { it.id == 2 }
-        assertEquals(12_000 * 0.02 / 30 * 29 + 12_000 * 0.04 / 30 * 1, lucas.interes, 0.5)
+        assertEquals(12_000 * 0.02 / 30 + 12_000 * 0.04 / 30, lucas.interes, 0.01)
 
         vm.campo { copy(pGracia = "x") }
         vm.guardarParametros()

@@ -161,9 +161,9 @@ object DemoData {
             ),
             turno = Turno(HOY.masDias(3), "17:30"),
             ingresos = listOf(
-                Ingreso("Lun 7 sep · 18:52", "Permitido"),
-                Ingreso("Vie 4 sep · 19:10", "Permitido"),
-                Ingreso("Mié 2 sep · 18:40", "Permitido"),
+                Ingreso("${HOY.masDias(-1).fmtCorto()} · 18:52", "Permitido"),
+                Ingreso("${HOY.masDias(-4).fmtCorto()} · 19:10", "Permitido"),
+                Ingreso("${HOY.masDias(-6).fmtCorto()} · 18:40", "Permitido"),
             ),
         ),
         Socio(

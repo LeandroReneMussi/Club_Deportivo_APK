@@ -106,9 +106,13 @@ class SocioVista(val socio: Socio, private val parametros: List<Parametros> = li
 
     val totalLabel = money(totalAdeudado)
 
-    /** "Cuota $12.000 + recargo $500 + interés $348", o `null` si no hay nada que sumar. */
+    /**
+     * "Cuota $12.000 + recargo $500 + interés $12", o `null` si no hay nada que sumar. El interés
+     * se muestra como la diferencia, así los tres sumandos siempre dan [totalAdeudado].
+     */
     val deudaDetalle: String? = if (cuotaVencida && (recargo > 0 || interes > 0)) {
-        "Cuota ${money(socio.cuota.monto)} + recargo ${money(recargo.roundToInt())} + interés ${money(interes.roundToInt())}"
+        val recargoEntero = recargo.roundToInt()
+        "Cuota ${money(socio.cuota.monto)} + recargo ${money(recargoEntero)} + interés ${money(totalAdeudado - socio.cuota.monto - recargoEntero)}"
     } else {
         null
     }
