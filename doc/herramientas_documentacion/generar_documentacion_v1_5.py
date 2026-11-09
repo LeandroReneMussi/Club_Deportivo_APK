@@ -104,14 +104,15 @@ doc.marcar_indice()
 doc.salto()
 
 # ================================================================== PARTE I
+VIDEO_URL = "https://www.youtube.com/watch?v=nrYGeAUIGi0"
 doc.parte("I", "Video de demostración del proyecto")
 doc.h1("1. Video de demostración del proyecto")
 doc.parrafo(
     "Video del grupo con el funcionamiento de la aplicación v1.5.1 y la explicación de las funcionalidades de la Etapa Entrega "
-    "(enlace de YouTube «No listado»). Según entrega/README_entrega_v1.5.md, el video está pendiente de grabación; el guion y el checklist "
+    "(enlace de YouTube «No listado»). El guion y el checklist "
     "están en entrega/Checklist_video_v1.5.md y entrega/Guion_presentacion_por_rol_v1.5.md.")
-doc.boton("VIDEO v1.5.1 — ENLACE A CONFIRMAR")
-doc.centro("Enlace: a confirmar (ver «A confirmar», punto 1)", 22, b=False)
+doc.boton("VER VIDEO v1.5.1 EN YOUTUBE", VIDEO_URL)
+doc.centro(f"Enlace: {VIDEO_URL}", 22, b=False)
 doc.parrafo(
     "Video de la etapa anterior (v1.2.0, Etapa Desarrollo): https://www.youtube.com/watch?v=bwIpHXsPboc", jc="center")
 doc.salto()
@@ -634,17 +635,16 @@ doc.salto()
 doc.h1("28. A confirmar")
 doc.parrafo("Lo que no se pudo verificar en el código ni en git al generar este documento. Ninguno de estos puntos se completó por suposición.")
 CONF = [
-    ["1", "Enlace del video de YouTube «No listado» de la v1.5.1.", "entrega/README_entrega_v1.5.md lo marca como pendiente de grabación."],
-    ["2", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
-    ["3", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
-    ["4", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
-    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
-    ["6", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
-    ["7", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
-    ["8", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],
-    ["9", "INSTALAR.md.", "Lo escribe otro integrante; al generar este documento existía con tres caminos (teléfono, emulador, Android Studio). Confirmar la versión final."],
-    ["10", "Firmas de aprobación y fecha de conformidad.", "La tabla de la sección 27 está en blanco."],
-    ["11", "Comisión «2° D».", "Tomada de la v1.2; no figura en el código ni en git."],
+    ["1", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
+    ["2", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
+    ["3", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
+    ["4", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
+    ["5", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
+    ["6", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
+    ["7", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],
+    ["8", "INSTALAR.md.", "Lo escribe otro integrante; al generar este documento existía con tres caminos (teléfono, emulador, Android Studio). Confirmar la versión final."],
+    ["9", "Firmas de aprobación y fecha de conformidad.", "La tabla de la sección 27 está en blanco."],
+    ["10", "Comisión «2° D».", "Tomada de la v1.2; no figura en el código ni en git."],
 ]
 doc.tabla(["#", "Punto", "Motivo / dónde quedó pendiente"], CONF, [450, 3700, 4921], sz=18)
 
