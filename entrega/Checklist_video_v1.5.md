@@ -49,5 +49,5 @@ Cuentas: `Andres / Socio123` (socio) · `Jorge / Admin123` (administrativo) · `
 
 ## Antes de subir
 
-- [ ] Video en YouTube como **No listado**; pegar el enlace en la documentación y en el campus.
+- [x] Video en YouTube como **No listado**: https://www.youtube.com/watch?v=nrYGeAUIGi0 (enlace ya en la documentación; falta pegarlo en el campus).
 - [ ] Verificar que el zip y el PDF digan **Grupo 3** y los cuatro apellidos.

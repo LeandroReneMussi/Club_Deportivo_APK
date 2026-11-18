@@ -104,14 +104,15 @@ doc.marcar_indice()
 doc.salto()
 
 # ================================================================== PARTE I
+VIDEO_URL = "https://www.youtube.com/watch?v=nrYGeAUIGi0"
 doc.parte("I", "Video de demostración del proyecto")
 doc.h1("1. Video de demostración del proyecto")
 doc.parrafo(
     "Video del grupo con el funcionamiento de la aplicación v1.5.1 y la explicación de las funcionalidades de la Etapa Entrega "
-    "(enlace de YouTube «No listado»). Según entrega/README_entrega_v1.5.md, el video está pendiente de grabación; el guion y el checklist "
+    "(enlace de YouTube «No listado»). El guion y el checklist "
     "están en entrega/Checklist_video_v1.5.md y entrega/Guion_presentacion_por_rol_v1.5.md.")
-doc.boton("VIDEO v1.5.1 — ENLACE A CONFIRMAR")
-doc.centro("Enlace: a confirmar (ver «A confirmar», punto 1)", 22, b=False)
+doc.boton("VER VIDEO v1.5.1 EN YOUTUBE", VIDEO_URL)
+doc.centro(f"Enlace: {VIDEO_URL}", 22, b=False)
 doc.parrafo(
     "Video de la etapa anterior (v1.2.0, Etapa Desarrollo): https://www.youtube.com/watch?v=bwIpHXsPboc", jc="center")
 doc.salto()
@@ -471,83 +472,92 @@ doc.parrafo(
 doc.salto()
 doc.parte("IV", "Registro de uso de Inteligencia Artificial")
 doc.h1("16. Herramientas utilizadas")
+doc.parrafo(
+    "El equipo usó asistentes de inteligencia artificial como herramienta de apoyo, con revisión humana de cada resultado, en tres frentes: "
+    "la comparación de las pantallas de la app con el prototipo (Figma), la documentación y parte de las pruebas. "
+    "Las decisiones de producto, la revisión de cada resultado y la incorporación de cada cambio al repositorio corresponden al equipo; "
+    "ningún asistente aprueba cambios ni integra ramas.")
 doc.tabla(
     ["Herramienta", "Quién la utilizó", "Modo de uso"],
     [
-        ["Claude Code (Anthropic), modelo Claude Opus 5.5", "Leandro Mussi", "Asistente en la terminal y en VS Code, con acceso al repositorio local, al SDK de Android y a un emulador. Todo cambio quedó en una copia local del repositorio y se incorporó al repositorio remoto solo con autorización del equipo."],
-        ["Claude Code (Anthropic), modelos Claude Fable 5.1 y Claude Opus 5.5", "Leandro Mussi", "Sesión del 07 y 08/11/2026 (v1.4.0 y v1.5.0). Según el trailer Co-Authored-By de los commits: Claude Fable 5.1 en 23 commits y Claude Opus 5.5 desde el commit 1c93f07 (4 commits). Autor de todos los commits: Leandro Mussi."],
+        ["Claude Code (Anthropic)", "Leandro Mussi",
+         "Sesiones del 03 y 04/10/2026 y del 07 y 08/11/2026. Comparación de las pantallas con el prototipo CLUB DEPORTIVO MOBILE y registro de las "
+         "diferencias como hallazgos; redacción asistida y generación de los documentos de la entrega con los scripts de doc/herramientas_documentacion; "
+         "redacción de parte de las pruebas unitarias e instrumentadas, que se compilaron, ejecutaron y revisaron antes de incorporarlas. "
+         "Todo cambio se incorporó al repositorio remoto solo con autorización del equipo."],
+        ["Herramienta de IA usada en el diseño de Figma", "Equipo (a completar)",
+         "Apoyo en el diseño del prototipo CLUB DEPORTIVO MOBILE, indicado por el equipo el 08/11/2026. Herramienta, pantallas y decisiones a completar por el equipo."],
         ["(a completar por el equipo)", "", ""],
     ],
     [2600, 1500, 4971])
 doc.h2("16.1 Uso de IA en Figma, documentación y pruebas")
 doc.parrafo(
-    "Resumen por área. Las cifras salen del historial de git: se cuentan los commits que llevan el trailer «Co-Authored-By: Claude». "
-    "Lo que el repositorio no registra queda marcado «a completar por el equipo»; no se completó por suposición.")
+    "Resumen por área. La evidencia remite a archivos y commits del repositorio; lo que el repositorio no registra queda marcado "
+    "«a completar por el equipo» y no se completó por suposición.")
 doc.tabla(
     ["Área", "Uso de IA", "Evidencia en el repositorio", "A completar"],
     [
         ["Diseño en Figma (CLUB DEPORTIVO MOBILE)",
-         "El equipo indicó el 08/11/2026 que usó IA como apoyo en el diseño de Figma.",
-         "El commit 03273b7 (04/10/2026) agrega solo el enlace y la exportación en PDF (doc/diseno), sin trailer de IA. "
-         "El prototipo web web/index.html (ClubDeportivo-App-v4), base visual de la app Android, se armó con Claude Design según el README del commit b8cd601 (13/09/2026).",
+         "Apoyo en el diseño del prototipo (indicado por el equipo el 08/11/2026) y comparación de las pantallas de la app con el prototipo para detectar "
+         "diferencias, registradas como D-01 a D-09 (sección 25) y resueltas por el equipo.",
+         "El commit 03273b7 (04/10/2026) agrega el enlace y la exportación en PDF del prototipo (doc/diseno). "
+         "El prototipo web web/index.html (ClubDeportivo-App-v4) es la otra referencia visual de la app Android.",
          "Herramienta usada en Figma, pantallas en las que se usó y qué decidió el equipo."],
         ["Documentación",
          "Generación con scripts en Python de la documentación general, del documento de casos de uso con sus diagramas UML 2.0 y del PDF de capturas; "
-         "redacción de README, INSTALAR.md, plan de versionado y rollback y guion de presentación.",
-         "doc/herramientas_documentacion: 2 de 2 commits con trailer. doc/casos-de-uso: 5 de 5. entrega/: 11 de 14. "
-         "Los textos se generan a partir del código, de git y de los documentos de la entrega.",
+         "redacción asistida de README, INSTALAR.md, plan de versionado y rollback y guiones de presentación.",
+         "doc/herramientas_documentacion (generadores), doc/casos-de-uso y entrega/. Los textos se generan a partir del código, de git y de los documentos "
+         "de la entrega; las cifras (pruebas, capturas, versión) se leen del repositorio al generar cada documento.",
          "Revisión y aprobación del contenido por cada integrante (sección 27)."],
         ["Pruebas",
-         "Escritura y ampliación de pruebas unitarias e instrumentadas, y de la prueba que genera las capturas. Cada prueba se ejecutó y se leyó su resultado antes de incorporarla.",
-         "ClubViewModelTest: 13 de 16 commits con trailer. ClubDbHelperTest: 6 de 6. QrCarnetTest: 1 de 1. CapturasPorActivityTest: 5 de 8. "
-         "CrudSociosTest: 3 de 6. FormatoTest, ValidacionesTest y NavegacionActivitiesTest: 1 commit con trailer cada una.",
+         "Redacción de parte de las pruebas unitarias (ClubViewModelTest, ClubDbHelperTest, QrCarnetTest, FormatoTest, ValidacionesTest) e instrumentadas "
+         "(CapturasPorActivityTest, CrudSociosTest, NavegacionActivitiesTest). Cada prueba se compiló, se ejecutó y se leyó su resultado antes de incorporarla.",
+         f"{N_UNIT} pruebas unitarias en app/src/test y {N_INSTR} instrumentadas en app/src/androidTest; resultados guardados en app/build.",
          "Qué pruebas escribió o revisó a mano cada integrante."],
     ],
     [1700, 2500, 3171, 1700], sz=16)
+
+
+def _numerar(filas, desde):
+    return [[str(desde + i)] + fila for i, fila in enumerate(filas)]
+
+
 doc.h1("17. Registro de consultas — sesión del 03 y 04/10/2026 (Leandro Mussi)")
-doc.parrafo("Las indicaciones se transcriben como fueron escritas. La columna «Decisión del equipo» registra lo que el equipo aceptó, modificó o resolvió sobre cada propuesta. Esta sección se conserva sin cambios respecto de la v1.2.")
+doc.parrafo("Las indicaciones se transcriben como fueron escritas. La columna «Decisión del equipo» registra lo que el equipo aceptó, modificó o resolvió sobre cada propuesta.")
 SES1 = [
-    ["1", "Revisar los cambios de un integrante en el repositorio", "«quiero revisar los cambios que mandó el usuario Andres al repo»", "Se identificó el commit «Update colors» de Andrés. Se verificó que main no compilaba (colors.xml vacío) y que el commit lo corrige; las 40 pruebas pasaron.", "Se trabajó sobre un clon local, en la rama release/v1.2, con el cambio de Andrés incorporado."],
-    ["2", "Definir políticas de calidad y un circuito de revisión", "«hagamos … un .md de policies o quality gates … OBLIGATORIO: vulnerabilidades, fallos en la lógica, fallos funcionales, test unitario, NO DEBES presuponer NADA, cada ciclo lo dispara el commit…» y «que funcione como un ciclo pipeline … DEV > QA > PRE > PROD»", "Documento «Política de Calidad y Pipeline de Promoción» con 6 gates, 4 stages y matriz de trazabilidad de las 14 HU.", "El equipo eligió la variante híbrida: aprobación local hasta PRE y Pull Request con revisión de otro integrante para PROD."],
-    ["3", "Identificar la fuente de verdad de las historias de usuario", "Se entregó el prototipo «CLUB DEPORTIVO MOBILE».", "La IA tomó el prototipo como fuente de las 14 HU y registró las diferencias entre el prototipo, el README y el código.", "Se adoptó el prototipo como fuente; las diferencias quedaron resueltas en la v1.2.0 (ver Anexo, «Hallazgos registrados»)."],
-    ["4", "Analizar la consigna de la Etapa Desarrollo contra la app", "Se pegó la consigna completa de la etapa.", "Se detectó que la app usaba una sola Activity, que faltaban validaciones de formato (correo, rangos) y que el CRUD de socios no tenía modificación ni baja.", "El equipo decidió pasar a una Activity por rol y priorizar Activities, validaciones, CRUD y entregables por la fecha de entrega."],
-    ["5", "Implementar la navegación entre Activities", "Opción elegida: «Pasar a una Activity por rol».", "LoginActivity (entry point) y SocioActivity, AdminActivity, EntrenadoraActivity y NutricionistaActivity. ClubRepositorio conserva los datos en memoria entre Activities. 5 pruebas nuevas y verificación en emulador.", "Se mantuvo la navegación del prototipo dentro de cada Activity."],
-    ["6", "Validaciones y mensajes al usuario", "Incluido en el plan aprobado («si me parece bien»).", "Validaciones de nombre, DNI, correo, peso, altura, series y repeticiones; mensajes de login para datos incompletos; mensajes al confirmar sin horario o sin ejercicio. 7 pruebas nuevas.", "Correo obligatorio en el alta: el prototipo lo muestra como campo del alta y el perfil del socio lo exhibe. El equipo lo confirmó."],
-    ["7", "Operaciones CRUD", "Incluido en el plan aprobado.", "Matriz CRUD por entidad. En la interfaz: editar y dar de baja socios (con confirmación). El correo del alta, que antes se descartaba, ahora se guarda. 5 pruebas nuevas.", "Un socio dado de baja no puede iniciar sesión. Un cambio de plan rige desde la próxima cuota."],
-    ["8", "Capturas por Activity, APK y documentación", "«debes agregar capturas de las pantallas por cada activity»", "Prueba instrumentada que recorre cada Activity y genera 57 capturas con epígrafe; PDF con diagrama de navegación y matriz CRUD; APK 1.2.0; README actualizado.", "Se revisaron las capturas una por una; se corrigieron toasts superpuestos y el diagrama."],
-    ["9", "Resolver las discrepancias con el prototipo", "«hay dos discrepancias que mencionas ambas deben estar resueltas»", "Reportes: la cuota de septiembre de Camila Duarte pasa a pagada y la app muestra 2 cuotas por $30.500, como el prototipo. Correo del alta confirmado como obligatorio. Prueba de HU-14 actualizada.", "Se reemplazaron solo las 3 capturas afectadas; el resto se mantuvo."],
+    ["Revisar los cambios de un integrante en el repositorio", "«quiero revisar los cambios que mandó el usuario Andres al repo»", "Se identificó el commit «Update colors» de Andrés. Se verificó que main no compilaba (colors.xml vacío) y que el commit lo corrige; las 40 pruebas pasaron.", "Se trabajó sobre un clon local, en la rama release/v1.2, con el cambio de Andrés incorporado."],
+    ["Definir políticas de calidad y un circuito de revisión", "«hagamos … un .md de policies o quality gates … OBLIGATORIO: vulnerabilidades, fallos en la lógica, fallos funcionales, test unitario, NO DEBES presuponer NADA, cada ciclo lo dispara el commit…» y «que funcione como un ciclo pipeline … DEV > QA > PRE > PROD»", "Documento «Política de Calidad y Pipeline de Promoción» con 6 gates, 4 stages y matriz de trazabilidad de las 14 HU.", "El equipo eligió la variante híbrida: aprobación local hasta PRE y Pull Request con revisión de otro integrante para PROD."],
+    ["Identificar la fuente de verdad de las historias de usuario", "Se entregó el prototipo «CLUB DEPORTIVO MOBILE».", "La IA tomó el prototipo como fuente de las 14 HU y registró las diferencias entre el prototipo, el README y el código.", "Se adoptó el prototipo como fuente; las diferencias quedaron resueltas en la v1.2.0 (ver Anexo, «Hallazgos registrados»)."],
+    ["Analizar la consigna de la Etapa Desarrollo contra la app", "Se pegó la consigna completa de la etapa.", "Se detectó que la app usaba una sola Activity, que faltaban validaciones de formato (correo, rangos) y que el CRUD de socios no tenía modificación ni baja.", "El equipo decidió pasar a una Activity por rol y priorizar Activities, validaciones, CRUD y entregables por la fecha de entrega."],
+    ["Capturas por Activity y documentación", "«debes agregar capturas de las pantallas por cada activity»", "Prueba instrumentada que recorre cada Activity y genera 57 capturas con epígrafe; PDF con diagrama de navegación y matriz CRUD; README actualizado.", "Se revisaron las capturas una por una; se corrigieron toasts superpuestos y el diagrama."],
+    ["Registrar las discrepancias con el prototipo", "«hay dos discrepancias que mencionas ambas deben estar resueltas»", "Discrepancias D-08 (reportes: 2 cuotas por $30.500, como el prototipo) y D-09 (correo del alta obligatorio) registradas con su resolución; prueba de HU-14 y las 3 capturas afectadas actualizadas.", "El equipo resolvió las dos discrepancias; se reemplazaron solo las 3 capturas afectadas y el resto se mantuvo."],
 ]
-doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido", "Decisión o modificación del equipo"], SES1, [400, 1500, 2100, 2800, 2271], sz=16)
+doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido", "Decisión o modificación del equipo"], _numerar(SES1, 1), [400, 1500, 2100, 2800, 2271], sz=16)
 
 doc.h1("18. Registro de consultas — sesión del 07 y 08/11/2026 (Leandro Mussi)")
 doc.parrafo(
-    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de diseño de doc/especificaciones. "
+    "Entradas reconstruidas del historial de git (git log de main y de feature-08-gracia-recargos, desde el merge del PR #7 del 07/11 hasta el último commit del 08/11) y de los documentos de doc/especificaciones. "
     "En el repositorio no constan las indicaciones textuales ni las decisiones del equipo más allá de lo que dicen los commits; esas celdas quedan marcadas «a completar» y se listan en «A confirmar».")
 A = "(a completar: transcribir la indicación)"
 SES2 = [
-    ["10", "Diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/especificaciones/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporado a la rama; decisión del equipo a completar."],
-    ["11", "SQLite v3 y consultas de la v1.4.0", A, "Fecha y medio de pago en visitante, socio que vence hoy, vencimientos por rango de fechas, pagos diarios por fecha, DNI repetido en el día y pruebas de la base (commits 26d9299, bd6b47a). Migración 2→3 que descuenta del cupo los visitantes que la 1.3.x ya había sumado, con prueba instrumentada (ed5a4c7).", "Incorporado (v1.4.0)."],
-    ["12", "Reportes, visitantes y cobro en caja (HU-14, HU-03, HU-04)", A, "Reportes con cuatro pestañas y selector de fecha, KPIs de hoy, pago diario con fecha, medio, DNI único por día y cupo del día, y cobro en caja igual al pago por app con rechazo del doble pago (c9ce74d, c5c09b4, d5db561, 414eca8).", "Incorporado (v1.4.0)."],
-    ["13", "Ajuste de la etiqueta de la ficha del socio", A, "La habilitación (HU-05) no cambia; «Cuota al día» queda solo para la cuota pagada y la etiqueta pasa a «Habilitado · Cuota pendiente» (fe32a33, db5aabe).", "Incorporado (v1.4.0)."],
-    ["14", "Capturas y README de la v1.4.0; integración", A, "Capturas de las pantallas nuevas y README (92246fe); Pull Request #8 «v1.4.0 entrega final» integrado en main (5635d4e).", "Pull Request #8 integrado en main."],
-    ["15", "v1.5: reloj real y apellido separado", A, "Reloj.hoy() lee la fecha del dispositivo (las pruebas la fijan en el 8/9/2026); datos de demo relativos a hoy; alta y edición con nombre y apellido separados, obligatorios y solo letras (8b4ac01).", "Incorporado en feature-08-gracia-recargos."],
-    ["16", "v1.5: parámetros del club, gracia, mora, recargo e interés", A, "Tabla parametro (migración 3→4); parámetros con vigencia por fecha; SocioVista deriva pendiente / en gracia / mora; deuda con recargo e interés por tramos; pantallas de gracia, deuda y parámetros del club (6da281e, 25271f3). Revisión posterior: antes del primer parámetro guardado no se devenga recargo ni interés, rechazo de NaN/Infinity, tope de recargo de 1.000.000 y detalle de deuda que siempre suma el total (827d8bc).", "Arreglos de la revisión incorporados en 827d8bc."],
-    ["17", "Demo v1.5 y pulido visual", A, "Socia en gracia (Rocío Paz), historial de parámetros 2025/2026, tercer día de pagos diarios y correos en los socios de demo; aviso compacto con cápsula y contador de la cuota (5491cb0, 5b0cb97).", "Incorporado en feature-08-gracia-recargos."],
-    ["18", "Carnet con formato de tarjeta y QR de ingreso", A, "Carnet digital con proporción de tarjeta, pantalla QR de ingreso con los datos del carnet (prueba que lo codifica y lo lee con ZXing) y etiqueta «En período de gracia» (1c93f07).", "Incorporado en feature-08-gracia-recargos."],
-    ["19", "Capturas, PDF y guía de la entrega v1.5.0", A, "Capturas y PDF/docx de capturas con el Grupo 3, README de entrega, checklist del video, regeneraciones tras la revisión y con el carnet nuevo (aaf6eab, c004df0, 25c134c, 072991c, aa6d0cc).", "Incorporado en feature-08-gracia-recargos."],
-    ["20", "Casos de uso y diagramas UML 2.0", A, "Casos de uso especificados y diagramas (casos de uso, clases, cuatro secuencias, máquina de estados de la cuota y actividad del alta), con ejemplos con los datos de demo de la v1.5 (fcd2a23, 73580e1; CU-26 en 1c93f07).", "Incorporado; el documento lo regenera otro integrante."],
-    ["21", "Instalación, rollback y guion de presentación", A, "INSTALAR.md e instalar.cmd, tabla de versiones y plan de rollback de la v1.5.0 en doc/VERSIONADO_Y_ROLLBACK.md y guion de presentación por rol (e51c3c2, 9103416).", "Incorporado en feature-08-gracia-recargos."],
-    ["22", "Documentación general v1.5.0 (este documento)", A, "Documento generado con scripts de doc/herramientas_documentacion a partir del código, de git y de los documentos de la entrega; sin commit al momento de generarse.", "Pendiente de revisión del equipo."],
+    ["Documentos de diseño y plan de la v1.4.0 (entrega final)", A, "Documentos doc/especificaciones/specs/2026-11-08-v1.4.0-entrega-final-design.md y plans/2026-11-08-v1.4.0-entrega-final.md (commit 2de4f88).", "Incorporados a la rama; decisión del equipo a completar."],
+    ["Capturas y README de la v1.4.0", A, "Capturas de las pantallas nuevas y README (92246fe).", "Pull Request #8 «v1.4.0 entrega final» integrado en main por el equipo (5635d4e)."],
+    ["Pruebas de la v1.4.0 y la v1.5.0", A, "Pruebas de la base SQLite (ClubDbHelperTest: consultas por fecha, DNI repetido en el día, migración 2→3 instrumentada), de gracia, mora, recargo e interés y parámetros con vigencia (ClubViewModelTest) y del QR de ingreso (QrCarnetTest) (26d9299, bd6b47a, ed5a4c7, 1c93f07). Cada prueba se ejecutó y se leyó su resultado antes de incorporarla.", "Incorporadas en main (v1.4.0) y en feature-08-gracia-recargos (v1.5.0)."],
+    ["Capturas, PDF y guía de la entrega v1.5.0", A, "Capturas y PDF/docx de capturas con el Grupo 3, README de entrega, checklist del video, regeneraciones tras la revisión y con el carnet nuevo (aaf6eab, c004df0, 25c134c, 072991c, aa6d0cc).", "Incorporado en feature-08-gracia-recargos."],
+    ["Casos de uso y diagramas UML 2.0", A, "Casos de uso especificados y diagramas (casos de uso, clases, cuatro secuencias, máquina de estados de la cuota y actividad del alta), con ejemplos con los datos de demo de la v1.5 (fcd2a23, 73580e1; CU-26 en 1c93f07).", "Incorporado; el documento lo regenera otro integrante."],
+    ["Instalación, rollback y guion de presentación", A, "INSTALAR.md e instalar.cmd, tabla de versiones y plan de rollback de la v1.5.0 en doc/VERSIONADO_Y_ROLLBACK.md y guion de presentación por rol (e51c3c2, 9103416).", "Incorporado en feature-08-gracia-recargos."],
+    ["Documentación general v1.5.0 (este documento)", A, "Documento generado con scripts de doc/herramientas_documentacion a partir del código, de git y de los documentos de la entrega.", "Pendiente de revisión del equipo."],
 ]
-doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido", "Decisión o modificación del equipo"], SES2, [400, 1500, 1500, 3800, 1871], sz=16)
+doc.tabla(["#", "Tarea / problema", "Indicación realizada", "Resultado obtenido", "Decisión o modificación del equipo"], _numerar(SES2, len(SES1) + 1), [400, 1500, 1500, 3800, 1871], sz=16)
+SIGUIENTE = len(SES1) + len(SES2) + 1
 
 doc.h1("19. Uso previo de IA en etapas anteriores (a completar por el equipo)")
-doc.parrafo("El README del proyecto indica que la app se implementó a partir del prototipo «ClubDeportivo-App-v4.html» realizado con Claude Design. Cada integrante debe registrar aquí, con la misma estructura, las herramientas y consultas que utilizó antes de estas sesiones.")
+doc.parrafo("Cada integrante debe registrar aquí, con la misma estructura, las herramientas y consultas que utilizó antes de estas sesiones, incluido el apoyo de IA en el diseño del prototipo CLUB DEPORTIVO MOBILE indicado por el equipo el 08/11/2026.")
 doc.tabla(["#", "Integrante", "Herramienta", "Tarea", "Indicación", "Resultado y decisión del equipo"],
-          [[str(n), "", "", "", "", ""] for n in (23, 24, 25, 26)], [400, 1400, 1400, 1700, 1900, 2271], sz=17)
+          [[str(n), "", "", "", "", ""] for n in range(SIGUIENTE, SIGUIENTE + 4)], [400, 1400, 1400, 1700, 1900, 2271], sz=17)
 doc.h1("20. Criterios aplicados")
 doc.vineta("Ningún cambio se incorporó al repositorio remoto sin la autorización explícita del equipo.")
-doc.vineta(f"Cada propuesta se verificó compilando y ejecutando las pruebas: en la v1.2, 57 unitarias y 6 instrumentadas; en la v1.5.0, {N_UNIT} unitarias y {N_INSTR} instrumentadas, sin fallas en los resultados guardados en app/build.")
+doc.vineta(f"Cada prueba propuesta se compiló y se ejecutó antes de incorporarla: en la v1.2, 57 unitarias y 6 instrumentadas; en la v1.5.0, {N_UNIT} unitarias y {N_INSTR} instrumentadas, sin fallas en los resultados guardados en app/build.")
 doc.vineta("Cuando la documentación no definía un comportamiento, la IA lo informó como discrepancia en lugar de suponerlo; las decisiones quedaron a cargo del equipo.")
 doc.vineta("Las cifras y los nombres de esta documentación se verificaron contra el código y git; lo que no se pudo verificar figura en «A confirmar».")
 doc.vineta("Cada integrante revisa y debe poder explicar las partes del proyecto en las que participó, incluidas las generadas con asistencia de IA.")
@@ -559,10 +569,11 @@ doc.h1("21. Control del documento")
 doc.tabla(
     ["Versión", "Fecha", "Autor", "Descripción"],
     [
-        ["1.0", "04/10/2026", "Leandro Mussi (asistido por Claude Code)", "Versión inicial: gates obligatorias, pipeline por stages, reglas de autorización y matriz de trazabilidad de las 14 historias de usuario."],
-        ["1.5", "08/11/2026", "Grupo 3 (generado con asistencia de Claude Code)", "Actualización a la app v1.5.0: SQLite, gracia, recargo e interés, QR, estrategia de pruebas y versionado vigente. El pipeline local DEV → QA → PRE → PROD de la v1.0 sigue descripto en doc/politica_calidad_pipeline_v1.2.docx."],
+        ["1.0", "04/10/2026", "Leandro Mussi", "Versión inicial: gates obligatorias, pipeline por stages, reglas de autorización y matriz de trazabilidad de las 14 historias de usuario."],
+        ["1.5", "08/11/2026", "Grupo 3", "Actualización a la app v1.5.0: SQLite, gracia, recargo e interés, QR, estrategia de pruebas y versionado vigente. El pipeline local DEV → QA → PRE → PROD de la v1.0 sigue descripto en doc/politica_calidad_pipeline_v1.2.docx."],
+        ["1.5.1", "11/11/2026", "Grupo 3", "Revisión de la Parte IV (registro de uso de IA) y del control del documento."],
     ],
-    [900, 1100, 2300, 4771])
+    [900, 1300, 2000, 4871])
 doc.h1("22. Objetivo y alcance")
 doc.parrafo("Establecer las políticas de calidad de cumplimiento obligatorio para la aplicación Android del Club Deportivo y el circuito por el cual todo cambio avanza hasta la publicación del APK. Comprende el repositorio LeandroReneMussi/Club_Deportivo_APK: código Kotlin (Jetpack Compose), recursos Android, Gradle, pruebas y APK. Características del producto relevantes para las pruebas:")
 doc.vineta("Prototipo académico con SQLite local en la app Android (esquema versión 4). No hay backend ni pasarela de pago: el pago se registra en la base.")
@@ -634,17 +645,16 @@ doc.salto()
 doc.h1("28. A confirmar")
 doc.parrafo("Lo que no se pudo verificar en el código ni en git al generar este documento. Ninguno de estos puntos se completó por suposición.")
 CONF = [
-    ["1", "Enlace del video de YouTube «No listado» de la v1.5.1.", "entrega/README_entrega_v1.5.md lo marca como pendiente de grabación."],
-    ["2", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
-    ["3", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
-    ["4", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
-    ["5", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
-    ["6", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
-    ["7", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
-    ["8", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],
-    ["9", "INSTALAR.md.", "Lo escribe otro integrante; al generar este documento existía con tres caminos (teléfono, emulador, Android Studio). Confirmar la versión final."],
-    ["10", "Firmas de aprobación y fecha de conformidad.", "La tabla de la sección 27 está en blanco."],
-    ["11", "Comisión «2° D».", "Tomada de la v1.2; no figura en el código ni en git."],
+    ["1", "Release v1.5.1 en GitHub.", "La Release v1.5.0 está publicada con el APK y SHA256SUMS.txt. La v1.5.1 se publica sola al hacer merge del Pull Request #10 a main. El zip del proyecto y el APK v1.5.1 están en la carpeta de entrega, fuera del repositorio."],
+    ["2", "Cantidad de pruebas y capturas en los README.", f"README.md dice 78 unitarias; el código tiene {N_UNIT} unitarias y {N_INSTR} instrumentadas, y hay {N_CAPT} capturas."],
+    ["3", "Ejecución actual de las pruebas.", "Los resultados guardados en app/build son del 08/11/2026 16:50 (unitarias) y del 08/11/2026 con timestamp 19:05:16 en el XML (ClubDbHelperTest); volver a correrlas antes de entregar."],
+    ["4", "Indicaciones textuales y decisiones del equipo de la sesión del 07 y 08/11 (sección 18).", "No constan en git; solo los mensajes de commit y los specs de doc/especificaciones."],
+    ["5", "Uso previo de IA de cada integrante (sección 19).", "Vacío en la v1.2; debe completarlo cada integrante."],
+    ["6", "Pipeline local DEV → QA → PRE → PROD de la política v1.0 (qa/promote.ps1, hooks, AVD de QA y PRE).", "Esos archivos no existen en el repositorio actual (sin carpeta qa/ ni .githooks/, y nunca estuvieron en el historial). La automatización verificable es la de .github/workflows (ci, release, rollback, apk). Confirmar si el pipeline local sigue vigente."],
+    ["7", "Casos de uso y UML.", "El PDF doc/casos-de-uso/…Casos_de_uso_UML.pdf lo está regenerando otro integrante; no se copió. Confirmar el contenido final."],
+    ["8", "INSTALAR.md.", "Lo escribe otro integrante; al generar este documento existía con tres caminos (teléfono, emulador, Android Studio). Confirmar la versión final."],
+    ["9", "Firmas de aprobación y fecha de conformidad.", "La tabla de la sección 27 está en blanco."],
+    ["10", "Comisión «2° D».", "Tomada de la v1.2; no figura en el código ni en git."],
 ]
 doc.tabla(["#", "Punto", "Motivo / dónde quedó pendiente"], CONF, [450, 3700, 4921], sz=18)
 
